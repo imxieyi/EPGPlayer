@@ -12,9 +12,12 @@ class PlayerEvents: ObservableObject {
     let togglePlay = PassthroughSubject<Void, Never>()
     let getTrackInfo = PassthroughSubject<String, Never>()
     
+    let addVideoTrack = PassthroughSubject<MediaTrack, Never>()
+    let addAudioTrack = PassthroughSubject<MediaTrack, Never>()
     let addTextTrack = PassthroughSubject<MediaTrack, Never>()
     
     let enableTrack = PassthroughSubject<MediaTrack, Never>()
+    let setPlaybackRate = PassthroughSubject<Float, Never>()
 }
 
 struct MediaTrack: Hashable, Identifiable {

@@ -22,6 +22,10 @@ struct PlayerView: View {
     @State var playbackSpeed: PlaybackSpeed = .x1
     @State var playerState: VLCMediaPlayerState = .opening
     
+    @State var activeVideoTrack = MediaTrack(id: "none", name: "video", codec: "")
+    @State var videoTracks: [MediaTrack] = []
+    @State var activeAudioTrack = MediaTrack(id: "none", name: "audio", codec: "")
+    @State var audioTracks: [MediaTrack] = []
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
     
@@ -62,14 +66,52 @@ struct PlayerView: View {
                                 Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
                             }
                             .pickerStyle(.menu)
+                            
+                            Divider()
+                            
+                            if !videoTracks.isEmpty {
+                                Picker(selection: $activeVideoTrack) {
+                                    ForEach(videoTracks) { track in
+                                        Button {
+                                        } label: {
+                                            Text(verbatim: track.name)
+                                            Text(verbatim: track.codec)
+                                        }
+                                        .tag(track)
+                                    }
+                                } label: {
+                                    Label("Video", systemImage: "film")
+                                }
+                                .pickerStyle(.menu)
+                            }
+                            
+                            if !audioTracks.isEmpty {
+                                Picker(selection: $activeAudioTrack) {
+                                    ForEach(audioTracks) { track in
+                                        Button {
+                                        } label: {
+                                            Text(verbatim: track.name)
+                                            Text(verbatim: track.codec)
+                                        }
+                                        .tag(track)
+                                    }
+                                } label: {
+                                    Label("Audio", systemImage: "waveform")
+                                }
+                                .pickerStyle(.menu)
+                            }
 
                             if !textTracks.isEmpty {
                                 Picker(selection: $activeTextTrack) {
                                     Text("None")
                                         .tag(MediaTrack(id: "none", name: "text", codec: ""))
                                     ForEach(textTracks) { track in
-                                        Text(verbatim: track.name)
-                                            .tag(track)
+                                        Button {
+                                        } label: {
+                                            Text(verbatim: track.name)
+                                            Text(verbatim: track.codec)
+                                        }
+                                        .tag(track)
                                     }
                                 } label: {
                                     Label("Subtitle", systemImage: "captions.bubble")
@@ -105,15 +147,17 @@ struct PlayerView: View {
                                 .font(.system(size: 25))
                         }
                         Spacer()
-                            .frame(width: 10)
+                            .frame(width: 15)
                         Button {
                             playerEvents.togglePlay.send()
                         } label: {
                             Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 40))
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                                .scaledToFit()
                         }
                         Spacer()
-                            .frame(width: 10)
+                            .frame(width: 15)
                         Button {
                         } label: {
                             Image(systemName: "30.arrow.trianglehead.clockwise")
@@ -128,9 +172,30 @@ struct PlayerView: View {
         .preferredColorScheme(.dark)
         .tint(.primary)
         .background(.black)
-        .onChange(of: activeTextTrack, { oldValue, newValue in
+        .onChange(of: activeVideoTrack, { _, newValue in
             playerEvents.enableTrack.send(newValue)
         })
+        .onChange(of: activeAudioTrack, { _, newValue in
+            playerEvents.enableTrack.send(newValue)
+        })
+        .onChange(of: activeTextTrack, { _, newValue in
+            playerEvents.enableTrack.send(newValue)
+        })
+        .onChange(of: playbackSpeed, { _, newValue in
+            playerEvents.setPlaybackRate.send(newValue.rawValue)
+        })
+        .onReceive(playerEvents.addVideoTrack) { track in
+            videoTracks.append(track)
+            if videoTracks.count == 1 {
+                activeVideoTrack = track
+            }
+        }
+        .onReceive(playerEvents.addAudioTrack) { track in
+            audioTracks.append(track)
+            if audioTracks.count == 1 {
+                activeAudioTrack = track
+            }
+        }
         .onReceive(playerEvents.addTextTrack) { track in
             textTracks.append(track)
             if userSettings.enableSubtitle && textTracks.count == 1 {
@@ -140,7 +205,7 @@ struct PlayerView: View {
     }
 }
 
-enum PlaybackSpeed: Double, Hashable, Identifiable {
+enum PlaybackSpeed: Float, Hashable, Identifiable {
     case x0_5 = 0.5
     case x0_75 = 0.75
     case x1 = 1
@@ -148,7 +213,7 @@ enum PlaybackSpeed: Double, Hashable, Identifiable {
     case x4 = 4
     static let all = [PlaybackSpeed.x0_5, .x0_75, .x1, .x2, .x4]
     
-    var id: Double { rawValue }
+    var id: Float { rawValue }
     
     var text: String {
         switch self {

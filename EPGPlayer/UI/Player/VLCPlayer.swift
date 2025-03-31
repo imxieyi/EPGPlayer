@@ -84,6 +84,7 @@ class VLCPlayerViewController: UIViewController {
     var togglePlayListener: AnyCancellable?
     var getTrackInfoListener: AnyCancellable?
     var enableTrackListener: AnyCancellable?
+    var setPlaybackRateListener: AnyCancellable?
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -105,8 +106,14 @@ class VLCPlayerViewController: UIViewController {
                 return
             }
             DispatchQueue.main.async {
-                if let textTrack = player.textTracks.filter({ $0.trackId == trackId }).first {
-                    playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: textTrack.trackName, codec: textTrack.codecName()))
+                if let track = player.videoTracks.filter({ $0.trackId == trackId }).first {
+                    playerEvents.addVideoTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+                }
+                if let track = player.audioTracks.filter({ $0.trackId == trackId }).first {
+                    playerEvents.addAudioTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+                }
+                if let track = player.textTracks.filter({ $0.trackId == trackId }).first {
+                    playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
                 }
             }
         })
@@ -133,6 +140,12 @@ class VLCPlayerViewController: UIViewController {
             player.audioTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
             player.textTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
         })
+        setPlaybackRateListener = playerEvents.setPlaybackRate.sink(receiveValue: { [weak self] rate in
+            guard let player = self?.mediaPlayer else {
+                return
+            }
+            player.rate = rate
+        })
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -150,5 +163,14 @@ class VLCPlayerViewController: UIViewController {
         } else {
             mediaPlayer.stop()
         }
+    }
+}
+
+extension VLCMediaPlayer.Track {
+    var codecName: String {
+        if codecName() != "" {
+            return codecName()
+        }
+        return String(bytes: withUnsafeBytes(of: codec.littleEndian, Array.init), encoding: .ascii) ?? "\(codec)"
     }
 }
