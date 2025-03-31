@@ -11,12 +11,32 @@
         }
       }
     },
+    "Caches" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "缓存"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
+          }
+        }
+      }
+    },
+    "Clear cache" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "清空缓存"
           }
         }
       }
@@ -37,6 +57,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Detail" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节目详情"
           }
         }
       }
@@ -97,6 +127,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往设置"
+          }
+        }
+      }
+    },
+    "Image cache size: %lld MB" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "图片缓存大小：%lld MB"
           }
         }
       }

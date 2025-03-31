@@ -16,10 +16,13 @@ struct SettingsView: View {
     @State private var serverUrl: String = ""
     @State private var showServerUrlInvalidAlert: Bool = false
     
+    @State private var currentCacheSize: Int = 0
+    
     var body: some View {
         Form {
             serverSection
             playerSection
+            cacheSection
             resetSection
         }
     }
@@ -88,6 +91,22 @@ struct SettingsView: View {
             }
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")
+        }
+    }
+    
+    var cacheSection: some View {
+        Section {
+            Text("Image cache size: \(currentCacheSize / 1024 / 1024) MB")
+                .foregroundStyle(.gray)
+            Button("Clear cache") {
+                URLCache.imageCache.removeAllCachedResponses()
+                currentCacheSize = 0
+            }
+        } header: {
+            Label("Caches", systemImage: "arrow.up.bin")
+        }
+        .onAppear {
+            currentCacheSize = URLCache.imageCache.currentDiskUsage
         }
     }
     

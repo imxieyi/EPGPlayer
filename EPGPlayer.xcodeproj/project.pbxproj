@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
+		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -69,6 +70,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
+				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -156,6 +158,7 @@
 				8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */,
 				8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
 				8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
+				8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -429,6 +432,14 @@
 				minimumVersion = 1.0.2;
 			};
 		};
+		8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lorenzofiamingo/swiftui-cached-async-image";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -446,6 +457,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
 			productName = "plugin:OpenAPIGenerator";
+		};
+		8A76696B2D9AB337008E69F7 /* CachedAsyncImage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
+			productName = CachedAsyncImage;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

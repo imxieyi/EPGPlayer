@@ -7,11 +7,12 @@
 
 import SwiftUI
 import OpenAPIRuntime
+import CachedAsyncImage
 
 struct RecordingCell: View {
     @Environment(AppState.self) private var appState
     
-    static private let startDateFormatStyle = Date.FormatStyle(
+    static let startDateFormatStyle = Date.FormatStyle(
         date: .abbreviated,
         time: .shortened,
         locale: Locale(identifier: "ja_JP"),
@@ -22,7 +23,7 @@ struct RecordingCell: View {
         .day(.twoDigits)
         .weekday(.abbreviated)
     
-    static private let endDateFormatStyle = Date.FormatStyle(
+    static let endDateFormatStyle = Date.FormatStyle(
         date: .omitted,
         time: .shortened,
         locale: Locale(identifier: "ja_JP"),
@@ -34,14 +35,18 @@ struct RecordingCell: View {
     var body: some View {
         VStack(alignment: .leading) {
             if let thumbnailId = item.thumbnails?.first {
-                AsyncImage(url: appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)")) { image in
+                CachedAsyncImage(url: appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)"), urlCache: .imageCache) { image in
                     image
                         .resizable()
                         .scaledToFit()
                 } placeholder: {
-                    ProgressView()
+                    ZStack(alignment: .center) {
+                        Color.clear
+                        ProgressView()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .aspectRatio(16/9, contentMode: .fit)
                 }
-
             }
             Text(verbatim: item.name)
                 .font(.headline)

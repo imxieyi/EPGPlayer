@@ -26,14 +26,23 @@ struct RecordingsView: View {
                     .padding()
             } else if case .loaded = loadingState {
                 ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))]) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 350))]) {
                         ForEach(recorded) { item in
-                            Button {
-                                appState.selectedRecording = item
+                            NavigationLink {
+                                RecordingDetailView(item: item)
                             } label: {
                                 RecordingCell(item: item)
                             }
                             .tint(.primary)
+                            .id(item.id)
+
+//                            Button {
+//                                appState.selectedRecording = item
+//                            } label: {
+//                                RecordingCell(item: item)
+//                            }
+//                            .tint(.primary)
+//                            .id(item.id)
                         }
                         if case .loaded = loadingMoreState, recorded.count < totalCount {
                             Spacer()
