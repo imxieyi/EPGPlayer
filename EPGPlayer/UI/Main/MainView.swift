@@ -23,25 +23,9 @@ struct MainView: View {
                     SettingsView()
                 }
             }
-            .navigationDestination(item: $appState.selectedRecording) { item in
-                VStack {
-                    VLCPlayerView(videoURL: appState.client.endpoint.appending(path: "videos/\(item.videoFiles?.first?.id ?? 0)"))
-                        .frame(maxWidth: .infinity)
-                        .aspectRatio(16/9, contentMode: .fit)
-                    ScrollView(.vertical) {
-                        Text(item.name)
-                            .font(.headline)
-                        if let desc = item.description {
-                            Text(desc)
-                                .font(.subheadline)
-                        }
-                        if let ext = item.extended {
-                            Text(ext)
-                                .font(.caption)
-                        }
-                    }
-                }
-            }
+        }
+        .fullScreenCover(item: $appState.playingItem) { item in
+            PlayerView(item: item)
         }
         .sheet(isPresented: $appState.isAuthenticating) {
             NavigationView {

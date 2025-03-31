@@ -18,7 +18,7 @@ final class AppState {
     var isAuthenticating = false
     var clientState: ClientState = .notInitialized
     
-    var selectedRecording: Components.Schemas.RecordedItem? = nil
+    var playingItem: PlayerItem? = nil
     
     var channelMap: [Int : Components.Schemas.ChannelItem] = [:]
 }
@@ -28,4 +28,11 @@ enum ClientState {
     case initialized
     case authNeeded
     case setupNeeded
+}
+
+struct PlayerItem: Identifiable {
+    let id = UUID()
+    
+    let title: String
+    let url: URL
 }

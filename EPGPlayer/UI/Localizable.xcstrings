@@ -161,6 +161,12 @@
         }
       }
     },
+    "None" : {
+
+    },
+    "Play" : {
+
+    },
     "Player Settings" : {
       "localizations" : {
         "zh-Hans" : {
@@ -282,6 +288,12 @@
           }
         }
       }
+    },
+    "Speed" : {
+
+    },
+    "Subtitle" : {
+
     }
   },
   "version" : "1.0"

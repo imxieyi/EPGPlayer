@@ -47,6 +47,15 @@ struct RecordingCell: View {
                     .frame(maxWidth: .infinity)
                     .aspectRatio(16/9, contentMode: .fit)
                 }
+            } else {
+                ZStack(alignment: .center) {
+                    Color.clear
+                    Image(systemName: "photo.badge.exclamationmark")
+                        .font(.largeTitle)
+                        .foregroundStyle(.placeholder)
+                }
+                .frame(maxWidth: .infinity)
+                .aspectRatio(16/9, contentMode: .fit)
             }
             Text(verbatim: item.name)
                 .font(.headline)

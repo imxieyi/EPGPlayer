@@ -8,7 +8,6 @@ import SwiftUI
 import WebKit
 
 struct AuthWebView: UIViewRepresentable {
-
     let url: URL
     
     @Binding var isAuthenticaing: Bool
