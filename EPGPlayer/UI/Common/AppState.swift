@@ -19,10 +19,13 @@ final class AppState {
     var clientState: ClientState = .notInitialized
     
     var selectedRecording: Components.Schemas.RecordedItem? = nil
+    
+    var channelMap: [Int : Components.Schemas.ChannelItem] = [:]
 }
 
 enum ClientState {
     case notInitialized
     case initialized
     case authNeeded
+    case setupNeeded
 }

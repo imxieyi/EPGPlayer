@@ -18,69 +18,89 @@ struct SettingsView: View {
     
     var body: some View {
         Form {
-            Section {
-                if userSettings.serverUrl != "" {
-                    Text(verbatim: userSettings.serverUrl)
+            serverSection
+            playerSection
+            resetSection
+        }
+    }
+    
+    var serverSection: some View {
+        Section {
+            if userSettings.serverUrl != "" {
+                Text(verbatim: userSettings.serverUrl)
+                    .foregroundStyle(.gray)
+                if appState.serverVersion != "" {
+                    Text("Server version: \(appState.serverVersion)")
                         .foregroundStyle(.gray)
-                    if appState.serverVersion != "" {
-                        Text("Server version: \(appState.serverVersion)")
-                            .foregroundStyle(.gray)
-                    } else if appState.clientState == .authNeeded {
-                        Button("Login") {
-                            appState.isAuthenticating = true
-                        }
-                    } else {
-                        appState.serverError
-                            .foregroundStyle(.red)
+                } else if appState.clientState == .authNeeded {
+                    Button("Login") {
+                        appState.isAuthenticating = true
                     }
                 } else {
-                    Text("Please set EPGStation URL")
-                        .foregroundStyle(.gray)
+                    appState.serverError
+                        .foregroundStyle(.red)
                 }
-                
-                Button("Set URL") {
-                    showServerUrlAlert.toggle()
-                }
-                .alert("Set EPGStation URL", isPresented: $showServerUrlAlert) {
-                    TextField("EPGStation URL", text: $serverUrl, prompt: Text(verbatim: "https://example.com"))
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .textContentType(.URL)
-                    Button("Done") {
-                        if !serverUrl.hasSuffix("/api") {
-                            serverUrl.append("/api")
-                        }
-                        guard let url = URL(string: serverUrl, encodingInvalidCharacters: false) else {
-                            showServerUrlInvalidAlert.toggle()
-                            return
-                        }
-                        userSettings.serverUrl = url.absoluteString
-                    }
-                    Button("Cancel", role: .cancel) {
-                        serverUrl = userSettings.serverUrl
-                    }
-                }
-                .alert("Invalid URL", isPresented: $showServerUrlInvalidAlert) {
-                    Button("Close", role: .cancel) {
-                    }
-                }
-                .onAppear {
-                    serverUrl = userSettings.serverUrl
-                }
-            } header: {
-                Label("Server Settings", systemImage: "network")
+            } else {
+                Text("Please set EPGStation URL")
+                    .foregroundStyle(.gray)
             }
             
-            Section {
-                Button("Clear cookies", role: .destructive) {
-                    HTTPCookieStorage.shared.removeCookies(since: .distantPast)
-                }
-                Button("Reset settings") {
-                    userSettings.reset()
-                }
-            } header: {
-                Label("Reset", systemImage: "arrow.counterclockwise")
+            Button("Set URL") {
+                showServerUrlAlert.toggle()
             }
+            .alert("Set EPGStation URL", isPresented: $showServerUrlAlert) {
+                TextField("EPGStation URL", text: $serverUrl, prompt: Text(verbatim: "https://example.com"))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.URL)
+                Button("Done") {
+                    if !serverUrl.hasSuffix("/api") {
+                        serverUrl.append("/api")
+                    }
+                    guard let url = URL(string: serverUrl, encodingInvalidCharacters: false) else {
+                        showServerUrlInvalidAlert.toggle()
+                        return
+                    }
+                    userSettings.serverUrl = url.absoluteString
+                }
+                Button("Cancel", role: .cancel) {
+                    serverUrl = userSettings.serverUrl
+                }
+            }
+            .alert("Invalid URL", isPresented: $showServerUrlInvalidAlert) {
+                Button("Close", role: .cancel) {
+                }
+            }
+            .onAppear {
+                serverUrl = userSettings.serverUrl
+            }
+        } header: {
+            Label("Server Settings", systemImage: "network")
+        }
+    }
+    
+    var playerSection: some View {
+        Section {
+            HStack {
+                Toggle(isOn: userSettings.$enableSubtitle) {
+                    Text("Enable subtitles")
+                }
+            }
+        } header: {
+            Label("Player Settings", systemImage: "play.rectangle")
+        }
+    }
+    
+    var resetSection: some View {
+        Section {
+            Button("Clear cookies", role: .destructive) {
+                HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+            }
+            Button("Reset settings") {
+                userSettings.reset()
+            }
+        } header: {
+            Label("Reset", systemImage: "arrow.counterclockwise")
         }
     }
 }

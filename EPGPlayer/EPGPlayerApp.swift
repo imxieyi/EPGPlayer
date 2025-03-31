@@ -41,6 +41,8 @@ struct EPGPlayerApp: App {
                             appState.client = EPGClient(endpoint: url)
                             appState.clientState = .notInitialized
                             refreshServerInfo()
+                        } else {
+                            appState.clientState = .setupNeeded
                         }
                     }
                 }

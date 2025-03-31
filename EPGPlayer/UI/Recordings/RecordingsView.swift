@@ -11,9 +11,12 @@ import OpenAPIURLSession
 
 struct RecordingsView: View {
     @Bindable var appState: AppState
+    @Binding var activeTab: TabSelection
     
     @State var loadingState = LoadingState.loading
+    @State var loadingMoreState = LoadingState.loaded
     
+    @State var totalCount = 0
     @State var recorded: [Components.Schemas.RecordedItem] = []
     
     var body: some View {
@@ -22,35 +25,55 @@ struct RecordingsView: View {
                 ProgressView()
                     .padding()
             } else if case .loaded = loadingState {
-                List(selection: $appState.selectedRecording) {
-                    ForEach(recorded) { item in
-                        Text(item.name)
-                            .tag(item)
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))]) {
+                        ForEach(recorded) { item in
+                            Button {
+                                appState.selectedRecording = item
+                            } label: {
+                                RecordingCell(item: item)
+                            }
+                            .tint(.primary)
+                        }
+                        if case .loaded = loadingMoreState, recorded.count < totalCount {
+                            Spacer()
+                                .onAppear {
+                                    loadMore()
+                                }
+                        }
                     }
-                }
-                .listStyle(.sidebar)
-                .refreshable {
-                    refresh()
+                    .padding(.horizontal)
+                    if recorded.count < totalCount {
+                        if case .loading = loadingMoreState {
+                            ProgressView()
+                        } else if case .error(let message) = loadingMoreState {
+                            ContentUnavailableView {
+                                Label("Error loading content", systemImage: "xmark.circle")
+                            } description: {
+                                message
+                            }
+                        }
+                    }
                 }
             } else if case .error(let message) = loadingState {
                 ContentUnavailableView {
-                    if appState.clientState == .notInitialized {
-                        Label("No EPGStation client", systemImage: "exclamationmark.triangle")
+                    if appState.clientState == .setupNeeded {
+                        Label("Setup needed", systemImage: "exclamationmark.triangle")
                     } else if appState.clientState == .authNeeded {
                         Label("Authentication required", systemImage: "exclamationmark.triangle")
                     } else {
                         Label("Error loading content", systemImage: "xmark.circle")
                     }
                 } description: {
-                    if appState.clientState == .notInitialized {
-                        Text("Please set EPGStation URL")
-                    } else {
-                        message
-                    }
+                    message
                 } actions: {
                     if appState.clientState == .authNeeded {
                         Button("Login") {
                             appState.isAuthenticating = true
+                        }
+                    } else if appState.clientState == .setupNeeded {
+                        Button("Go to settings") {
+                            activeTab = .settings
                         }
                     }
                 }
@@ -58,12 +81,18 @@ struct RecordingsView: View {
                 EmptyView()
             }
         }
-        .onAppear {
-            refresh()
-        }
         .onChange(of: appState.isAuthenticating) { oldValue, newValue in
             if oldValue && !newValue {
                 refresh(waitTime: .seconds(1))
+            }
+        }
+        .onChange(of: appState.clientState) { _, newValue in
+            if newValue == .initialized {
+                refresh()
+            } else if newValue == .authNeeded {
+                loadingState = .error(Text("Redirection detected"))
+            } else if newValue == .setupNeeded {
+                loadingState = .error(Text("Please set EPGStation URL"))
             }
         }
     }
@@ -73,14 +102,18 @@ struct RecordingsView: View {
             loadingState = .error(appState.serverError)
             return
         }
-        loadingState = .loading
+        recorded = []
         Task {
             do {
                 try await Task.sleep(for: waitTime)
                 let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true))
-                recorded = try resp.ok.body.json.records
+                let json = try resp.ok.body.json
+                recorded = json.records
+                totalCount = json.total
                 loadingState = .loaded
+                print("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
+                print("Failed to load recordings: \(error)")
                 if let error = error as? ClientError, error.response?.status.kind == .redirection {
                     appState.clientState = .authNeeded
                     loadingState = .error(Text("Redirection detected"))
@@ -88,6 +121,33 @@ struct RecordingsView: View {
                 }
                 loadingState = .error(Text(verbatim: error.localizedDescription))
             }
+            
+            do {
+                let resp = try await appState.client.api.getChannels()
+                let channels = try resp.ok.body.json
+                appState.channelMap = channels.reduce(into: [Int: Components.Schemas.ChannelItem]()) { map, item in
+                    map[item.id] = item
+                }
+            } catch let error {
+                print("Failed to load channels: \(error)")
+            }
+        }
+    }
+    
+    func loadMore() {
+        Task {
+            do {
+                let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
+                let json = try resp.ok.body.json
+                recorded += json.records
+                totalCount = json.total
+                loadingMoreState = .loaded
+                print("Loaded \(recorded.count) recordings (\(totalCount) total)")
+            } catch let error {
+                print("Failed to load more recordings: \(error)")
+                loadingMoreState = .error(Text(verbatim: error.localizedDescription))
+            }
+            
         }
     }
 }

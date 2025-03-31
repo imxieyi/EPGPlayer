@@ -51,11 +51,25 @@
         }
       }
     },
-    "EPGPlayer" : {
-
+    "Enable subtitles" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用字幕"
+          }
+        }
+      }
     },
     "EPGStation URL" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPGStation地址"
+          }
+        }
+      }
     },
     "Error loading content" : {
       "localizations" : {
@@ -77,12 +91,22 @@
         }
       }
     },
+    "Go to settings" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前往设置"
+          }
+        }
+      }
+    },
     "Invalid URL" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "无效URL"
+            "value" : "无效地址"
           }
         }
       }
@@ -97,12 +121,12 @@
         }
       }
     },
-    "No EPGStation client" : {
+    "Player Settings" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有EPGStation客户端"
+            "value" : "播放器设置"
           }
         }
       }
@@ -112,7 +136,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请设置EPGStation的URL"
+            "value" : "请设置EPGStation的地址"
           }
         }
       }
@@ -184,7 +208,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "设置EPGStation的URL"
+            "value" : "设置EPGStation的地址"
           }
         }
       }
@@ -194,7 +218,7 @@
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "设置URL"
+            "value" : "设置地址"
           }
         }
       }
@@ -205,6 +229,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置"
+          }
+        }
+      }
+    },
+    "Setup needed" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要设置"
           }
         }
       }

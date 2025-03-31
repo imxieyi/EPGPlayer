@@ -11,20 +11,18 @@ import OpenAPIRuntime
 struct MainView: View {
     @Bindable var appState: AppState
     
-    @State private var activeTab: TabSelection = .settings
+    @State private var activeTab: TabSelection = .recordings
     
     var body: some View {
         NavigationStack {
             TabView(selection: $activeTab) {
                 Tab("Recordings", systemImage: "recordingtape", value: .recordings) {
-                    RecordingsView(appState: appState)
+                    RecordingsView(appState: appState, activeTab: $activeTab)
                 }
                 Tab("Settings", systemImage: "gearshape", value: .settings) {
                     SettingsView()
                 }
             }
-            .navigationTitle("EPGPlayer")
-            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(item: $appState.selectedRecording) { item in
                 VStack {
                     VLCPlayerView(videoURL: appState.client.endpoint.appending(path: "videos/\(item.videoFiles?.first?.id ?? 0)"))

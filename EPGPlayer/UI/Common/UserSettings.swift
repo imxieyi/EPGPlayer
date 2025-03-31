@@ -9,7 +9,12 @@ import SwiftUI
 
 @MainActor
 class UserSettings: ObservableObject {
+    
+    // Server Settings
     @AppStorage("server_url") var serverUrl: String = ""
+    
+    // Player Settings
+    @AppStorage("enable_subtitle") var enableSubtitle = true
     
     func reset() {
         serverUrl = ""
