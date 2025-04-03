@@ -57,9 +57,6 @@ struct SettingsView: View {
                     .autocorrectionDisabled()
                     .textContentType(.URL)
                 Button("Done") {
-                    if !serverUrl.hasSuffix("/api") {
-                        serverUrl.append("/api")
-                    }
                     guard let url = URL(string: serverUrl, encodingInvalidCharacters: false) else {
                         showServerUrlInvalidAlert.toggle()
                         return

@@ -14,14 +14,15 @@ struct MainView: View {
     @State private var activeTab: TabSelection = .recordings
     
     var body: some View {
-        NavigationStack {
-            TabView(selection: $activeTab) {
-                Tab("Recordings", systemImage: "recordingtape", value: .recordings) {
-                    RecordingsView(appState: appState, activeTab: $activeTab)
-                }
-                Tab("Settings", systemImage: "gearshape", value: .settings) {
-                    SettingsView()
-                }
+        TabView(selection: $activeTab) {
+            Tab("Recordings", systemImage: "recordingtape", value: .recordings) {
+                RecordingsView(appState: appState, activeTab: $activeTab)
+            }
+            Tab("Downloads", systemImage: "square.and.arrow.down", value: .downloads) {
+                DownloadsView()
+            }
+            Tab("Settings", systemImage: "gearshape", value: .settings) {
+                SettingsView()
             }
         }
         .fullScreenCover(item: $appState.playingItem) { item in
@@ -46,5 +47,6 @@ struct MainView: View {
 
 enum TabSelection: String, Hashable {
     case recordings
+    case downloads
     case settings
 }

@@ -91,6 +91,12 @@
         }
       }
     },
+    "Download" : {
+
+    },
+    "Downloads" : {
+
+    },
     "Enable subtitles" : {
       "localizations" : {
         "zh-Hans" : {
@@ -100,6 +106,9 @@
           }
         }
       }
+    },
+    "EPGPlayer" : {
+
     },
     "EPGStation URL" : {
       "localizations" : {

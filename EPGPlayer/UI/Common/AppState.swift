@@ -31,8 +31,6 @@ enum ClientState {
 }
 
 struct PlayerItem: Identifiable {
-    let id = UUID()
-    
+    let id: Int
     let title: String
-    let url: URL
 }

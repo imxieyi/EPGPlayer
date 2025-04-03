@@ -23,7 +23,7 @@ struct EPGPlayerApp: App {
                         return
                     }
                     if newValue != "", let url = URL(string: newValue) {
-                        appState.client = EPGClient(endpoint: url)
+                        appState.client = EPGClient(endpoint: url.appending(path: "api"))
                         appState.clientState = .notInitialized
                         refreshServerInfo()
                         return
@@ -38,7 +38,7 @@ struct EPGPlayerApp: App {
                 .onAppear {
                     Task {
                         if userSettings.serverUrl != "", let url = URL(string: userSettings.serverUrl) {
-                            appState.client = EPGClient(endpoint: url)
+                            appState.client = EPGClient(endpoint: url.appending(path: "api"))
                             appState.clientState = .notInitialized
                             refreshServerInfo()
                         } else {

@@ -53,9 +53,13 @@ struct RecordingDetailView: View {
                                 }
                                 VStack(alignment: .leading) {
                                     Button {
-                                        appState.playingItem = PlayerItem(title: item.name, url: appState.client.endpoint.appending(path: "videos/\(videoFile.id)"))
+                                        appState.playingItem = PlayerItem(id: videoFile.id, title: item.name)
                                     } label: {
                                         Text("Play")
+                                    }
+                                    Button {
+                                    } label: {
+                                        Text("Download")
                                     }
                                 }
                             }

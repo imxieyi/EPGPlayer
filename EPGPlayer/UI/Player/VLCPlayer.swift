@@ -4,9 +4,13 @@
 //
 //  Created by Yi Xie on 2025/03/25.
 //
+
+import os
 import VLCKit
 import SwiftUI
 import Combine
+
+fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct VLCPlayer: UIViewControllerRepresentable {
     let videoURL: URL
@@ -35,7 +39,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
     }
     
     @MainActor
-    class Coordinator: NSObject, @preconcurrency VLCMediaPlayerDelegate {
+    class Coordinator: NSObject, @preconcurrency VLCMediaPlayerDelegate, @preconcurrency VLCMediaDelegate {
         let parent: VLCPlayer
         weak var playerEvents: PlayerEvents?
         
@@ -45,12 +49,32 @@ struct VLCPlayer: UIViewControllerRepresentable {
         }
         
         func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
+            logger.debug("Player state changed: \(newState.rawValue)")
             parent.playerState = newState
         }
         
         func mediaPlayerTrackAdded(_ trackId: String, with trackType: VLCMedia.TrackType) {
-            print("Track added:", trackId, trackType.rawValue)
+            logger.info("Track added: \(trackId) type \(trackType.rawValue)")
             playerEvents?.getTrackInfo.send(trackId)
+        }
+        
+        func mediaPlayerLengthChanged(_ length: Int64) {
+            print("Length: \(length)")
+        }
+        
+        func mediaPlayerTimeChanged(_ aNotification: Notification) {
+            guard let player = aNotification.object as? VLCMediaPlayer else {
+                print("mediaPlayerTimeChanged: wrong object type")
+                return
+            }
+//            logger.debug("Current time: \(Int(player.time.intValue)) remianing \(Int(player.remainingTime?.intValue ?? 0)) position \(player.position) total \(Double(player.time.intValue) / 1000 / player.position)")
+            DispatchQueue.main.async {
+                self.playerEvents?.updatePosition.send(PlaybackPosition(time: Int(player.time.intValue), position: player.position))
+            }
+        }
+        
+        func mediaDidFinishParsing(_ aMedia: VLCMedia) {
+            logger.info("Finished parsing media, status \(aMedia.parsedStatus.rawValue), length \(aMedia.length)")
         }
     }
 }
@@ -58,7 +82,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
 class VLCPlayerViewController: UIViewController {
     var mediaPlayer = VLCMediaPlayer()
     var videoURL: URL?
-    var delegate: VLCMediaPlayerDelegate? = nil
+    var delegate: VLCPlayer.Coordinator? = nil
     var playerEvents: PlayerEvents?
 
     override func viewDidLoad() {
@@ -72,7 +96,10 @@ class VLCPlayerViewController: UIViewController {
         mediaPlayer.delegate = delegate
 
         if let url = videoURL {
+            logger.debug("Media URL: \(url.absoluteString)")
             let media = VLCMedia(url: url)
+            media?.delegate = delegate
+            media?.parse(options: [.parseForced], timeout: .max)
             mediaPlayer.media = media
             HTTPCookieStorage.shared.cookies?.forEach { cookie in
                 media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
@@ -85,6 +112,8 @@ class VLCPlayerViewController: UIViewController {
     var getTrackInfoListener: AnyCancellable?
     var enableTrackListener: AnyCancellable?
     var setPlaybackRateListener: AnyCancellable?
+    var setPlaybackPositionListener: AnyCancellable?
+    var setPlaybackTimeListener: AnyCancellable?
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -146,6 +175,18 @@ class VLCPlayerViewController: UIViewController {
             }
             player.rate = rate
         })
+        setPlaybackPositionListener = playerEvents.setPlaybackPosition.sink(receiveValue: { [weak self] position in
+            guard let player = self?.mediaPlayer else {
+                return
+            }
+            player.position = position
+        })
+        setPlaybackTimeListener = playerEvents.setPlaybackTime.sink(receiveValue: { [weak self] time in
+            guard let player = self?.mediaPlayer else {
+                return
+            }
+            player.time = VLCTime(int: Int32(time * 1000))
+        })
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -158,6 +199,7 @@ class VLCPlayerViewController: UIViewController {
     func reload() {
         if let url = videoURL {
             let media = VLCMedia(url: url)
+            media?.delegate = delegate
             mediaPlayer.media = media
             mediaPlayer.play()
         } else {

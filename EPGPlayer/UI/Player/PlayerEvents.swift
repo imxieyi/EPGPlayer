@@ -18,6 +18,24 @@ class PlayerEvents: ObservableObject {
     
     let enableTrack = PassthroughSubject<MediaTrack, Never>()
     let setPlaybackRate = PassthroughSubject<Float, Never>()
+    let setPlaybackPosition = PassthroughSubject<Double, Never>()
+    let setPlaybackTime = PassthroughSubject<Double, Never>()
+    
+    let updatePosition = PassthroughSubject<PlaybackPosition, Never>()
+    
+    let userInteracted = PassthroughSubject<Void, Never>()
+    
+    init() {
+        NotificationCenter.default.addObserver(self, selector: #selector(handleUserInteraction), name: .userActivityDetected, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func handleUserInteraction(_ notification: Notification) {
+        userInteracted.send()
+    }
 }
 
 struct MediaTrack: Hashable, Identifiable {
@@ -28,4 +46,9 @@ struct MediaTrack: Hashable, Identifiable {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
+}
+
+struct PlaybackPosition {
+    let time: Int
+    let position: Double
 }

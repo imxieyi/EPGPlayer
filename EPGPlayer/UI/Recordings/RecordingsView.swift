@@ -20,75 +20,74 @@ struct RecordingsView: View {
     @State var recorded: [Components.Schemas.RecordedItem] = []
     
     var body: some View {
-        Group {
-            if case .loading = loadingState {
-                ProgressView()
-                    .padding()
-            } else if case .loaded = loadingState {
-                ScrollView {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 350))]) {
-                        ForEach(recorded) { item in
-                            NavigationLink {
-                                RecordingDetailView(item: item)
-                            } label: {
-                                RecordingCell(item: item)
-                            }
-                            .tint(.primary)
-                            .id(item.id)
-
-//                            Button {
-//                                appState.selectedRecording = item
-//                            } label: {
-//                                RecordingCell(item: item)
-//                            }
-//                            .tint(.primary)
-//                            .id(item.id)
-                        }
-                        if case .loaded = loadingMoreState, recorded.count < totalCount {
-                            Spacer()
-                                .onAppear {
-                                    loadMore()
+        NavigationStack {
+            Group {
+                if case .loading = loadingState {
+                    ProgressView()
+                        .padding()
+                } else if case .loaded = loadingState {
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))]) {
+                            ForEach(recorded) { item in
+                                NavigationLink {
+                                    RecordingDetailView(item: item)
+                                } label: {
+                                    RecordingCell(item: item)
                                 }
+                                .tint(.primary)
+                                .id(item.id)
+                            }
+                            if case .loaded = loadingMoreState, recorded.count < totalCount {
+                                Spacer()
+                                    .onAppear {
+                                        loadMore()
+                                    }
+                            }
                         }
-                    }
-                    .padding(.horizontal)
-                    if recorded.count < totalCount {
-                        if case .loading = loadingMoreState {
-                            ProgressView()
-                        } else if case .error(let message) = loadingMoreState {
-                            ContentUnavailableView {
-                                Label("Error loading content", systemImage: "xmark.circle")
-                            } description: {
-                                message
+                        .padding(.horizontal)
+                        if recorded.count < totalCount {
+                            if case .loading = loadingMoreState {
+                                ProgressView()
+                            } else if case .error(let message) = loadingMoreState {
+                                ContentUnavailableView {
+                                    Label("Error loading content", systemImage: "xmark.circle")
+                                } description: {
+                                    message
+                                }
                             }
                         }
                     }
-                }
-            } else if case .error(let message) = loadingState {
-                ContentUnavailableView {
-                    if appState.clientState == .setupNeeded {
-                        Label("Setup needed", systemImage: "exclamationmark.triangle")
-                    } else if appState.clientState == .authNeeded {
-                        Label("Authentication required", systemImage: "exclamationmark.triangle")
-                    } else {
-                        Label("Error loading content", systemImage: "xmark.circle")
+                    .refreshable {
+                        refresh()
                     }
-                } description: {
-                    message
-                } actions: {
-                    if appState.clientState == .authNeeded {
-                        Button("Login") {
-                            appState.isAuthenticating = true
+                } else if case .error(let message) = loadingState {
+                    ContentUnavailableView {
+                        if appState.clientState == .setupNeeded {
+                            Label("Setup needed", systemImage: "exclamationmark.triangle")
+                        } else if appState.clientState == .authNeeded {
+                            Label("Authentication required", systemImage: "exclamationmark.triangle")
+                        } else {
+                            Label("Error loading content", systemImage: "xmark.circle")
                         }
-                    } else if appState.clientState == .setupNeeded {
-                        Button("Go to settings") {
-                            activeTab = .settings
+                    } description: {
+                        message
+                    } actions: {
+                        if appState.clientState == .authNeeded {
+                            Button("Login") {
+                                appState.isAuthenticating = true
+                            }
+                        } else if appState.clientState == .setupNeeded {
+                            Button("Go to settings") {
+                                activeTab = .settings
+                            }
                         }
                     }
+                } else {
+                    EmptyView()
                 }
-            } else {
-                EmptyView()
             }
+            .navigationTitle("EPGPlayer")
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onChange(of: appState.isAuthenticating) { oldValue, newValue in
             if oldValue && !newValue {

@@ -5,10 +5,14 @@
 //  Created by Yi Xie on 2025/03/31.
 //
 
+import os
 import SwiftUI
 import VLCKit
 
+fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
+
 struct PlayerView: View {
+    @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userSettings: UserSettings
     
@@ -18,9 +22,10 @@ struct PlayerView: View {
     
     @StateObject var playerEvents = PlayerEvents()
     
-    @State var playbackPosition: Double = 0.3
     @State var playbackSpeed: PlaybackSpeed = .x1
     @State var playerState: VLCMediaPlayerState = .opening
+    
+    @State var playerUIOpacity: Double = 1
     
     @State var activeVideoTrack = MediaTrack(id: "none", name: "video", codec: "")
     @State var videoTracks: [MediaTrack] = []
@@ -29,9 +34,11 @@ struct PlayerView: View {
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
     
+    @State var idleTimer: Timer? = nil
+    
     var body: some View {
         ZStack(alignment: .center) {
-            VLCPlayer(videoURL: item.url, playerEvents: playerEvents, playerState: $playerState)
+            VLCPlayer(videoURL: appState.client.endpoint.appending(path: "videos/\(item.id)"), playerEvents: playerEvents, playerState: $playerState)
                 .disabled(true)
             
             if playerState == .opening {
@@ -53,6 +60,7 @@ struct PlayerView: View {
                         }
                         
                         Text(verbatim: item.title)
+                            .lineLimit(1)
                         
                         Spacer()
                         
@@ -100,7 +108,7 @@ struct PlayerView: View {
                                 }
                                 .pickerStyle(.menu)
                             }
-
+                            
                             if !textTracks.isEmpty {
                                 Picker(selection: $activeTextTrack) {
                                     Text("None")
@@ -119,7 +127,12 @@ struct PlayerView: View {
                                 .pickerStyle(.menu)
                             }
                         } label: {
-                            Image(systemName: "ellipsis")
+                            ZStack(alignment: .center) {
+                                Color.clear
+                                Image(systemName: "ellipsis")
+                            }
+                            .frame(width: 20, height: 20, alignment: .center)
+                            .contentShape(Rectangle())
                         }
                         Spacer()
                             .frame(width: paddingSize)
@@ -127,51 +140,40 @@ struct PlayerView: View {
                     Spacer()
                         .frame(height: paddingSize)
                 }
-                .background(.thickMaterial)
+                .background(.black.opacity(0.7))
+                .opacity(playerUIOpacity)
                 
-                Spacer()
-                
-                VStack {
-                    Spacer()
-                        .frame(height: 5)
-                    
-                    Slider(value: $playbackPosition)
-                    Spacer()
-                        .frame(height: 5)
-                    
-                    HStack {
-                        Spacer()
-                        Button {
-                        } label: {
-                            Image(systemName: "10.arrow.trianglehead.counterclockwise")
-                                .font(.system(size: 25))
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.default.speed(2)) {
+                            playerUIOpacity = playerUIOpacity == 0 ? 1 : 0
                         }
-                        Spacer()
-                            .frame(width: 15)
-                        Button {
-                            playerEvents.togglePlay.send()
-                        } label: {
-                            Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .scaledToFit()
-                        }
-                        Spacer()
-                            .frame(width: 15)
-                        Button {
-                        } label: {
-                            Image(systemName: "30.arrow.trianglehead.clockwise")
-                                .font(.system(size: 25))
-                        }
-                        Spacer()
                     }
+                
+                HStack {
+                    Spacer()
+                        .frame(width: paddingSize)
+                    
+                    PlayerProgressControl(item: item, playerState: $playerState, playerEvents: playerEvents)
+                    
+                    Spacer()
+                        .frame(width: paddingSize)
                 }
-                .background(.thickMaterial)
+                .background(.black.opacity(0.7))
+                .opacity(playerUIOpacity)
             }
         }
         .preferredColorScheme(.dark)
         .tint(.primary)
         .background(.black)
+        .onAppear {
+            UIApplication.shared.addUserActivityTracker()
+            updateIdleTimer()
+        }
+        .onDisappear {
+            UIApplication.shared.removeUserActivityTracker()
+        }
         .onChange(of: activeVideoTrack, { _, newValue in
             playerEvents.enableTrack.send(newValue)
         })
@@ -200,6 +202,24 @@ struct PlayerView: View {
             textTracks.append(track)
             if userSettings.enableSubtitle && textTracks.count == 1 {
                 activeTextTrack = track
+            }
+        }
+        .onReceive(playerEvents.userInteracted) {
+            updateIdleTimer()
+        }
+    }
+    
+    func updateIdleTimer() {
+        if let idleTimer {
+            idleTimer.invalidate()
+        }
+        idleTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
+            Task {
+                await MainActor.run {
+                    withAnimation(.default.speed(2)) {
+                        playerUIOpacity = 0
+                    }
+                }
             }
         }
     }
