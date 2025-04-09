@@ -35,22 +35,25 @@ struct PlayerView: View {
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
     
-    // Player stats
-    @State var inputBitrate: Float = 0
-    @State var demuxBitrate: Float = 0
-    
     @State var idleTimer: Timer? = nil
     
     @State var originalOrientation: UIInterfaceOrientation?
     
     var body: some View {
-        ZStack(alignment: .center) {
+        ZStack(alignment: .topLeading) {
             VLCPlayer(videoURL: appState.client.endpoint.appending(path: "videos/\(item.id)"), playerEvents: playerEvents, playerState: $playerState)
                 .ignoresSafeArea(edges: .vertical)
-                .disabled(true)
+                .onTapGesture {
+                    withAnimation(.default.speed(2)) {
+                        playerUIOpacity = playerUIOpacity == 0 ? 1 : 0
+                    }
+                }
             
-            if playerState == .opening {
-                ProgressView()
+            if userSettings.showPlayerStats {
+                PlayerStatsView()
+                    .allowsHitTesting(false)
+                    .offset(x: 10, y: 10)
+                    .environmentObject(playerEvents)
             }
             
             VStack {
@@ -72,7 +75,6 @@ struct PlayerView: View {
                         
                         Spacer()
                         
-                        playerStats
                         playerMenu
                         
                         Spacer()
@@ -84,13 +86,7 @@ struct PlayerView: View {
                 .background(.black.opacity(0.7))
                 .opacity(playerUIOpacity)
                 
-                Color.clear
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        withAnimation(.default.speed(2)) {
-                            playerUIOpacity = playerUIOpacity == 0 ? 1 : 0
-                        }
-                    }
+                Spacer()
                 
                 HStack {
                     Spacer()
@@ -103,6 +99,12 @@ struct PlayerView: View {
                 }
                 .background(.black.opacity(0.7))
                 .opacity(playerUIOpacity)
+                
+                if appState.isOnMac {
+                    Color.black
+                        .frame(height: 10)
+                        .opacity(playerUIOpacity * 0.7)
+                }
             }
         }
         .preferredColorScheme(.dark)
@@ -111,7 +113,7 @@ struct PlayerView: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             UIApplication.shared.addUserActivityTracker()
-            updateIdleTimer()
+            resetIdleTimer()
             originalOrientation = appDelegate.windowScene?.interfaceOrientation
             if userSettings.forceLandscape {
                 appDelegate.orientationLock = .landscape
@@ -159,25 +161,13 @@ struct PlayerView: View {
         }
         .onReceive(playerEvents.addTextTrack) { track in
             textTracks.append(track)
-            if userSettings.enableSubtitle && textTracks.count == 1 {
+            if userSettings.enableSubtitles && textTracks.count == 1 {
                 activeTextTrack = track
             }
         }
-        .onReceive(playerEvents.updateStats) { stats in
-            inputBitrate = stats.inputBitrate
-            demuxBitrate = stats.demuxBitrate
-        }
         .onReceive(playerEvents.userInteracted) {
-            updateIdleTimer()
+            resetIdleTimer()
         }
-    }
-    
-    var playerStats: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Download: \(inputBitrate, specifier: "%.2f") MB/s")
-            Text("Demux: \(demuxBitrate, specifier: "%.2f") MB/s")
-        }
-        .font(.caption2.monospacedDigit())
     }
     
     var playerMenu: some View {
@@ -253,7 +243,7 @@ struct PlayerView: View {
         }
     }
     
-    func updateIdleTimer() {
+    func resetIdleTimer() {
         if let idleTimer {
             idleTimer.invalidate()
         }

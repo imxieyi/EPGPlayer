@@ -96,6 +96,7 @@ class VLCPlayerViewController: UIViewController {
 
         let videoView = UIView(frame: view.bounds)
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        videoView.isUserInteractionEnabled = false
         view.addSubview(videoView)
 
         mediaPlayer.drawable = videoView

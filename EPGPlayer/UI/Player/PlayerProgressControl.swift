@@ -43,6 +43,7 @@ struct PlayerProgressControl: View {
                     }
                 }
             })
+            .disabled(playerState == .opening)
             
             ZStack (alignment: .top) {
                 HStack {
@@ -55,36 +56,41 @@ struct PlayerProgressControl: View {
                 
                 HStack {
                     Spacer()
-                    Button {
-                        seekBy(seconds: -10)
-                    } label: {
-                        Image(systemName: "10.arrow.trianglehead.counterclockwise")
-                            .font(.system(size: 25))
+                    if playerState == .opening {
+                        ProgressView()
+                    } else {
+                        Button {
+                            seekBy(seconds: -10)
+                        } label: {
+                            Image(systemName: "10.arrow.trianglehead.counterclockwise")
+                                .font(.system(size: 25))
+                        }
+                        .disabled(videoLength == nil)
+                        
+                        Spacer()
+                            .frame(width: 15)
+                        
+                    
+                        Button {
+                            playerEvents.togglePlay.send()
+                        } label: {
+                            Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
+                                .resizable()
+                                .frame(width: 30, height: 30)
+                                .scaledToFit()
+                        }
+                        
+                        Spacer()
+                            .frame(width: 15)
+                        
+                        Button {
+                            seekBy(seconds: 30)
+                        } label: {
+                            Image(systemName: "30.arrow.trianglehead.clockwise")
+                                .font(.system(size: 25))
+                        }
+                        .disabled(videoLength == nil)
                     }
-                    .disabled(videoLength == nil)
-                    
-                    Spacer()
-                        .frame(width: 15)
-                    
-                    Button {
-                        playerEvents.togglePlay.send()
-                    } label: {
-                        Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                            .scaledToFit()
-                    }
-                    
-                    Spacer()
-                        .frame(width: 15)
-                    
-                    Button {
-                        seekBy(seconds: 30)
-                    } label: {
-                        Image(systemName: "30.arrow.trianglehead.clockwise")
-                            .font(.system(size: 25))
-                    }
-                    .disabled(videoLength == nil)
                     Spacer()
                 }
                 .disabled(isSeeking)

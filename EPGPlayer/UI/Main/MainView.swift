@@ -9,6 +9,7 @@ import SwiftUI
 import OpenAPIRuntime
 
 struct MainView: View {
+    @EnvironmentObject private var userSettings: UserSettings
     @Bindable var appState: AppState
     
     @State private var activeTab: TabSelection = .recordings
@@ -29,6 +30,7 @@ struct MainView: View {
             if appState.isOnMac {
                 PlayerView(item: item)
                     .environment(appState)
+                    .environmentObject(userSettings)
             } else {
                 PlayerView(item: item)
             }
