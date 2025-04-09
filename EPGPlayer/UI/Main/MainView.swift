@@ -26,7 +26,12 @@ struct MainView: View {
             }
         }
         .fullScreenCover(item: $appState.playingItem) { item in
-            PlayerView(item: item)
+            if appState.isOnMac {
+                PlayerView(item: item)
+                    .environment(appState)
+            } else {
+                PlayerView(item: item)
+            }
         }
         .sheet(isPresented: $appState.isAuthenticating) {
             NavigationView {

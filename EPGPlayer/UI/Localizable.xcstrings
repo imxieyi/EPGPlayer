@@ -71,6 +71,9 @@
         }
       }
     },
+    "Demux: %.2f MB/s" : {
+
+    },
     "Detail" : {
       "localizations" : {
         "zh-Hans" : {
@@ -92,6 +95,9 @@
       }
     },
     "Download" : {
+
+    },
+    "Download: %.2f MB/s" : {
 
     },
     "Downloads" : {
@@ -139,6 +145,9 @@
           }
         }
       }
+    },
+    "Force landscape" : {
+
     },
     "Go to settings" : {
       "localizations" : {

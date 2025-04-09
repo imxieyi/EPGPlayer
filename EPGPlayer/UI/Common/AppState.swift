@@ -21,6 +21,8 @@ final class AppState {
     var playingItem: PlayerItem? = nil
     
     var channelMap: [Int : Components.Schemas.ChannelItem] = [:]
+    
+    let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
 
 enum ClientState {

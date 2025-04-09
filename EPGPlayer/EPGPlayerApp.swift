@@ -10,6 +10,8 @@ import OpenAPIRuntime
 
 @main
 struct EPGPlayerApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     @State private var appState = AppState()
     @StateObject private var userSettings = UserSettings()
     

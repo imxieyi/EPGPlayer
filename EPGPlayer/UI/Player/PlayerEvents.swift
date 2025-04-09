@@ -22,6 +22,7 @@ class PlayerEvents: ObservableObject {
     let setPlaybackTime = PassthroughSubject<Double, Never>()
     
     let updatePosition = PassthroughSubject<PlaybackPosition, Never>()
+    let updateStats = PassthroughSubject<VLCMedia.Stats, Never>()
     
     let userInteracted = PassthroughSubject<Void, Never>()
     

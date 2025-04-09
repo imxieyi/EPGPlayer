@@ -6,7 +6,7 @@
 //
 
 import os
-import VLCKit
+@preconcurrency import VLCKit
 import SwiftUI
 import Combine
 
@@ -67,7 +67,13 @@ struct VLCPlayer: UIViewControllerRepresentable {
                 print("mediaPlayerTimeChanged: wrong object type")
                 return
             }
+            if let stats = player.media?.statistics {
+                DispatchQueue.main.async {
+                    self.playerEvents?.updateStats.send(stats)
+                }
+            }
 //            logger.debug("Current time: \(Int(player.time.intValue)) remianing \(Int(player.remainingTime?.intValue ?? 0)) position \(player.position) total \(Double(player.time.intValue) / 1000 / player.position)")
+//            logger.debug("Subtitle delay: \(player.currentVideoSubTitleDelay)")
             DispatchQueue.main.async {
                 self.playerEvents?.updatePosition.send(PlaybackPosition(time: Int(player.time.intValue), position: player.position))
             }
@@ -191,9 +197,19 @@ class VLCPlayerViewController: UIViewController {
     
     override func viewDidDisappear(_ animated: Bool) {
         mediaPlayer.stop()
+        Task.detached(priority: .background) { [mediaPlayer] in
+            while mediaPlayer.state != .stopped {
+                logger.warning("VLCPlayer not stopped")
+                try await Task.sleep(for: .milliseconds(100))
+            }
+            logger.warning("VLCPlayer stopped")
+        }
         togglePlayListener?.cancel()
         getTrackInfoListener?.cancel()
         enableTrackListener?.cancel()
+        setPlaybackRateListener?.cancel()
+        setPlaybackPositionListener?.cancel()
+        setPlaybackTimeListener?.cancel()
     }
     
     func reload() {

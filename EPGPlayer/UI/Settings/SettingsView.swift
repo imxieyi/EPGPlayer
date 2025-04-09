@@ -81,10 +81,11 @@ struct SettingsView: View {
     
     var playerSection: some View {
         Section {
-            HStack {
-                Toggle(isOn: userSettings.$enableSubtitle) {
-                    Text("Enable subtitles")
-                }
+            Toggle(isOn: userSettings.$enableSubtitle) {
+                Text("Enable subtitles")
+            }
+            Toggle(isOn: userSettings.$forceLandscape) {
+                Text("Force landscape")
             }
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")

@@ -15,6 +15,7 @@ class UserSettings: ObservableObject {
     
     // Player Settings
     @AppStorage("enable_subtitle") var enableSubtitle = true
+    @AppStorage("force_landscape") var forceLandscape = true
     
     func reset() {
         serverUrl = ""

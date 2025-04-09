@@ -27,7 +27,7 @@ struct RecordingsView: View {
                         .padding()
                 } else if case .loaded = loadingState {
                     ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))]) {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
                             ForEach(recorded) { item in
                                 NavigationLink {
                                     RecordingDetailView(item: item)

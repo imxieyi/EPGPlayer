@@ -33,7 +33,7 @@ struct RecordingCell: View {
     let item: Components.Schemas.RecordedItem
     
     var body: some View {
-        VStack(alignment: .leading) {
+        ZStack {
             if let thumbnailId = item.thumbnails?.first {
                 CachedAsyncImage(url: appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)"), urlCache: .imageCache) { image in
                     image
@@ -57,23 +57,37 @@ struct RecordingCell: View {
                 .frame(maxWidth: .infinity)
                 .aspectRatio(16/9, contentMode: .fit)
             }
-            Text(verbatim: item.name)
-                .font(.headline)
-                .lineLimit(1)
-            if let channelId = item.channelId {
-                Text(verbatim: appState.channelMap[channelId]?.name ?? "\(channelId)")
-                    .font(.caption)
-            }
-            Text(verbatim: Date(timeIntervalSince1970: TimeInterval(item.startAt) / 1000).formatted(RecordingCell.startDateFormatStyle)
-                 + " ~ "
-                 + Date(timeIntervalSince1970: TimeInterval(item.endAt) / 1000).formatted(RecordingCell.endDateFormatStyle)
-                 + " (\((item.endAt - item.startAt) / 60000)分)")
-                .font(.caption)
-            if let description = item.description {
-                Text(verbatim: description)
-                    .font(.footnote)
-                    .lineLimit(1)
+            VStack(alignment: .leading) {
+                Spacer()
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(verbatim: item.name)
+                            .font(.headline)
+                            .lineLimit(1)
+                        if let channelId = item.channelId {
+                            Text(verbatim: appState.channelMap[channelId]?.name ?? "\(channelId)")
+                                .font(.caption)
+                        }
+                        Text(verbatim: Date(timeIntervalSince1970: TimeInterval(item.startAt) / 1000).formatted(RecordingCell.startDateFormatStyle)
+                             + " ~ "
+                             + Date(timeIntervalSince1970: TimeInterval(item.endAt) / 1000).formatted(RecordingCell.endDateFormatStyle)
+                             + " (\((item.endAt - item.startAt) / 60000)分)")
+                        .font(.caption)
+                        if let description = item.description {
+                            Text(verbatim: description)
+                                .font(.footnote)
+                                .lineLimit(1)
+                        }
+                    }
+                    .layoutPriority(1)
+                    Spacer()
+                }
+                .padding(.all, 4)
+                .frame(maxWidth: .infinity)
+                .background(.thinMaterial)
             }
         }
+        .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
+        .shadow(radius: 3)
     }
 }
