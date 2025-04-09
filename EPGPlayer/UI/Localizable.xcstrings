@@ -244,6 +244,16 @@
         }
       }
     },
+    "Playing in external display" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在外置显示器播放中"
+          }
+        }
+      }
+    },
     "Please set EPGStation URL" : {
       "localizations" : {
         "zh-Hans" : {

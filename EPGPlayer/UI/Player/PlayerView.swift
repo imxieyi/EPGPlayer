@@ -52,6 +52,21 @@ struct PlayerView: View {
                     }
                 }
             
+            if isExternalPlay {
+                HStack {
+                    Spacer()
+                    VStack(alignment: .center) {
+                        Spacer()
+                        Image(systemName: "play.display")
+                            .font(.system(size: 100))
+                        Text("Playing in external display")
+                        Spacer()
+                    }
+                    Spacer()
+                }
+                .foregroundStyle(.secondary)
+            }
+            
             if userSettings.showPlayerStats {
                 PlayerStatsView()
                     .allowsHitTesting(false)
