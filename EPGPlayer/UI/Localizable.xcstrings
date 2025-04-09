@@ -92,10 +92,24 @@
       }
     },
     "Download" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        }
+      }
     },
     "Downloads" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已下载"
+          }
+        }
+      }
     },
     "Enable subtitles" : {
       "localizations" : {
@@ -108,10 +122,17 @@
       }
     },
     "Encoded" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已编码"
+          }
+        }
+      }
     },
     "EPGPlayer" : {
-
+      "shouldTranslate" : false
     },
     "EPGStation URL" : {
       "localizations" : {
@@ -144,7 +165,14 @@
       }
     },
     "Force landscape" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "强制横屏"
+          }
+        }
+      }
     },
     "Go to settings" : {
       "localizations" : {
@@ -197,7 +225,14 @@
       }
     },
     "Play" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放"
+          }
+        }
+      }
     },
     "Player Settings" : {
       "localizations" : {
@@ -322,7 +357,14 @@
       }
     },
     "Show stats" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "显示统计信息"
+          }
+        }
+      }
     },
     "Speed" : {
       "localizations" : {
@@ -345,7 +387,7 @@
       }
     },
     "TS" : {
-
+      "shouldTranslate" : false
     },
     "Video" : {
       "localizations" : {

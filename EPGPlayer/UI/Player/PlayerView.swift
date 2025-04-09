@@ -25,6 +25,8 @@ struct PlayerView: View {
     
     @State var playbackSpeed: PlaybackSpeed = .x1
     @State var playerState: VLCMediaPlayerState = .opening
+    @State var isPIPSupported = false
+    @State var isPIPEnabled = false
     
     @State var playerUIOpacity: Double = 1
     
@@ -74,6 +76,14 @@ struct PlayerView: View {
                             .lineLimit(1)
                         
                         Spacer()
+                        
+                        if isPIPSupported {
+                            Button {
+                                playerEvents.togglePIPMode.send(!isPIPEnabled)
+                            } label: {
+                                Image(systemName: isPIPEnabled ? "pip.exit" : "pip.enter")
+                            }
+                        }
                         
                         playerMenu
                         
@@ -165,6 +175,12 @@ struct PlayerView: View {
                 activeTextTrack = track
             }
         }
+        .onReceive(playerEvents.setPIPSupported, perform: { supported in
+            isPIPSupported = supported
+        })
+        .onReceive(playerEvents.setPIPEnabled, perform: { enabled in
+            isPIPEnabled = enabled
+        })
         .onReceive(playerEvents.userInteracted) {
             resetIdleTimer()
         }

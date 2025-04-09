@@ -24,6 +24,10 @@ final class PlayerEvents: ObservableObject, Sendable {
     let updatePosition = PassthroughSubject<PlaybackPosition, Never>()
     let updateStats = PassthroughSubject<VLCMedia.Stats, Never>()
     
+    let setPIPSupported = CurrentValueSubject<Bool, Never>(false)
+    let setPIPEnabled = PassthroughSubject<Bool, Never>()
+    let togglePIPMode = PassthroughSubject<Bool, Never>()
+    
     let userInteracted = PassthroughSubject<Void, Never>()
     
     init() {

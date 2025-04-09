@@ -6,6 +6,7 @@
 //
 
 import os
+import AVKit
 @preconcurrency import VLCKit
 import SwiftUI
 import Combine
@@ -89,18 +90,22 @@ struct VLCPlayer: UIViewControllerRepresentable {
 class VLCPlayerViewController: UIViewController {
     var mediaPlayer = VLCMediaPlayer()
     var videoURL: URL?
-    var delegate: VLCPlayer.Coordinator? = nil
+    var delegate: VLCPlayer.Coordinator?
     var playerEvents: PlayerEvents?
+    
+    var videoView: UIView!
+    var pipController: VLCPictureInPictureWindowControlling?
+    var pipPossibleObservation: NSKeyValueObservation?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        let videoView = UIView(frame: view.bounds)
+        
+        videoView = UIView(frame: view.bounds)
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         videoView.isUserInteractionEnabled = false
         view.addSubview(videoView)
-
-        mediaPlayer.drawable = videoView
+        
+        mediaPlayer.drawable = self
         mediaPlayer.delegate = delegate
 
         if let url = videoURL {
@@ -122,6 +127,7 @@ class VLCPlayerViewController: UIViewController {
     var setPlaybackRateListener: AnyCancellable?
     var setPlaybackPositionListener: AnyCancellable?
     var setPlaybackTimeListener: AnyCancellable?
+    var togglePIPModeListener: AnyCancellable?
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -195,10 +201,21 @@ class VLCPlayerViewController: UIViewController {
             }
             player.time = VLCTime(int: Int32(time * 1000))
         })
+        togglePIPModeListener = playerEvents.togglePIPMode.sink(receiveValue: { [weak self] enable in
+            guard let pipController = self?.pipController else {
+                return
+            }
+            if enable {
+                pipController.startPictureInPicture()
+            } else {
+                pipController.stopPictureInPicture()
+            }
+        })
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         mediaPlayer.stop()
+        pipController?.invalidatePlaybackState()
         Task.detached(priority: .background) { [mediaPlayer] in
             while mediaPlayer.state != .stopped {
                 logger.warning("VLCPlayer not stopped")
@@ -212,6 +229,7 @@ class VLCPlayerViewController: UIViewController {
         setPlaybackRateListener?.cancel()
         setPlaybackPositionListener?.cancel()
         setPlaybackTimeListener?.cancel()
+        togglePIPModeListener?.cancel()
     }
     
     func reload() {
@@ -222,6 +240,61 @@ class VLCPlayerViewController: UIViewController {
             mediaPlayer.play()
         } else {
             mediaPlayer.stop()
+        }
+    }
+}
+
+extension VLCPlayerViewController: @preconcurrency VLCDrawable {
+    func addSubview(_ view: UIView!) {
+        self.videoView.addSubview(view)
+    }
+    
+    func bounds() -> CGRect {
+        return videoView.bounds
+    }
+}
+
+extension VLCPlayerViewController: @preconcurrency VLCPictureInPictureMediaControlling, @preconcurrency VLCPictureInPictureDrawable {
+    
+    func play() {
+        mediaPlayer.play()
+    }
+    
+    func pause() {
+        mediaPlayer.pause()
+    }
+    
+    func seek(by offset: Int64) async {
+        mediaPlayer.jump(withOffset: Int32(offset))
+    }
+    
+    func mediaLength() -> Int64 {
+        return Int64(mediaPlayer.media?.length.value?.intValue ?? 0)
+    }
+    
+    func mediaTime() -> Int64 {
+        return Int64(mediaPlayer.time.intValue)
+    }
+    
+    func isMediaSeekable() -> Bool {
+        return mediaPlayer.isSeekable
+    }
+    
+    func isMediaPlaying() -> Bool {
+        return mediaPlayer.isPlaying
+    }
+    
+    func mediaController() -> (any VLCPictureInPictureMediaControlling)! {
+        return self
+    }
+    
+    func pictureInPictureReady() -> (((any VLCPictureInPictureWindowControlling)?) -> Void)! {
+        return { [weak self] pipController in
+            pipController?.stateChangeEventHandler = { [weak self] started in
+                self?.playerEvents?.setPIPEnabled.send(started)
+            }
+            self?.playerEvents?.setPIPSupported.send(true)
+            self?.pipController = pipController
         }
     }
 }
