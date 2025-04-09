@@ -105,7 +105,13 @@ class VLCPlayerViewController: UIViewController {
         videoView.isUserInteractionEnabled = false
         view.addSubview(videoView)
         
-        mediaPlayer.drawable = self
+        if let externalView = ExternalDisplayHelper.instance.delegate?.viewController.view {
+            mediaPlayer.drawable = externalView
+            playerEvents?.setExternalPlay.send(true)
+        } else {
+            mediaPlayer.drawable = self
+            playerEvents?.setExternalPlay.send(false)
+        }
         mediaPlayer.delegate = delegate
 
         if let url = videoURL {
@@ -128,6 +134,7 @@ class VLCPlayerViewController: UIViewController {
     var setPlaybackPositionListener: AnyCancellable?
     var setPlaybackTimeListener: AnyCancellable?
     var togglePIPModeListener: AnyCancellable?
+    var externalDisplayObservation: NSKeyValueObservation?
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -209,6 +216,27 @@ class VLCPlayerViewController: UIViewController {
                 pipController.startPictureInPicture()
             } else {
                 pipController.stopPictureInPicture()
+            }
+        })
+        externalDisplayObservation = ExternalDisplayHelper.instance.observe(\.delegate, options: [.old, .new], changeHandler: { [weak self] helper, change in
+            Task { @MainActor in
+                let newMediaPlayer = VLCMediaPlayer()
+                newMediaPlayer.delegate = self?.delegate
+                if let view = change.newValue??.viewController.view {
+                    newMediaPlayer.drawable = view
+                    self?.playerEvents?.setExternalPlay.send(true)
+                } else {
+                    newMediaPlayer.drawable = self
+                    self?.playerEvents?.setExternalPlay.send(false)
+                }
+                guard let oldPosition = self?.mediaPlayer.position else {
+                    return
+                }
+                newMediaPlayer.media = self?.mediaPlayer.media
+                self?.mediaPlayer.stop()
+                self?.mediaPlayer = newMediaPlayer
+                self?.mediaPlayer.play()
+                self?.mediaPlayer.position = oldPosition
             }
         })
     }

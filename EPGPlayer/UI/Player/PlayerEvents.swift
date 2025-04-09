@@ -28,6 +28,8 @@ final class PlayerEvents: ObservableObject, Sendable {
     let setPIPEnabled = PassthroughSubject<Bool, Never>()
     let togglePIPMode = PassthroughSubject<Bool, Never>()
     
+    let setExternalPlay = PassthroughSubject<Bool, Never>()
+    
     let userInteracted = PassthroughSubject<Void, Never>()
     
     init() {

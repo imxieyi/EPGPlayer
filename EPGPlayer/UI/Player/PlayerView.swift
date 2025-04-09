@@ -27,6 +27,7 @@ struct PlayerView: View {
     @State var playerState: VLCMediaPlayerState = .opening
     @State var isPIPSupported = false
     @State var isPIPEnabled = false
+    @State var isExternalPlay = false
     
     @State var playerUIOpacity: Double = 1
     
@@ -77,7 +78,7 @@ struct PlayerView: View {
                         
                         Spacer()
                         
-                        if isPIPSupported {
+                        if isPIPSupported && !isExternalPlay {
                             Button {
                                 playerEvents.togglePIPMode.send(!isPIPEnabled)
                             } label: {
@@ -180,6 +181,9 @@ struct PlayerView: View {
         })
         .onReceive(playerEvents.setPIPEnabled, perform: { enabled in
             isPIPEnabled = enabled
+        })
+        .onReceive(playerEvents.setExternalPlay, perform: { enabled in
+            isExternalPlay = enabled
         })
         .onReceive(playerEvents.userInteracted) {
             resetIdleTimer()
