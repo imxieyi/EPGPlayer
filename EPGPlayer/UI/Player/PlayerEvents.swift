@@ -5,10 +5,10 @@
 //  Created by Yi Xie on 2025/03/31.
 //
 
-import Combine
+@preconcurrency import Combine
 import VLCKit
 
-class PlayerEvents: ObservableObject {
+final class PlayerEvents: ObservableObject, Sendable {
     let togglePlay = PassthroughSubject<Void, Never>()
     let getTrackInfo = PassthroughSubject<String, Never>()
     

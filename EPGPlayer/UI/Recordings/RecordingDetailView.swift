@@ -40,31 +40,60 @@ struct RecordingDetailView: View {
                     .font(.subheadline)
                 if let videoFiles = item.videoFiles, !videoFiles.isEmpty {
                     Divider()
-                    HStack {
-                        ForEach(videoFiles) { videoFile in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(verbatim: videoFile._type.rawValue)
-                                        .font(.headline)
-                                    Text(verbatim: videoFile.name)
-                                        .font(.subheadline)
-                                    Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
-                                        .font(.subheadline)
-                                }
-                                VStack(alignment: .leading) {
+                    HStack(alignment: .center, spacing: 20) {
+                        Menu {
+                            Section("TS") {
+                                ForEach(videoFiles.filter({ $0._type == .ts })) { videoFile in
                                     Button {
                                         appState.playingItem = PlayerItem(id: videoFile.id, title: item.name)
                                     } label: {
-                                        Text("Play")
-                                    }
-                                    Button {
-                                    } label: {
-                                        Text("Download")
+                                        Text(verbatim: videoFile.name)
+                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
                                     }
                                 }
                             }
-                            if videoFile != videoFiles.last {
-                                Divider()
+                            Section("Encoded") {
+                                ForEach(videoFiles.filter({ $0._type == .encoded })) { videoFile in
+                                    Button {
+                                        appState.playingItem = PlayerItem(id: videoFile.id, title: item.name)
+                                    } label: {
+                                        Text(verbatim: videoFile.name)
+                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(alignment: .center) {
+                                Image(systemName: "play")
+                                    .font(.system(size: 25))
+                                Text("Play")
+                            }
+                        }
+                        
+                        Menu {
+                            Section("TS") {
+                                ForEach(videoFiles.filter({ $0._type == .ts })) { videoFile in
+                                    Button {
+                                    } label: {
+                                        Text(verbatim: videoFile.name)
+                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                                    }
+                                }
+                            }
+                            Section("Encoded") {
+                                ForEach(videoFiles.filter({ $0._type == .encoded })) { videoFile in
+                                    Button {
+                                    } label: {
+                                        Text(verbatim: videoFile.name)
+                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(alignment: .center) {
+                                Image(systemName: "arrow.down")
+                                    .font(.system(size: 25))
+                                Text("Download")
                             }
                         }
                     }

@@ -38,8 +38,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         Coordinator(parent: self, playerEvents: playerEvents)
     }
     
-    @MainActor
-    class Coordinator: NSObject, @preconcurrency VLCMediaPlayerDelegate, @preconcurrency VLCMediaDelegate {
+    class Coordinator: NSObject, VLCMediaPlayerDelegate, VLCMediaDelegate {
         let parent: VLCPlayer
         weak var playerEvents: PlayerEvents?
         
@@ -50,12 +49,16 @@ struct VLCPlayer: UIViewControllerRepresentable {
         
         func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
             logger.debug("Player state changed: \(newState.rawValue)")
-            parent.playerState = newState
+            Task { @MainActor [parent] in
+                parent.playerState = newState
+            }
         }
         
         func mediaPlayerTrackAdded(_ trackId: String, with trackType: VLCMedia.TrackType) {
             logger.info("Track added: \(trackId) type \(trackType.rawValue)")
-            playerEvents?.getTrackInfo.send(trackId)
+            Task { @MainActor [weak playerEvents] in
+                playerEvents?.getTrackInfo.send(trackId)
+            }
         }
         
         func mediaPlayerLengthChanged(_ length: Int64) {
@@ -68,14 +71,12 @@ struct VLCPlayer: UIViewControllerRepresentable {
                 return
             }
             if let stats = player.media?.statistics {
-                DispatchQueue.main.async {
-                    self.playerEvents?.updateStats.send(stats)
+                Task { @MainActor [weak playerEvents] in
+                    playerEvents?.updateStats.send(stats)
                 }
             }
-//            logger.debug("Current time: \(Int(player.time.intValue)) remianing \(Int(player.remainingTime?.intValue ?? 0)) position \(player.position) total \(Double(player.time.intValue) / 1000 / player.position)")
-//            logger.debug("Subtitle delay: \(player.currentVideoSubTitleDelay)")
-            DispatchQueue.main.async {
-                self.playerEvents?.updatePosition.send(PlaybackPosition(time: Int(player.time.intValue), position: player.position))
+            Task { @MainActor [weak playerEvents] in
+                playerEvents?.updatePosition.send(PlaybackPosition(time: Int(player.time.intValue), position: player.position))
             }
         }
         

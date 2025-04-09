@@ -60,5 +60,5 @@ private func swizzleMethod(class aClass: AnyClass?, originalSelector: Selector, 
 }
 
 #if DEBUG
-private var implementationReplacedClassesBySelectors = [String : [String]]()
+nonisolated(unsafe) private var implementationReplacedClassesBySelectors = [String : [String]]()
 #endif

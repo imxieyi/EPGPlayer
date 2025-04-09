@@ -107,6 +107,9 @@
         }
       }
     },
+    "Encoded" : {
+
+    },
     "EPGPlayer" : {
 
     },
@@ -194,14 +197,7 @@
       }
     },
     "Play" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "播放"
-          }
-        }
-      }
+
     },
     "Player Settings" : {
       "localizations" : {
@@ -347,6 +343,9 @@
           }
         }
       }
+    },
+    "TS" : {
+
     },
     "Video" : {
       "localizations" : {
