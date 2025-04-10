@@ -268,6 +268,14 @@ struct PlayerView: View {
                 }
                 .pickerStyle(.menu)
             }
+            
+            if !videoTracks.isEmpty || !audioTracks.isEmpty || !textTracks.isEmpty {
+                Divider()
+            }
+            
+            Toggle(isOn: userSettings.$showPlayerStats) {
+                Text("Show stats")
+            }
         } label: {
             ZStack(alignment: .center) {
                 Color.clear

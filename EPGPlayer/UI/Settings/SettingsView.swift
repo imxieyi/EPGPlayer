@@ -87,9 +87,6 @@ struct SettingsView: View {
             Toggle(isOn: userSettings.$forceLandscape) {
                 Text("Force landscape")
             }
-            Toggle(isOn: userSettings.$showPlayerStats) {
-                Text("Show stats")
-            }
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")
         }
