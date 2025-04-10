@@ -39,6 +39,8 @@ struct PlayerView: View {
     @State var textTracks: [MediaTrack] = []
     
     @State var idleTimer: Timer? = nil
+    @State var uiHelper: UIHelper? = nil
+    @State var lastMouseMoveHandled: TimeInterval = 0
     
     @State var originalOrientation: UIInterfaceOrientation?
     
@@ -148,6 +150,7 @@ struct PlayerView: View {
 //                    logger.error("Unable to force landscape orientation: \(error)")
 //                })
             }
+            setupMouseMoveDetection()
         }
         .onDisappear {
             UIApplication.shared.removeUserActivityTracker()
@@ -160,6 +163,7 @@ struct PlayerView: View {
                 appDelegate.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
 //                appDelegate.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .allButUpsideDown))
             }
+            uiHelper?.stopMonitorMouseMovement()
         }
         .onChange(of: activeVideoTrack, { _, newValue in
             playerEvents.enableTrack.send(newValue)
@@ -274,7 +278,7 @@ struct PlayerView: View {
             }
             
             Toggle(isOn: userSettings.$showPlayerStats) {
-                Text("Show stats")
+                Label("Show stats", systemImage: "waveform.path.ecg")
             }
         } label: {
             ZStack(alignment: .center) {
@@ -283,6 +287,31 @@ struct PlayerView: View {
             }
             .frame(width: 20, height: 20, alignment: .center)
             .contentShape(Rectangle())
+        }
+    }
+    
+    func setupMouseMoveDetection() {
+        if !appState.isOnMac {
+            return
+        }
+        do {
+            let uiHelper = try MacNativeBundle.loadUIHelper()
+            uiHelper.startMonitorMouseMovement {
+                let timestamp = Date().timeIntervalSinceReferenceDate
+                if timestamp - lastMouseMoveHandled < 0.3 {
+                    return
+                }
+                lastMouseMoveHandled = timestamp
+                resetIdleTimer()
+                if playerUIOpacity == 0 {
+                    withAnimation(.default.speed(2)) {
+                        playerUIOpacity = 1
+                    }
+                }
+            }
+            self.uiHelper = uiHelper
+        } catch let error {
+            logger.error("Unable to load Mac UI helper: \(error)")
         }
     }
     

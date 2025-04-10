@@ -10,7 +10,18 @@
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
+		8A7E1C572DA7EA6500CB099F /* MacNativeHelper.bundle in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8A7E1C532DA7EA5600CB099F /* MacNativeHelper.bundle */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8A7E1C5A2DA7EA7300CB099F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A7744502D92C2F30080D3BA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A7E1C522DA7EA5600CB099F;
+			remoteInfo = MacNativeHelper;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		8A7744BA2D92DB920080D3BA /* Embed Frameworks */ = {
@@ -19,6 +30,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				8A7E1C572DA7EA6500CB099F /* MacNativeHelper.bundle in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -27,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		8A7744582D92C2F30080D3BA /* EPGPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EPGPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A7E1C532DA7EA5600CB099F /* MacNativeHelper.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacNativeHelper.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -35,8 +48,17 @@
 			membershipExceptions = (
 				Dependency/.gitkeep,
 				Info.plist,
+				MacNativeHelper/Impl/UIHelperImpl.swift,
 			);
 			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
+		};
+		8A7E1C732DA7EC9F00CB099F /* Exceptions for "EPGPlayer" folder in "MacNativeHelper" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MacNativeHelper/Impl/UIHelperImpl.swift,
+				MacNativeHelper/UIHelper.swift,
+			);
+			target = 8A7E1C522DA7EA5600CB099F /* MacNativeHelper */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -59,6 +81,7 @@
 			exceptions = (
 				8A7668812D993761008E69F7 /* Exceptions for "EPGPlayer" folder in "EPGPlayer" target */,
 				8A7668582D95CE81008E69F7 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
+				8A7E1C732DA7EC9F00CB099F /* Exceptions for "EPGPlayer" folder in "MacNativeHelper" target */,
 			);
 			path = EPGPlayer;
 			sourceTree = "<group>";
@@ -73,6 +96,13 @@
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A7E1C502DA7EA5600CB099F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				8A7744582D92C2F30080D3BA /* EPGPlayer.app */,
+				8A7E1C532DA7EA5600CB099F /* MacNativeHelper.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,6 +149,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				8A7E1C5B2DA7EA7300CB099F /* PBXTargetDependency */,
 				8A7667EB2D946A99008E69F7 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
@@ -127,6 +159,25 @@
 			productName = EPGPlayer;
 			productReference = 8A7744582D92C2F30080D3BA /* EPGPlayer.app */;
 			productType = "com.apple.product-type.application";
+		};
+		8A7E1C522DA7EA5600CB099F /* MacNativeHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8A7E1C542DA7EA5600CB099F /* Build configuration list for PBXNativeTarget "MacNativeHelper" */;
+			buildPhases = (
+				8A7E1C4F2DA7EA5600CB099F /* Sources */,
+				8A7E1C502DA7EA5600CB099F /* Frameworks */,
+				8A7E1C512DA7EA5600CB099F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacNativeHelper;
+			packageProductDependencies = (
+			);
+			productName = MacNativeHelper;
+			productReference = 8A7E1C532DA7EA5600CB099F /* MacNativeHelper.bundle */;
+			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
 
@@ -141,6 +192,9 @@
 					8A7744572D92C2F30080D3BA = {
 						CreatedOnToolsVersion = 16.2;
 						LastSwiftMigration = 1620;
+					};
+					8A7E1C522DA7EA5600CB099F = {
+						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
@@ -167,12 +221,20 @@
 			projectRoot = "";
 			targets = (
 				8A7744572D92C2F30080D3BA /* EPGPlayer */,
+				8A7E1C522DA7EA5600CB099F /* MacNativeHelper */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8A7744562D92C2F30080D3BA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A7E1C512DA7EA5600CB099F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -189,12 +251,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8A7E1C4F2DA7EA5600CB099F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		8A7667EB2D946A99008E69F7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			productRef = 8A7667EA2D946A99008E69F7 /* OpenAPIGenerator */;
+		};
+		8A7E1C5B2DA7EA7300CB099F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8A7E1C522DA7EA5600CB099F /* MacNativeHelper */;
+			targetProxy = 8A7E1C5A2DA7EA7300CB099F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -387,6 +461,54 @@
 			};
 			name = Release;
 		};
+		8A7E1C552DA7EA5600CB099F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 34A2STWT5M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 15.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.MacNativeHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		8A7E1C562DA7EA5600CB099F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 34A2STWT5M;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				MACOSX_DEPLOYMENT_TARGET = 15.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.MacNativeHelper;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -404,6 +526,15 @@
 			buildConfigurations = (
 				8A7744672D92C2F50080D3BA /* Debug */,
 				8A7744682D92C2F50080D3BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8A7E1C542DA7EA5600CB099F /* Build configuration list for PBXNativeTarget "MacNativeHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8A7E1C552DA7EA5600CB099F /* Debug */,
+				8A7E1C562DA7EA5600CB099F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
