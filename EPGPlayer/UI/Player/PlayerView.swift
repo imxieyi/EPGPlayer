@@ -95,7 +95,7 @@ struct PlayerView: View {
                         
                         Spacer()
                         
-                        if isPIPSupported && !isExternalPlay {
+                        if !appState.isOnMac && isPIPSupported && !isExternalPlay {
                             Button {
                                 playerEvents.togglePIPMode.send(!isPIPEnabled)
                             } label: {

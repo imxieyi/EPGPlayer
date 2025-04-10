@@ -39,6 +39,9 @@ struct EPGPlayerApp: App {
                 }
                 .onAppear {
                     Task {
+                        if appState.isOnMac {
+                            userSettings.forceLandscape = false
+                        }
                         if userSettings.serverUrl != "", let url = URL(string: userSettings.serverUrl) {
                             appState.client = EPGClient(endpoint: url.appending(path: "api"))
                             appState.clientState = .notInitialized

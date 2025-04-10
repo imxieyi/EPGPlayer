@@ -84,8 +84,10 @@ struct SettingsView: View {
             Toggle(isOn: userSettings.$enableSubtitles) {
                 Text("Enable subtitles")
             }
-            Toggle(isOn: userSettings.$forceLandscape) {
-                Text("Force landscape")
+            if !appState.isOnMac {
+                Toggle(isOn: userSettings.$forceLandscape) {
+                    Text("Force landscape")
+                }
             }
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")
