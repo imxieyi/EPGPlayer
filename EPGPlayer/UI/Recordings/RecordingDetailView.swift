@@ -13,6 +13,7 @@ struct RecordingDetailView: View {
     @Environment(AppState.self) private var appState
     
     let item: Components.Schemas.RecordedItem
+    let localVideo: LocalVideo?
     
     var body: some View {
         ScrollView(.vertical) {
@@ -77,6 +78,7 @@ struct RecordingDetailView: View {
                             Section("TS") {
                                 ForEach(videoFiles.filter({ $0._type == .ts })) { videoFile in
                                     Button {
+                                        startDownloding(videoFile: videoFile)
                                     } label: {
                                         Text(verbatim: videoFile.name)
                                         Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
@@ -86,6 +88,7 @@ struct RecordingDetailView: View {
                             Section("Encoded") {
                                 ForEach(videoFiles.filter({ $0._type == .encoded })) { videoFile in
                                     Button {
+                                        startDownloding(videoFile: videoFile)
                                     } label: {
                                         Text(verbatim: videoFile.name)
                                         Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
@@ -120,6 +123,27 @@ struct RecordingDetailView: View {
             }
         }
         .navigationTitle("Detail")
+    }
+    
+    fileprivate func startDownloding(videoFile: Components.Schemas.VideoFile) {
+        guard !appState.downloads.contains(where: { $0.item.id == item.id && !$0.videoFiles.filter({ $0.id == videoFile.id }).isEmpty }) else {
+            return
+        }
+        Task(priority: .background) { [appState] in
+            let thumbnailUrl: URL?
+            if let thumbnailId = item.thumbnails?.first {
+                thumbnailUrl = appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)")
+            } else {
+                thumbnailUrl = nil
+            }
+            let oldIndex = appState.downloads.firstIndex(where: { $0.item.id == item.id }) ?? -1
+            if oldIndex == -1 {
+                appState.downloads.append(LocalVideo(thumbnail: thumbnailUrl, item: item, videoFiles: [videoFile]))
+            } else {
+                appState.downloads[oldIndex] = LocalVideo(thumbnail: thumbnailUrl, item: item, videoFiles: appState.downloads[oldIndex].videoFiles + [videoFile])
+            }
+//            DownloadManager.shared.startDownloading(id: videoFile.id, url: appState.client.endpoint.appending(path: "videos/\(videoFile.id)"), extectedBytes: Int64(videoFile.size))
+        }
     }
 }
 

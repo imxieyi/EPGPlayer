@@ -48,6 +48,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, ObservableObject {
         return orientationLock
     }
     
+    var backgroundCompletionHandler: (() -> Void)?
+    
+    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
+        backgroundCompletionHandler = completionHandler
+    }
+    
     override func buildMenu(with builder: UIMenuBuilder) {
         super.buildMenu(with: builder)
         

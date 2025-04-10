@@ -39,6 +39,7 @@ struct EPGPlayerApp: App {
                 }
                 .onAppear {
                     Task {
+                        DownloadManager.shared.initialize()
                         if appState.isOnMac {
                             userSettings.forceLandscape = false
                         }

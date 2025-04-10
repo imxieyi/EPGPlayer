@@ -30,9 +30,9 @@ struct RecordingsView: View {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
                             ForEach(recorded) { item in
                                 NavigationLink {
-                                    RecordingDetailView(item: item)
+                                    RecordingDetailView(item: item, localVideo: nil)
                                 } label: {
-                                    RecordingCell(item: item)
+                                    RecordingCell(item: item, localVideo: nil)
                                 }
                                 .tint(.primary)
                                 .id(item.id)
@@ -122,6 +122,13 @@ struct RecordingsView: View {
                 let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true))
                 let json = try resp.ok.body.json
                 recorded = json.records
+                appState.downloads = recorded.compactMap({ item in
+                    guard let thumbnailId = item.thumbnails?.first, let videoFiles = item.videoFiles else {
+                        return nil
+                    }
+                    let thumbnailUrl = appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)")
+                    return LocalVideo(thumbnail: thumbnailUrl, item: item, videoFiles: videoFiles.filter({ $0.id % 2 == 0 }))
+                })
                 totalCount = json.total
                 loadingState = .loaded
                 print("Loaded \(recorded.count) recordings (\(totalCount) total)")
@@ -160,7 +167,6 @@ struct RecordingsView: View {
                 print("Failed to load more recordings: \(error)")
                 loadingMoreState = .error(Text(verbatim: error.localizedDescription))
             }
-            
         }
     }
 }

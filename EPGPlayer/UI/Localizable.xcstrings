@@ -132,7 +132,7 @@
       }
     },
     "EPGPlayer" : {
-      "shouldTranslate" : false
+
     },
     "EPGStation URL" : {
       "localizations" : {
@@ -213,6 +213,9 @@
           }
         }
       }
+    },
+    "No downloaded video" : {
+
     },
     "None" : {
       "localizations" : {

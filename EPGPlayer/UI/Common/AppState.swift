@@ -22,6 +22,8 @@ final class AppState {
     
     var channelMap: [Int : Components.Schemas.ChannelItem] = [:]
     
+    var downloads: [LocalVideo] = []
+    
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
 
