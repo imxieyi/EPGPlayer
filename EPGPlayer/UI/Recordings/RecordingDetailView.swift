@@ -29,15 +29,18 @@ struct RecordingDetailView: View {
                 }
                 Text(verbatim: item.name)
                     .font(.headline)
+                    .textSelection(.enabled)
                 if let channelId = item.channelId {
                     Text(verbatim: appState.channelMap[channelId]?.name ?? "\(channelId)")
                         .font(.subheadline)
+                        .textSelection(.enabled)
                 }
                 Text(verbatim: Date(timeIntervalSince1970: TimeInterval(item.startAt) / 1000).formatted(RecordingCell.startDateFormatStyle)
                      + " ~ "
                      + Date(timeIntervalSince1970: TimeInterval(item.endAt) / 1000).formatted(RecordingCell.endDateFormatStyle)
                      + " (\((item.endAt - item.startAt) / 60000)分)")
                     .font(.subheadline)
+                    .textSelection(.enabled)
                 if let videoFiles = item.videoFiles, !videoFiles.isEmpty {
                     Divider()
                     HStack(alignment: .center, spacing: 20) {
@@ -102,14 +105,18 @@ struct RecordingDetailView: View {
                 if let description = item.description {
                     Divider()
                     Text(LocalizedStringKey(description))
+                        .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 if let extended = item.extended {
                     Divider()
                     Text(LocalizedStringKey(extended))
+                        .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                Spacer()
+                    .frame(height: 10)
             }
         }
         .navigationTitle("Detail")
