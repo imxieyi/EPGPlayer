@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 import SwiftUI
 
-class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
+class AppDelegate: UIResponder, UIApplicationDelegate, ObservableObject {
     
     private weak var _windowScene: UIWindowScene?
     var windowScene: UIWindowScene? {
@@ -46,5 +46,15 @@ class AppDelegate: NSObject, UIApplicationDelegate, ObservableObject {
     
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window:UIWindow?) -> UIInterfaceOrientationMask {
         return orientationLock
+    }
+    
+    override func buildMenu(with builder: UIMenuBuilder) {
+        super.buildMenu(with: builder)
+        
+        builder.remove(menu: .file)
+        builder.remove(menu: .edit)
+        builder.remove(menu: .view)
+        builder.remove(menu: .format)
+        builder.remove(menu: .help)
     }
 }

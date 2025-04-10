@@ -56,6 +56,11 @@ struct RecordingsView: View {
                                 }
                             }
                         }
+                        
+                        if appState.isOnMac {
+                            Spacer()
+                                .frame(height: 10)
+                        }
                     }
                     .refreshable {
                         refresh()
