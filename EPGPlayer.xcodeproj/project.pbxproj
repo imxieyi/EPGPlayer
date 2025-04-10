@@ -48,15 +48,21 @@
 			membershipExceptions = (
 				Dependency/.gitkeep,
 				Info.plist,
-				MacNativeHelper/Impl/UIHelperImpl.swift,
 			);
 			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
 		};
-		8A7E1C732DA7EC9F00CB099F /* Exceptions for "EPGPlayer" folder in "MacNativeHelper" target */ = {
+		8A7E1CA42DA7F81400CB099F /* Exceptions for "MacNativeHelper" folder in "EPGPlayer" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				MacNativeHelper/Impl/UIHelperImpl.swift,
-				MacNativeHelper/UIHelper.swift,
+				Impl/UIHelperImpl.swift,
+			);
+			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
+		};
+		8A7E1CA52DA7F81400CB099F /* Exceptions for "MacNativeHelper" folder in "MacNativeHelper" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Impl/UIHelperImpl.swift,
+				UIHelper.swift,
 			);
 			target = 8A7E1C522DA7EA5600CB099F /* MacNativeHelper */;
 		};
@@ -81,9 +87,17 @@
 			exceptions = (
 				8A7668812D993761008E69F7 /* Exceptions for "EPGPlayer" folder in "EPGPlayer" target */,
 				8A7668582D95CE81008E69F7 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
-				8A7E1C732DA7EC9F00CB099F /* Exceptions for "EPGPlayer" folder in "MacNativeHelper" target */,
 			);
 			path = EPGPlayer;
+			sourceTree = "<group>";
+		};
+		8A7E1C9F2DA7F81400CB099F /* MacNativeHelper */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8A7E1CA42DA7F81400CB099F /* Exceptions for "MacNativeHelper" folder in "EPGPlayer" target */,
+				8A7E1CA52DA7F81400CB099F /* Exceptions for "MacNativeHelper" folder in "MacNativeHelper" target */,
+			);
+			path = MacNativeHelper;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -120,6 +134,7 @@
 			isa = PBXGroup;
 			children = (
 				8A77445A2D92C2F30080D3BA /* EPGPlayer */,
+				8A7E1C9F2DA7F81400CB099F /* MacNativeHelper */,
 				8A7744592D92C2F30080D3BA /* Products */,
 				440125368C107C8675F64AE8 /* Frameworks */,
 			);
@@ -154,6 +169,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				8A77445A2D92C2F30080D3BA /* EPGPlayer */,
+				8A7E1C9F2DA7F81400CB099F /* MacNativeHelper */,
 			);
 			name = EPGPlayer;
 			productName = EPGPlayer;
