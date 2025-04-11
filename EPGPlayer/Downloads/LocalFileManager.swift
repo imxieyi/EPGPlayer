@@ -13,6 +13,7 @@ class LocalFileManager {
     @MainActor static let shared = LocalFileManager()
     
     private(set) var filesDir: URL!
+    var container: ModelContainer?
     
     private init() {}
     
@@ -32,5 +33,24 @@ class LocalFileManager {
     
     func deleteFile(name: String) throws {
         try FileManager.default.removeItem(at: filesDir.appending(path: name))
+    }
+    
+    @MainActor func deleteOrphans() {
+        guard let container else { return }
+        do {
+            let managedFiles = Set(try container.mainContext.fetch(FetchDescriptor<LocalFile>()).map { $0.id.uuidString })
+            let contents = try FileManager.default.contentsOfDirectory(at: filesDir, includingPropertiesForKeys: nil)
+            for content in contents {
+                let fileName = content.lastPathComponent
+                guard !managedFiles.contains(fileName) else { continue }
+                do {
+                    try FileManager.default.removeItem(at: content)
+                } catch let error {
+                    print("Failed to delete \(content.path()): \(error.localizedDescription)")
+                }
+            }
+        } catch let error {
+            print("Failed to delete orphan files: \(error)")
+        }
     }
 }

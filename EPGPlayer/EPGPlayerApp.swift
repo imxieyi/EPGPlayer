@@ -27,7 +27,8 @@ struct EPGPlayerApp: App {
                     LocalFile.self
                 ], onSetup: { result in
                     do {
-                        _ = try result.get()
+                        let container = try result.get()
+                        LocalFileManager.shared.container = container
                     } catch let error {
                         appState.downloadsSetupError = error
                     }

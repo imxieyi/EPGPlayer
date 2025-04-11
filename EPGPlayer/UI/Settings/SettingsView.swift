@@ -24,6 +24,9 @@ struct SettingsView: View {
             playerSection
             cacheSection
             resetSection
+            #if DEBUG
+            debugSection
+            #endif
         }
     }
     
@@ -122,4 +125,22 @@ struct SettingsView: View {
             Label("Reset", systemImage: "arrow.counterclockwise")
         }
     }
+    
+    #if DEBUG
+    var debugSection: some View {
+        Section {
+            Button {
+                LocalFileManager.shared.deleteOrphans()
+            } label: {
+                Text(verbatim: "Clean orphan files")
+            }
+        } header: {
+            Label {
+                Text(verbatim: "Debug")
+            } icon: {
+                Image(systemName: "ladybug")
+            }
+        }
+    }
+    #endif
 }

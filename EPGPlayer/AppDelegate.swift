@@ -44,6 +44,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate, ObservableObject {
         return true
     }
     
+    func applicationWillTerminate(_ application: UIApplication) {
+        LocalFileManager.shared.deleteOrphans()
+    }
+    
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window:UIWindow?) -> UIInterfaceOrientationMask {
         return orientationLock
     }
