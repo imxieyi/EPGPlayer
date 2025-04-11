@@ -10,6 +10,7 @@ import SwiftData
 
 struct DownloadsView: View {
     @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
     
     @Query(sort: \LocalRecordedItem.startTime, order: .reverse) var recorded: [LocalRecordedItem]

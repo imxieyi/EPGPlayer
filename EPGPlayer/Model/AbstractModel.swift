@@ -25,6 +25,7 @@ protocol VideoItem {
     var type: VideoFileType { get }
     var fileSize: Int64 { get }
     @MainActor var url: URL { get }
+    var canPlay: Bool { get }
 }
 
 enum VideoFileType: Codable {

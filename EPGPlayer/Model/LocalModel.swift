@@ -51,6 +51,8 @@ class LocalVideoItem: VideoItem, Identifiable {
     @Relationship(deleteRule: .cascade) var file: LocalFile
     
     @MainActor var url: URL { file.url }
+    var canPlay: Bool { file.available }
+    
     init(epgId: Int, name: String, type: VideoFileType, fileSize: Int64, duration: Double?, recordedItem: LocalRecordedItem?, file: LocalFile) {
         self.id = UUID()
         self.epgId = epgId

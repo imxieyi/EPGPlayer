@@ -75,4 +75,8 @@ extension Components.Schemas.VideoFile: VideoItem {
         Components.Schemas.RecordedItem.endpoint.appending(path: "videos/\(id)")
     }
     
+    var canPlay: Bool {
+        true
+    }
+    
 }
