@@ -28,6 +28,7 @@ struct PlayerView: View {
     @State var isPIPSupported = false
     @State var isPIPEnabled = false
     @State var isExternalPlay = false
+    @State var isMacFullscreen = false
     
     @State var playerUIOpacity: Double = 1
     
@@ -103,6 +104,14 @@ struct PlayerView: View {
                             }
                         }
                         
+                        if let uiHelper {
+                            Button {
+                                uiHelper.toggleFullscreen()
+                            } label: {
+                                Image(systemName: isMacFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                            }
+                        }
+                        
                         playerMenu
                         
                         Spacer()
@@ -150,7 +159,7 @@ struct PlayerView: View {
 //                    logger.error("Unable to force landscape orientation: \(error)")
 //                })
             }
-            setupMouseMoveDetection()
+            setupMacMonitoring()
         }
         .onDisappear {
             UIApplication.shared.removeUserActivityTracker()
@@ -294,7 +303,7 @@ struct PlayerView: View {
         }
     }
     
-    func setupMouseMoveDetection() {
+    func setupMacMonitoring() {
         if !appState.isOnMac {
             return
         }
@@ -316,6 +325,9 @@ struct PlayerView: View {
                         playerUIOpacity = 1
                     }
                 }
+            }
+            uiHelper.startObservingFullScreenChange { isFullscreen in
+                isMacFullscreen = isFullscreen
             }
             self.uiHelper = uiHelper
         } catch let error {

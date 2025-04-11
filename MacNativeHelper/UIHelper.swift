@@ -16,4 +16,7 @@ protocol UIHelper: NSObjectProtocol {
     func showMouseCursor()
     func hideMouseCursor()
     @MainActor func isMousePointerInWindow() -> Bool
+    @MainActor func startObservingFullScreenChange(_ callback: @escaping @MainActor (Bool) -> Void)
+    func stopObservingFullScreenChange()
+    @MainActor func toggleFullscreen()
 }

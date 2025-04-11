@@ -16,6 +16,7 @@ class UIHelperImpl: NSObject, UIHelper {
     }
     
     private var mouseMonitor: Any?
+    private var fullScreenMonitors: [any NSObjectProtocol] = []
     
     func startMonitorMouseMovement(_ callback: @escaping () -> Void) {
         stopMonitorMouseMovement()
@@ -30,6 +31,7 @@ class UIHelperImpl: NSObject, UIHelper {
             return
         }
         NSEvent.removeMonitor(mouseMonitor)
+        self.mouseMonitor = nil
     }
     
     func showMouseCursor() {
@@ -44,6 +46,29 @@ class UIHelperImpl: NSObject, UIHelper {
         return !NSApplication.shared.windows.filter { window in
             window.frame.contains(NSEvent.mouseLocation)
         }.isEmpty
+    }
+    
+    @MainActor func startObservingFullScreenChange(_ callback: @escaping @MainActor (Bool) -> Void) {
+        fullScreenMonitors.append(NotificationCenter.default.addObserver(forName: NSWindow.willEnterFullScreenNotification, object: NSApplication.shared.windows.first, queue: .main) { notification in
+            DispatchQueue.main.async {
+                callback(true)
+            }
+        })
+        fullScreenMonitors.append(NotificationCenter.default.addObserver(forName: NSWindow.willExitFullScreenNotification, object: NSApplication.shared.windows.first, queue: .main) { notification in
+            DispatchQueue.main.async {
+                callback(false)
+            }
+        })
+        callback(NSApplication.shared.presentationOptions.contains(.fullScreen))
+    }
+    
+    func stopObservingFullScreenChange() {
+        fullScreenMonitors.forEach { NotificationCenter.default.removeObserver($0) }
+        fullScreenMonitors.removeAll()
+    }
+    
+    @MainActor func toggleFullscreen() {
+        NSApplication.shared.windows.first?.toggleFullScreen(self)
     }
 }
 
