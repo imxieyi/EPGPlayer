@@ -163,6 +163,9 @@ struct PlayerView: View {
                 appDelegate.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
 //                appDelegate.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .allButUpsideDown))
             }
+            if let idleTimer {
+                idleTimer.invalidate()
+            }
             uiHelper?.stopMonitorMouseMovement()
             uiHelper?.showMouseCursor()
         }
@@ -324,7 +327,10 @@ struct PlayerView: View {
         if let idleTimer {
             idleTimer.invalidate()
         }
-        idleTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
+        guard userSettings.inactiveTimer != .max else {
+            return
+        }
+        idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(userSettings.inactiveTimer), repeats: false) { _ in
             Task {
                 await MainActor.run {
                     if let uiHelper, uiHelper.isMousePointerInWindow() {

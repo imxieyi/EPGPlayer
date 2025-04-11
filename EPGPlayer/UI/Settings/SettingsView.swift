@@ -87,11 +87,25 @@ struct SettingsView: View {
             Toggle(isOn: userSettings.$enableSubtitles) {
                 Text("Enable subtitles")
             }
+            
             if !appState.isOnMac {
                 Toggle(isOn: userSettings.$forceLandscape) {
                     Text("Force landscape")
                 }
             }
+            
+            Picker(selection: userSettings.$inactiveTimer) {
+                ForEach([3, 5, 10, 15, .max], id: \.self) { time in
+                    if time == .max {
+                        Text("Never")
+                    } else {
+                        Text("\(time)s")
+                    }
+                }
+            } label: {
+                Text("Auto hide UI")
+            }
+            .pickerStyle(.menu)
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")
         }

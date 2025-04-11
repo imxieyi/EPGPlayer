@@ -16,12 +16,14 @@ class UserSettings: ObservableObject {
     // Player Settings
     @AppStorage("enable_subtitles") var enableSubtitles = true
     @AppStorage("force_landscape") var forceLandscape = true
-    @AppStorage("showPlayerStats") var showPlayerStats = false
+    @AppStorage("show_player_stats") var showPlayerStats = false
+    @AppStorage("inactive_timer") var inactiveTimer = 5
     
     func reset() {
         serverUrl = ""
         enableSubtitles = true
         forceLandscape = true
         showPlayerStats = false
+        inactiveTimer = 5
     }
 }

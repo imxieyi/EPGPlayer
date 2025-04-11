@@ -1,6 +1,16 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%llds" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld秒"
+          }
+        }
+      }
+    },
     "Audio" : {
       "localizations" : {
         "zh-Hans" : {
@@ -17,6 +27,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要认证"
+          }
+        }
+      }
+    },
+    "Auto hide UI" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自动隐藏UI"
           }
         }
       }
@@ -72,10 +92,24 @@
       }
     },
     "Database setup failed" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据库初始化失败"
+          }
+        }
+      }
     },
     "Delete" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
+          }
+        }
+      }
     },
     "Detail" : {
       "localizations" : {
@@ -138,7 +172,7 @@
       }
     },
     "EPGPlayer" : {
-
+      "shouldTranslate" : false
     },
     "EPGStation URL" : {
       "localizations" : {
@@ -220,8 +254,25 @@
         }
       }
     },
+    "Never" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "从不"
+          }
+        }
+      }
+    },
     "No downloaded video" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有已下载的视频"
+          }
+        }
+      }
     },
     "None" : {
       "localizations" : {
@@ -406,7 +457,7 @@
       }
     },
     "TS" : {
-
+      "shouldTranslate" : false
     },
     "Video" : {
       "localizations" : {
