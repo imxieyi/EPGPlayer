@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import OpenAPIRuntime
 import CachedAsyncImage
 
 struct RecordingCell: View {
@@ -30,14 +29,13 @@ struct RecordingCell: View {
         calendar: Calendar(identifier: .japanese),
         timeZone: TimeZone(identifier: "Asia/Tokyo")!)
     
-    let item: Components.Schemas.RecordedItem
-    let localVideo: LocalVideo?
+    let item: RecordedItem
     
     var body: some View {
         VStack {
             ZStack {
-                if let thumbnailId = item.thumbnails?.first {
-                    CachedAsyncImage(url: appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)"), urlCache: .imageCache) { image in
+                if let thumbnail = item.thumbnail {
+                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { image in
                         image
                             .resizable()
                             .scaledToFit()
@@ -67,17 +65,17 @@ struct RecordingCell: View {
                                 Text(verbatim: item.name)
                                     .font(.headline)
                                     .lineLimit(1)
-                                if let channelId = item.channelId {
-                                    Text(verbatim: appState.channelMap[channelId]?.name ?? "\(channelId)")
+                                if let channelName = item.channelName {
+                                    Text(verbatim: channelName)
                                         .font(.caption)
                                 }
-                                Text(verbatim: Date(timeIntervalSince1970: TimeInterval(item.startAt) / 1000).formatted(RecordingCell.startDateFormatStyle)
+                                Text(verbatim: item.startTime.formatted(RecordingCell.startDateFormatStyle)
                                      + " ~ "
-                                     + Date(timeIntervalSince1970: TimeInterval(item.endAt) / 1000).formatted(RecordingCell.endDateFormatStyle)
-                                     + " (\((item.endAt - item.startAt) / 60000)分)")
-                                .font(.caption)
-                                if let description = item.description {
-                                    Text(verbatim: description)
+                                     + item.endTime.formatted(RecordingCell.endDateFormatStyle)
+                                     + " (\(Int(item.endTime.timeIntervalSinceReferenceDate - item.startTime.timeIntervalSinceReferenceDate) / 60)分)")
+                                    .font(.caption)
+                                if let shortDesc = item.shortDesc {
+                                    Text(verbatim: shortDesc)
                                         .font(.footnote)
                                         .lineLimit(1)
                                 }
@@ -95,64 +93,6 @@ struct RecordingCell: View {
             .aspectRatio(16/9, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
             .shadow(radius: 3)
-            
-            if let localVideo, !localVideo.videoFiles.isEmpty {
-                VStack(alignment: .videoTypeNameAlignmentGuide) {
-                    ForEach(localVideo.videoFiles) { videoFile in
-                        Button {
-                        } label: {
-                            HStack {
-                                Group {
-                                    if videoFile._type == .ts {
-                                        Text("TS")
-                                    } else if videoFile._type == .encoded {
-                                        Text("Encoded")
-                                    }
-                                }
-                                .alignmentGuide(.videoTypeNameAlignmentGuide) { context in
-                                    context[.leading]
-                                }
-                                Text(verbatim: videoFile.name)
-                                    .alignmentGuide(.videoFileNameAlignmentGuide) { context in
-                                        context[.leading]
-                                    }
-                                Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
-                                    .alignmentGuide(.videoFileSizeAlignmentGuide) { context in
-                                        context[.leading]
-                                    }
-                                Spacer()
-                                Image(systemName: "play")
-                            }
-                        }
-                    }
-                }
-                .padding([.horizontal, .bottom], 4)
-                .frame(maxWidth: .infinity)
-                .background(.thinMaterial)
-            }
         }
     }
-}
-
-fileprivate extension HorizontalAlignment {
-    private struct VideoTypeNameAlignment: AlignmentID {
-        static func defaultValue(in context: ViewDimensions) -> CGFloat {
-            context[HorizontalAlignment.leading]
-        }
-    }
-    static let videoTypeNameAlignmentGuide = HorizontalAlignment(VideoTypeNameAlignment.self)
-    
-    private struct VideoFileNameAlignment: AlignmentID {
-        static func defaultValue(in context: ViewDimensions) -> CGFloat {
-            context[HorizontalAlignment.leading]
-        }
-    }
-    static let videoFileNameAlignmentGuide = HorizontalAlignment(VideoFileNameAlignment.self)
-    
-    private struct VideoFileSizeAlignment: AlignmentID {
-        static func defaultValue(in context: ViewDimensions) -> CGFloat {
-            context[HorizontalAlignment.leading]
-        }
-    }
-    static let videoFileSizeAlignmentGuide = HorizontalAlignment(VideoFileSizeAlignment.self)
 }

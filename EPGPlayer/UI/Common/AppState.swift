@@ -20,9 +20,7 @@ final class AppState {
     
     var playingItem: PlayerItem? = nil
     
-    var channelMap: [Int : Components.Schemas.ChannelItem] = [:]
-    
-    var downloads: [LocalVideo] = []
+    var downloadsSetupError: Error? = nil
     
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
@@ -34,7 +32,14 @@ enum ClientState {
     case setupNeeded
 }
 
-struct PlayerItem: Identifiable {
-    let id: Int
+class PlayerItem: Identifiable {
+    var id: any VideoItem { videoItem }
+
+    let videoItem: any VideoItem
     let title: String
+    
+    init(videoItem: any VideoItem, title: String) {
+        self.videoItem = videoItem
+        self.title = title
+    }
 }

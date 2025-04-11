@@ -30,9 +30,9 @@ struct RecordingsView: View {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
                             ForEach(recorded) { item in
                                 NavigationLink {
-                                    RecordingDetailView(item: item, localVideo: nil)
+                                    RecordingDetailView(item: item)
                                 } label: {
-                                    RecordingCell(item: item, localVideo: nil)
+                                    RecordingCell(item: item)
                                 }
                                 .tint(.primary)
                                 .id(item.id)
@@ -117,18 +117,12 @@ struct RecordingsView: View {
         }
         recorded = []
         Task {
+            let records: [Components.Schemas.RecordedItem]
             do {
                 try await Task.sleep(for: waitTime)
                 let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true))
                 let json = try resp.ok.body.json
-                recorded = json.records
-                appState.downloads = recorded.compactMap({ item in
-                    guard let thumbnailId = item.thumbnails?.first, let videoFiles = item.videoFiles else {
-                        return nil
-                    }
-                    let thumbnailUrl = appState.client.endpoint.appending(path: "thumbnails/\(thumbnailId)")
-                    return LocalVideo(thumbnail: thumbnailUrl, item: item, videoFiles: videoFiles.filter({ $0.id % 2 == 0 }))
-                })
+                records = json.records
                 totalCount = json.total
                 loadingState = .loaded
                 print("Loaded \(recorded.count) recordings (\(totalCount) total)")
@@ -140,17 +134,21 @@ struct RecordingsView: View {
                     return
                 }
                 loadingState = .error(Text(verbatim: error.localizedDescription))
+                records = []
             }
+            Components.Schemas.RecordedItem.endpoint = appState.client.endpoint
             
             do {
                 let resp = try await appState.client.api.getChannels()
                 let channels = try resp.ok.body.json
-                appState.channelMap = channels.reduce(into: [Int: Components.Schemas.ChannelItem]()) { map, item in
+                Components.Schemas.RecordedItem.channelMap = channels.reduce(into: [Int: Components.Schemas.ChannelItem]()) { map, item in
                     map[item.id] = item
                 }
             } catch let error {
                 print("Failed to load channels: \(error)")
             }
+            
+            self.recorded = records
         }
     }
     

@@ -71,6 +71,12 @@
         }
       }
     },
+    "Database setup failed" : {
+
+    },
+    "Delete" : {
+
+    },
     "Detail" : {
       "localizations" : {
         "zh-Hans" : {
@@ -400,7 +406,7 @@
       }
     },
     "TS" : {
-      "shouldTranslate" : false
+
     },
     "Video" : {
       "localizations" : {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import OpenAPIRuntime
 
 @main
@@ -20,6 +21,17 @@ struct EPGPlayerApp: App {
             MainView(appState: appState)
                 .environment(appState)
                 .environmentObject(userSettings)
+                .modelContainer(for: [
+                    LocalRecordedItem.self,
+                    LocalVideoItem.self,
+                    LocalFile.self
+                ], onSetup: { result in
+                    do {
+                        _ = try result.get()
+                    } catch let error {
+                        appState.downloadsSetupError = error
+                    }
+                })
                 .onChange(of: userSettings.serverUrl, { oldValue, newValue in
                     guard oldValue != newValue else {
                         return
@@ -40,6 +52,11 @@ struct EPGPlayerApp: App {
                 .onAppear {
                     Task {
                         DownloadManager.shared.initialize()
+                        do {
+                            try LocalFileManager.shared.initialize()
+                        } catch let error {
+                            appState.downloadsSetupError = error
+                        }
                         if appState.isOnMac {
                             userSettings.forceLandscape = false
                         }
