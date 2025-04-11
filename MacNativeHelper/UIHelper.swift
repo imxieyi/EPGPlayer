@@ -13,4 +13,7 @@ protocol UIHelper: NSObjectProtocol {
     init()
     func startMonitorMouseMovement(_ callback: @escaping () -> Void)
     func stopMonitorMouseMovement()
+    func showMouseCursor()
+    func hideMouseCursor()
+    @MainActor func isMousePointerInWindow() -> Bool
 }

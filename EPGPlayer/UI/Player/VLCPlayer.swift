@@ -197,7 +197,7 @@ class VLCPlayerViewController: UIViewController {
             player.rate = rate
         })
         setPlaybackPositionListener = playerEvents.setPlaybackPosition.sink(receiveValue: { [weak self] position in
-            guard let player = self?.mediaPlayer else {
+            guard position >= 0, let player = self?.mediaPlayer else {
                 return
             }
             player.position = position

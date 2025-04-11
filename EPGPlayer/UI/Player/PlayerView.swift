@@ -76,7 +76,7 @@ struct PlayerView: View {
                     .environmentObject(playerEvents)
             }
             
-            VStack {
+            VStack(spacing: 0) {
                 VStack {
                     Spacer()
                         .frame(height: paddingSize)
@@ -164,6 +164,7 @@ struct PlayerView: View {
 //                appDelegate.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .allButUpsideDown))
             }
             uiHelper?.stopMonitorMouseMovement()
+            uiHelper?.showMouseCursor()
         }
         .onChange(of: activeVideoTrack, { _, newValue in
             playerEvents.enableTrack.send(newValue)
@@ -297,6 +298,10 @@ struct PlayerView: View {
         do {
             let uiHelper = try MacNativeBundle.loadUIHelper()
             uiHelper.startMonitorMouseMovement {
+                uiHelper.showMouseCursor()
+                guard uiHelper.isMousePointerInWindow() else {
+                    return
+                }
                 let timestamp = Date().timeIntervalSinceReferenceDate
                 if timestamp - lastMouseMoveHandled < 0.3 {
                     return
@@ -322,6 +327,9 @@ struct PlayerView: View {
         idleTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { _ in
             Task {
                 await MainActor.run {
+                    if let uiHelper, uiHelper.isMousePointerInWindow() {
+                        uiHelper.hideMouseCursor()
+                    }
                     withAnimation(.default.speed(2)) {
                         playerUIOpacity = 0
                     }

@@ -8,6 +8,7 @@
 
 import Foundation
 import AppKit
+import CoreGraphics
 
 class UIHelperImpl: NSObject, UIHelper {
     
@@ -17,9 +18,7 @@ class UIHelperImpl: NSObject, UIHelper {
     private var mouseMonitor: Any?
     
     func startMonitorMouseMovement(_ callback: @escaping () -> Void) {
-        if let mouseMonitor {
-            stopMonitorMouseMovement()
-        }
+        stopMonitorMouseMovement()
         mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: [.mouseMoved]) { event in
             callback()
             return event
@@ -33,5 +32,18 @@ class UIHelperImpl: NSObject, UIHelper {
         NSEvent.removeMonitor(mouseMonitor)
     }
     
+    func showMouseCursor() {
+        CGDisplayShowCursor(kCGNullDirectDisplay)
+    }
+    
+    func hideMouseCursor() {
+        CGDisplayHideCursor(kCGNullDirectDisplay)
+    }
+    
+    @MainActor func isMousePointerInWindow() -> Bool {
+        return !NSApplication.shared.windows.filter { window in
+            window.frame.contains(NSEvent.mouseLocation)
+        }.isEmpty
+    }
 }
 
