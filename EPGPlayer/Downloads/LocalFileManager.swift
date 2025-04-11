@@ -5,13 +5,16 @@
 //  Created by Yi Xie on 2025/04/11.
 //
 
+import Combine
 import Foundation
+import SwiftData
 
 class LocalFileManager {
     @MainActor static let shared = LocalFileManager()
-    private init() {}
     
     private(set) var filesDir: URL!
+    
+    private init() {}
     
     func initialize() throws {
         let documentDir = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)

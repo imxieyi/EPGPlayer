@@ -13,6 +13,7 @@ struct DownloadsView: View {
     @Environment(AppState.self) private var appState
     
     @Query(sort: \LocalRecordedItem.startTime, order: .reverse) var recorded: [LocalRecordedItem]
+    @Query var localFiles: [LocalFile]
     
     var body: some View {
         NavigationStack {
@@ -39,6 +40,20 @@ struct DownloadsView: View {
                         Spacer()
                             .frame(height: 10)
                     }
+                }
+            }
+        }
+        .onChange(of: localFiles, initial: false) { oldValue, newValue in
+            let newSet = Set(newValue)
+            let deletedFiles = oldValue.filter { !newSet.contains($0) }
+            deletedFiles.forEach { file in
+                guard file.available else {
+                    return
+                }
+                do {
+                    try LocalFileManager.shared.deleteFile(name: file.id.uuidString)
+                } catch let error {
+                    print("Failed to delete local file \(file.id.uuidString): \(error.localizedDescription)")
                 }
             }
         }

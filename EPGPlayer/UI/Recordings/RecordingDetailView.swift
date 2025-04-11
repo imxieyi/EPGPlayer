@@ -113,7 +113,7 @@ struct RecordingDetailView: View {
                                 Section("TS") {
                                     ForEach(item._videoItems.filter({ $0.type == .ts })) { videoItem in
                                         Button {
-                                            deleteDownloaded(item: item, videoItem: videoItem)
+                                            deleteDownloaded(videoItem: videoItem)
                                         } label: {
                                             Text(verbatim: videoItem.name)
                                             Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
@@ -123,7 +123,7 @@ struct RecordingDetailView: View {
                                 Section("Encoded") {
                                     ForEach(item._videoItems.filter({ $0.type == .encoded })) { videoItem in
                                         Button {
-                                            deleteDownloaded(item: item, videoItem: videoItem)
+                                            deleteDownloaded(videoItem: videoItem)
                                         } label: {
                                             Text(verbatim: videoItem.name)
                                             Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
@@ -169,7 +169,7 @@ struct RecordingDetailView: View {
         }
         Task(priority: .background) {
             let localVideoFile = LocalFile()
-            let videoItem = LocalVideoItem(epgId: videoFile.epgId, name: videoFile.name, type: videoFile.type, fileSize: videoFile.fileSize, duration: nil, file: localVideoFile)
+            let videoItem = LocalVideoItem(epgId: videoFile.epgId, name: videoFile.name, type: videoFile.type, fileSize: videoFile.fileSize, duration: nil, recordedItem: nil, file: localVideoFile)
             
             let recordItem: LocalRecordedItem
             if let existingItem {
@@ -198,6 +198,7 @@ struct RecordingDetailView: View {
                 recordItem = LocalRecordedItem(epgId: item.epgId, name: item.name, channelName: item.channelName, startTime: item.startTime, endTime: item.endTime, shortDesc: item.shortDesc, extendedDesc: item.extendedDesc, thumbnail: thumbnailFile, videoItems: [videoItem])
                 context.insert(recordItem)
             }
+            videoItem.recordedItem = recordItem
             
             do {
                 videoItem.duration = try await appState.client.api.getVideosVideoFileIdDuration(Operations.GetVideosVideoFileIdDuration.Input(path: Operations.GetVideosVideoFileIdDuration.Input.Path(videoFileId: videoFile.epgId))).ok.body.json.duration
@@ -223,15 +224,18 @@ struct RecordingDetailView: View {
             } catch let error {
                 print("Failed to download video file: \(error.localizedDescription)")
             }
-            deleteDownloaded(item: recordItem, videoItem: videoItem)
+            deleteDownloaded(videoItem: videoItem)
         }
     }
     
-    fileprivate func deleteDownloaded(item: LocalRecordedItem, videoItem: LocalVideoItem) {
-        item._videoItems.removeAll(where: { $0 == videoItem })
+    fileprivate func deleteDownloaded(videoItem: LocalVideoItem) {
+        guard let recordedItem = videoItem.recordedItem else {
+            fatalError("videoItem.recordedItem should not be nil")
+        }
+        recordedItem._videoItems.removeAll(where: { $0 == videoItem })
         context.delete(videoItem)
-        if item.videoItems.isEmpty {
-            context.delete(item)
+        if recordedItem.videoItems.isEmpty {
+            context.delete(recordedItem)
             dismiss()
         }
     }

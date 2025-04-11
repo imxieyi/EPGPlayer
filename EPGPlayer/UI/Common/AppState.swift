@@ -22,6 +22,8 @@ final class AppState {
     
     var downloadsSetupError: Error? = nil
     
+    var activeDownloads: [LocalVideoItem] = []
+    
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
 
