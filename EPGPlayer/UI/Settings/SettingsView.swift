@@ -19,6 +19,8 @@ struct SettingsView: View {
     
     @State private var currentDownloadsSize: Int? = nil
     @State private var downloadSizeError: String? = nil
+    @State private var currentDatabaseSize: Int? = nil
+    @State private var databaseSizeError: String? = nil
     @State private var currentCacheSize: Int = 0
     
     var body: some View {
@@ -129,6 +131,17 @@ struct SettingsView: View {
                 }
             }
             .foregroundStyle(.gray)
+            
+            Group {
+                if let downloadSizeError {
+                    Text("Database error: \(downloadSizeError)")
+                } else {
+                    Text("Database size: ")
+                    + (currentDatabaseSize == nil ? Text("Calculating") : Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(currentDatabaseSize!))))
+                }
+            }
+            .foregroundStyle(.gray)
+            
             HStack {
                 Text("Image cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
                     .foregroundStyle(.gray)
@@ -150,6 +163,21 @@ struct SettingsView: View {
             currentDownloadsSize = nil
             downloadSizeError = nil
             Task(priority: .background) {
+                if let downloadError = appState.downloadsSetupError {
+                    databaseSizeError = downloadError.localizedDescription
+                } else if let url = context.container.configurations.first?.url {
+                    do {
+                        if let fileSize = try url.resourceValues(forKeys: [.fileAllocatedSizeKey]).fileAllocatedSize {
+                            currentDatabaseSize = fileSize
+                        }
+                    } catch let error {
+                        print("Failed to get database size: \(error.localizedDescription)")
+                        databaseSizeError = error.localizedDescription
+                    }
+                } else {
+                    databaseSizeError = "Unknown database location"
+                }
+                
                 do {
                     self.currentDownloadsSize = try LocalFileManager.shared.totalSize()
                 } catch let error {

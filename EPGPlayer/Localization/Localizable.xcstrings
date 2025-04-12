@@ -94,12 +94,32 @@
         }
       }
     },
+    "Database error: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据库错误："
+          }
+        }
+      }
+    },
     "Database setup failed" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "数据库初始化失败"
+          }
+        }
+      }
+    },
+    "Database size: " : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数据库大小："
           }
         }
       }
