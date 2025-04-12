@@ -165,9 +165,6 @@ struct SettingsView: View {
             Button("Clear cookies", role: .destructive) {
                 HTTPCookieStorage.shared.removeCookies(since: .distantPast)
             }
-            Button("Reset settings") {
-                userSettings.reset()
-            }
         } header: {
             Label("Reset", systemImage: "arrow.counterclockwise")
         }
@@ -185,6 +182,11 @@ struct SettingsView: View {
                 try! context.container.erase()
             } label: {
                 Text(verbatim: "Clear SwiftData")
+            }
+            Button(role: .destructive) {
+                userSettings.reset()
+            } label: {
+                Text(verbatim: "Reset settings")
             }
         } header: {
             Label {

@@ -455,16 +455,6 @@
         }
       }
     },
-    "Reset settings" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "重置设置"
-          }
-        }
-      }
-    },
     "Server Settings" : {
       "extractionState" : "manual",
       "localizations" : {
