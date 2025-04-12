@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 protocol RecordedItem {
     var epgId: Int { get }
@@ -31,4 +32,13 @@ protocol VideoItem {
 enum VideoFileType: Codable {
     case ts
     case encoded
+    
+    var text: Text {
+        switch self {
+        case .ts:
+            return Text("TS")
+        case .encoded:
+            return Text("Encoded")
+        }
+    }
 }

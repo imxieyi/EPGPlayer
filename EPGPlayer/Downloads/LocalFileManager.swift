@@ -35,6 +35,23 @@ class LocalFileManager {
         try FileManager.default.removeItem(at: filesDir.appending(path: name))
     }
     
+    func fixFilesAvailability() {
+        guard let container else { return }
+        Task(priority: .background) { @MainActor [filesDir] in
+            do {
+                let unavailableFiles = try container.mainContext.fetch(FetchDescriptor<LocalFile>(predicate: #Predicate { !$0.available }))
+                for file in unavailableFiles {
+                    if FileManager.default.fileExists(atPath: filesDir!.appending(path: file.id.uuidString).path()) {
+                        file.available = true
+                    }
+                }
+                print("Fixed availablility for \(unavailableFiles.count) files")
+            } catch let error {
+                print("Failed to fix files availablility: \(error)")
+            }
+        }
+    }
+    
     @MainActor func deleteOrphans() {
         guard let container else { return }
         do {

@@ -89,6 +89,7 @@ struct PlayerView: View {
                             dismiss()
                         } label: {
                             Image(systemName: "xmark")
+                                .contentShape(Rectangle())
                         }
                         
                         Text(verbatim: item.title)

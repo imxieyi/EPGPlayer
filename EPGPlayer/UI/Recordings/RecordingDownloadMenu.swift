@@ -101,8 +101,17 @@ public struct RecordingDownloadMenu: View {
             return
         }
         Task(priority: .background) {
+            let center = UNUserNotificationCenter.current()
+            do {
+                let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
+                print("Notification authorization granted: \(granted)")
+            } catch let error {
+                print("Failed to aquire notification authorization: \(error.localizedDescription)")
+            }
+        }
+        Task(priority: .background) {
             let localVideoFile = LocalFile()
-            let videoItem = LocalVideoItem(epgId: videoFile.epgId, name: videoFile.name, type: videoFile.type, fileSize: videoFile.fileSize, duration: nil, recordedItem: nil, file: localVideoFile)
+            let videoItem = LocalVideoItem(epgId: videoFile.epgId, name: videoFile.name, type: videoFile.type, fileSize: videoFile.fileSize, duration: nil, originalUrl: videoFile.url, recordedItem: nil, file: localVideoFile)
             
             let recordItem: LocalRecordedItem
             if let existingItem {
@@ -128,8 +137,9 @@ public struct RecordingDownloadMenu: View {
                         print("Failed to download thumbnail: \(error.localizedDescription)")
                     }
                 }
-                recordItem = LocalRecordedItem(epgId: item.epgId, name: item.name, channelName: item.channelName, startTime: item.startTime, endTime: item.endTime, shortDesc: item.shortDesc, extendedDesc: item.extendedDesc, thumbnail: thumbnailFile, videoItems: [videoItem])
+                recordItem = LocalRecordedItem(epgId: item.epgId, name: item.name, channelName: item.channelName, startTime: item.startTime, endTime: item.endTime, shortDesc: item.shortDesc, extendedDesc: item.extendedDesc, thumbnail: thumbnailFile)
                 context.insert(recordItem)
+                recordItem._videoItems = [videoItem]
             }
             videoItem.recordedItem = recordItem
             
@@ -139,25 +149,12 @@ public struct RecordingDownloadMenu: View {
                 print("Failed to get video length: \(error.localizedDescription)")
             }
             
-            videoFetch: do {
-                let (url, response) = try await URLSession.shared.download(from: videoFile.url, delegate: nil)
-                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-                    print("Failed to download video file: HTTP status code: \(httpResponse.statusCode)")
-                    break videoFetch
-                }
-                if videoItem.duration == nil, let media = VLCMedia(url: url) {
-                    media.parse(options: .parseLocal)
-                    if let length = media.lengthWait(until: .now.advanced(by: 60)).value?.doubleValue {
-                        videoItem.duration = length / 1000
-                    }
-                }
-                try LocalFileManager.shared.moveFile(name: localVideoFile.id.uuidString, url: url)
-                localVideoFile.available = true
+            guard let downloadTask = DownloadManager.shared.startDownloading(url: videoFile.url, expectedBytes: videoFile.fileSize) else {
+                print("Failed to start download")
                 return
-            } catch let error {
-                print("Failed to download video file: \(error.localizedDescription)")
             }
-            deleteDownloaded(videoItem: videoItem)
+            
+            appState.activeDownloads.append(ActiveDownload(url: videoFile.url, videoItem: videoItem, downloadTask: downloadTask))
         }
     }
     

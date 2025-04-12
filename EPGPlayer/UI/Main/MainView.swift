@@ -6,13 +6,17 @@
 //
 
 import SwiftUI
+import SwiftData
 import OpenAPIRuntime
 
 struct MainView: View {
+    @Environment(\.modelContext) private var context
     @EnvironmentObject private var userSettings: UserSettings
     @Bindable var appState: AppState
     
     @State private var activeTab: TabSelection = .recordings
+    
+    @Query var localFiles: [LocalFile]
     
     var body: some View {
         TabView(selection: $activeTab) {
@@ -22,6 +26,7 @@ struct MainView: View {
             Tab("Downloads", systemImage: "square.and.arrow.down", value: .downloads) {
                 DownloadsView()
             }
+            .badge(appState.activeDownloads.count)
             Tab("Settings", systemImage: "gearshape", value: .settings) {
                 SettingsView()
             }

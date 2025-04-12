@@ -25,7 +25,7 @@ class LocalRecordedItem: RecordedItem {
     @MainActor var thumbnail: URL? { _thumbnail?.url }
     var videoItems: [any VideoItem] { _videoItems }
     
-    init(epgId: Int, name: String, channelName: String?, startTime: Date, endTime: Date, shortDesc: String?, extendedDesc: String?, thumbnail: LocalFile?, videoItems: [LocalVideoItem]) {
+    init(epgId: Int, name: String, channelName: String?, startTime: Date, endTime: Date, shortDesc: String?, extendedDesc: String?, thumbnail: LocalFile?) {
         self.id = UUID()
         self.epgId = epgId
         self.name = name
@@ -35,7 +35,7 @@ class LocalRecordedItem: RecordedItem {
         self.shortDesc = shortDesc
         self.extendedDesc = extendedDesc
         self._thumbnail = thumbnail
-        self._videoItems = videoItems
+        self._videoItems = []
     }
 }
 
@@ -47,19 +47,21 @@ class LocalVideoItem: VideoItem, Identifiable {
     var type: VideoFileType
     var fileSize: Int64
     var duration: Double?
+    var originalUrl: URL
     var recordedItem: LocalRecordedItem?
     @Relationship(deleteRule: .cascade) var file: LocalFile
     
     @MainActor var url: URL { file.url }
     var canPlay: Bool { file.available }
     
-    init(epgId: Int, name: String, type: VideoFileType, fileSize: Int64, duration: Double?, recordedItem: LocalRecordedItem?, file: LocalFile) {
+    init(epgId: Int, name: String, type: VideoFileType, fileSize: Int64, duration: Double?, originalUrl: URL, recordedItem: LocalRecordedItem?, file: LocalFile) {
         self.id = UUID()
         self.epgId = epgId
         self.name = name
         self.type = type
         self.fileSize = fileSize
         self.duration = duration
+        self.originalUrl = originalUrl
         self.recordedItem = recordedItem
         self.file = file
     }
@@ -69,6 +71,7 @@ class LocalVideoItem: VideoItem, Identifiable {
 class LocalFile {
     @Attribute(.unique) var id: UUID
     var available: Bool
+    var unavailableReason: String?
     
     @MainActor var url: URL {
         LocalFileManager.shared.filesDir.appending(path: id.uuidString)
@@ -77,5 +80,6 @@ class LocalFile {
     init() {
         self.id = UUID()
         self.available = false
+        self.unavailableReason = nil
     }
 }

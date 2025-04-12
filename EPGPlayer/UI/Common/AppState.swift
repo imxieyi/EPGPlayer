@@ -22,7 +22,8 @@ final class AppState {
     
     var downloadsSetupError: Error? = nil
     
-    var activeDownloads: [Int : LocalVideoItem] = [:]
+    var activeDownloads: [ActiveDownload] = []
+    var backgroundDownloadCount = 0
     
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
@@ -43,5 +44,19 @@ class PlayerItem: Identifiable {
     init(videoItem: any VideoItem, title: String) {
         self.videoItem = videoItem
         self.title = title
+    }
+}
+
+struct ActiveDownload: Identifiable, Equatable {
+    let url: URL
+    let videoItem: LocalVideoItem
+    let downloadTask: URLSessionDownloadTask
+    var progress: Double = 0
+    var errorMessage: String?
+    
+    var id: URL { url }
+    
+    static func ==(a: ActiveDownload, b: ActiveDownload) -> Bool {
+        return a.url == b.url
     }
 }
