@@ -62,7 +62,7 @@ struct RecordingCell: View {
                     ZStack(alignment: .center) {
                         Color.clear
                         Image(systemName: "photo.badge.exclamationmark")
-                            .font(.largeTitle)
+                            .font(.system(size: 100))
                             .foregroundStyle(.placeholder)
                     }
                     .frame(maxWidth: .infinity)

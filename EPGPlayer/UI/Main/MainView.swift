@@ -27,6 +27,7 @@ struct MainView: View {
                 DownloadsView()
             }
             .badge(appState.activeDownloads.count)
+            
             Tab("Settings", systemImage: "gearshape", value: .settings) {
                 SettingsView()
             }

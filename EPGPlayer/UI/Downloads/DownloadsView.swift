@@ -18,6 +18,10 @@ struct DownloadsView: View {
     
     @State var showActiveDownloads = false
     
+    @State var showErrorAlert = false
+    @State var errorAlertRecordItem: LocalRecordedItem? = nil
+    @State var errorAlertVideoItem: LocalVideoItem? = nil
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -29,18 +33,42 @@ struct DownloadsView: View {
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15, alignment: .top)], spacing: 15) {
                             ForEach(recorded) { item in
-                                NavigationLink {
-                                    RecordingDetailView(item: item)
-                                } label: {
-                                    RecordingCell(item: item)
-                                        .tint(.primary)
-                                        .id(item)
-                                }
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        context.delete(item)
+                                VStack(alignment: .center) {
+                                    NavigationLink {
+                                        RecordingDetailView(item: item)
                                     } label: {
-                                        Label("Delete", systemImage: "trash")
+                                        RecordingCell(item: item)
+                                            .tint(.primary)
+                                            .id(item)
+                                    }
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            context.delete(item)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                                    let localFailedItems = item._videoItems.filter({ $0.file.unavailableReason != nil })
+                                    if !localFailedItems.isEmpty {
+                                        GroupBox {
+                                            ForEach(localFailedItems) { failedItem in
+                                                HStack {
+                                                    Text(verbatim: failedItem.name)
+                                                        .bold()
+                                                    Button {
+                                                        errorAlertRecordItem = item
+                                                        errorAlertVideoItem = failedItem
+                                                        showErrorAlert.toggle()
+                                                    } label: {
+                                                        Text(verbatim: failedItem.file.unavailableReason!)
+                                                            .lineLimit(1)
+                                                    }
+                                                }
+                                                .tint(.red)
+                                            }
+                                        } label: {
+                                            Label("Errors", systemImage: "exclamationmark.circle")
+                                        }
                                     }
                                 }
                             }
@@ -72,6 +100,26 @@ struct DownloadsView: View {
                         }
                     }
                 }
+            }
+            .alert("Error", isPresented: $showErrorAlert) {
+                Button(role: .destructive) {
+                    if let errorAlertRecordItem, errorAlertRecordItem.videoItems.count == 1 {
+                        context.delete(errorAlertRecordItem)
+                    } else {
+                        context.delete(errorAlertVideoItem!)
+                    }
+                    appState.activeDownloads.removeAll { $0.videoItem == errorAlertVideoItem! }
+                    errorAlertRecordItem = nil
+                    errorAlertVideoItem = nil
+                } label: {
+                    Text("Delete")
+                }
+                Button(role: .cancel) {
+                } label: {
+                    Text("Close")
+                }
+            } message: {
+                Text(verbatim: errorAlertVideoItem?.file.unavailableReason ?? "Unknown error")
             }
         }
         .sheet(isPresented: $showActiveDownloads, content: {
