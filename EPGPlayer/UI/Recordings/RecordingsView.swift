@@ -116,6 +116,7 @@ struct RecordingsView: View {
             return
         }
         recorded = []
+        loadingState = .loading
         Task {
             let records: [Components.Schemas.RecordedItem]
             do {
@@ -124,6 +125,7 @@ struct RecordingsView: View {
                 let json = try resp.ok.body.json
                 records = json.records
                 totalCount = json.total
+                self.recorded = records
                 loadingState = .loaded
                 print("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
@@ -147,14 +149,23 @@ struct RecordingsView: View {
             } catch let error {
                 print("Failed to load channels: \(error)")
             }
-            
-            self.recorded = records
         }
     }
     
     func loadMore() {
+        if case .loading = loadingMoreState {
+            return
+        }
+        loadingMoreState = .loading
         Task {
+            while case .loading = loadingState {
+                try await Task.sleep(for: .milliseconds(100))
+            }
+            if case .error(_) = loadingState {
+                return
+            }
             do {
+                print("Loading more with offset \(recorded.count)")
                 let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
                 let json = try resp.ok.body.json
                 recorded += json.records
