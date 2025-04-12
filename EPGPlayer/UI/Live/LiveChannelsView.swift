@@ -19,65 +19,69 @@ struct LiveChannelsView: View {
     @State var channels: [Components.Schemas.ChannelItem] = []
     
     var body: some View {
-        Group {
-            if case .loading = loadingState {
-                ProgressView()
-                    .padding()
-            } else if case .loaded = loadingState {
-                List(channels) { channel in
-                    Button {
-                        appState.playingItem = PlayerItem(videoItem: channel, title: channel.halfWidthName)
-                    } label: {
-                        HStack {
-                            CachedAsyncImage(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), urlCache: .imageCache) { phase in
-                                if let image = phase.image {
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                } else if phase.error != nil {
-                                    Image(systemName: "photo.badge.exclamationmark")
-                                        .foregroundStyle(.placeholder)
-                                } else {
-                                    ProgressView()
+        NavigationStack {
+            Group {
+                if case .loading = loadingState {
+                    ProgressView()
+                        .padding()
+                } else if case .loaded = loadingState {
+                    List(channels) { channel in
+                        Button {
+                            appState.playingItem = PlayerItem(videoItem: channel, title: channel.halfWidthName)
+                        } label: {
+                            HStack {
+                                CachedAsyncImage(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), urlCache: .imageCache) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                    } else if phase.error != nil {
+                                        Image(systemName: "photo.badge.exclamationmark")
+                                            .foregroundStyle(.placeholder)
+                                    } else {
+                                        ProgressView()
+                                    }
                                 }
+                                .frame(height: 20)
+                                Text(verbatim: channel.halfWidthName)
+                                Spacer()
+                                Text(verbatim: channel.channelType.rawValue)
+                                    .foregroundStyle(.secondary)
                             }
-                            .frame(height: 20)
-                            Text(verbatim: channel.halfWidthName)
-                            Spacer()
-                            Text(verbatim: channel.channelType.rawValue)
-                                .foregroundStyle(.secondary)
+                        }
+                        .tint(.primary)
+                    }
+                    .refreshable {
+                        refresh()
+                    }
+                } else if case .error(let message) = loadingState {
+                    ContentUnavailableView {
+                        if appState.clientState == .setupNeeded {
+                            Label("Setup needed", systemImage: "exclamationmark.triangle")
+                        } else if appState.clientState == .authNeeded {
+                            Label("Authentication required", systemImage: "exclamationmark.triangle")
+                        } else {
+                            Label("Error loading content", systemImage: "xmark.circle")
+                        }
+                    } description: {
+                        message
+                    } actions: {
+                        if appState.clientState == .authNeeded {
+                            Button("Login") {
+                                appState.isAuthenticating = true
+                            }
+                        } else if appState.clientState == .setupNeeded {
+                            Button("Go to settings") {
+                                activeTab = .settings
+                            }
                         }
                     }
-                    .tint(.primary)
+                } else {
+                    EmptyView()
                 }
-                .refreshable {
-                    refresh()
-                }
-            } else if case .error(let message) = loadingState {
-                ContentUnavailableView {
-                    if appState.clientState == .setupNeeded {
-                        Label("Setup needed", systemImage: "exclamationmark.triangle")
-                    } else if appState.clientState == .authNeeded {
-                        Label("Authentication required", systemImage: "exclamationmark.triangle")
-                    } else {
-                        Label("Error loading content", systemImage: "xmark.circle")
-                    }
-                } description: {
-                    message
-                } actions: {
-                    if appState.clientState == .authNeeded {
-                        Button("Login") {
-                            appState.isAuthenticating = true
-                        }
-                    } else if appState.clientState == .setupNeeded {
-                        Button("Go to settings") {
-                            activeTab = .settings
-                        }
-                    }
-                }
-            } else {
-                EmptyView()
             }
+            .navigationTitle("Live")
+            .navigationBarTitleDisplayMode(.inline)
         }
         .onChange(of: appState.isAuthenticating) { oldValue, newValue in
             if oldValue && !newValue {

@@ -19,140 +19,154 @@ struct EPGPlayerApp: App {
     @StateObject private var userSettings = UserSettings()
     @State private var container: ModelContainer?
     
+    let modelContainer: ModelContainer?
+    let modelSetupError: Error?
+    
+    init() {
+        do {
+            modelContainer = try ModelContainer(for: Schema(versionedSchema: LocalSchemaV2.self), migrationPlan: LocalSchemaMigrationPlan.self)
+            modelSetupError = nil
+        } catch let error {
+            modelContainer = nil
+            modelSetupError = error
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
-            MainView(appState: appState)
-                .environment(appState)
-                .environmentObject(userSettings)
-                .modelContainer(for: [
-                    LocalRecordedItem.self,
-                    LocalVideoItem.self,
-                    LocalFile.self
-                ], onSetup: { result in
+            Group {
+                if let modelContainer {
+                    MainView(appState: appState)
+                        .modelContainer(modelContainer)
+                        .onAppear {
+                            DownloadManager.shared.container = modelContainer
+                            LocalFileManager.shared.container = modelContainer
+                            self.container = modelContainer
+                        }
+                } else if let modelSetupError {
+                    MainView(appState: appState)
+                        .onAppear {
+                            appState.downloadsSetupError = modelSetupError
+                        }
+                }
+            }
+            .environment(appState)
+            .environmentObject(userSettings)
+            .onChange(of: userSettings.serverUrl, { oldValue, newValue in
+                guard oldValue != newValue else {
+                    return
+                }
+                if newValue != "", let url = URL(string: newValue) {
+                    appState.client = EPGClient(endpoint: url.appending(path: "api"))
+                    appState.clientState = .notInitialized
+                    refreshServerInfo()
+                    return
+                }
+                appState.client = EPGClient()
+            })
+            .onChange(of: appState.isAuthenticating) { oldValue, newValue in
+                if oldValue && !newValue {
+                    refreshServerInfo(waitTime: .seconds(1))
+                }
+            }
+            .onChange(of: appState.activeDownloads, initial: true, { oldValue, newValue in
+                let count = newValue.count
+                Task(priority: .background) {
                     do {
-                        let container = try result.get()
-                        DownloadManager.shared.container = container
-                        LocalFileManager.shared.container = container
-                        self.container = container
+                        try await UNUserNotificationCenter.current().setBadgeCount(count)
                     } catch let error {
-                        appState.downloadsSetupError = error
-                    }
-                })
-                .onChange(of: userSettings.serverUrl, { oldValue, newValue in
-                    guard oldValue != newValue else {
-                        return
-                    }
-                    if newValue != "", let url = URL(string: newValue) {
-                        appState.client = EPGClient(endpoint: url.appending(path: "api"))
-                        appState.clientState = .notInitialized
-                        refreshServerInfo()
-                        return
-                    }
-                    appState.client = EPGClient()
-                })
-                .onChange(of: appState.isAuthenticating) { oldValue, newValue in
-                    if oldValue && !newValue {
-                        refreshServerInfo(waitTime: .seconds(1))
+                        print("Failed to set badge count: \(error.localizedDescription)")
                     }
                 }
-                .onChange(of: appState.activeDownloads, initial: true, { oldValue, newValue in
-                    let count = newValue.count
-                    Task(priority: .background) {
+            })
+            .onChange(of: scenePhase, { oldValue, newValue in
+                switch newValue {
+                case .active:
+                    LocalFileManager.shared.fixFilesAvailability()
+                case .background, .inactive:
+                    break
+                @unknown default:
+                    print("Unknown scene phase: \(newValue)")
+                    break
+                }
+            })
+            .onReceive(DownloadManager.shared.events.downloadSuccess, perform: { url in
+                appState.activeDownloads.removeAll(where: { $0.url == url })
+                if appState.activeDownloads.isEmpty {
+                    LocalFileManager.shared.fixFilesAvailability()
+                    Task {
+                        let center = UNUserNotificationCenter.current()
+                        let settings = await center.notificationSettings()
+                        guard settings.authorizationStatus == .authorized else {
+                            return
+                        }
+                        let content = UNMutableNotificationContent()
+                        content.title = String(localized: "Download completed")
+                        content.body = String(localized: "Background downloads have been completed.")
+                        content.sound = .default
+                        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
                         do {
-                            try await UNUserNotificationCenter.current().setBadgeCount(count)
+                            try await UNUserNotificationCenter.current().add(request)
                         } catch let error {
-                            print("Failed to set badge count: \(error.localizedDescription)")
+                            print("Failed to schedule notification: \(error.localizedDescription)")
                         }
-                    }
-                })
-                .onChange(of: scenePhase, { oldValue, newValue in
-                    switch newValue {
-                    case .active:
-                        LocalFileManager.shared.fixFilesAvailability()
-                    case .background, .inactive:
-                        break
-                    @unknown default:
-                        print("Unknown scene phase: \(newValue)")
-                        break
-                    }
-                })
-                .onReceive(DownloadManager.shared.events.downloadSuccess, perform: { url in
-                    appState.activeDownloads.removeAll(where: { $0.url == url })
-                    if appState.activeDownloads.isEmpty {
-                        LocalFileManager.shared.fixFilesAvailability()
-                        Task {
-                            let center = UNUserNotificationCenter.current()
-                            let settings = await center.notificationSettings()
-                            guard settings.authorizationStatus == .authorized else {
-                                return
-                            }
-                            let content = UNMutableNotificationContent()
-                            content.title = String(localized: "Download completed")
-                            content.body = String(localized: "Background downloads have been completed.")
-                            content.sound = .default
-                            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-                            do {
-                                try await UNUserNotificationCenter.current().add(request)
-                            } catch let error {
-                                print("Failed to schedule notification: \(error.localizedDescription)")
-                            }
-                        }
-                    }
-                })
-                .onReceive(DownloadManager.shared.events.downloadFailure, perform: { (url: URL, task: URLSessionDownloadTask, error: String) in
-                    if let index = appState.activeDownloads.firstIndex(where: { $0.url == url }) {
-                        appState.activeDownloads[index].errorMessage = error
-                        appState.activeDownloads[index].videoItem.file.unavailableReason = error
-                        return
-                    }
-                    let insertDownload = { (container: ModelContainer) in
-                        do {
-                            guard let videoItem = try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first else {
-                                print("Local video item does not exist for: \(url)")
-                                return
-                            }
-                            appState.activeDownloads.append(ActiveDownload(url: url, videoItem: videoItem, downloadTask: task, progress: task.progress.fractionCompleted, errorMessage: error))
-                            videoItem.file.unavailableReason = error
-                        } catch let error {
-                            print("Failed to fetch video item: \(error.localizedDescription)")
-                        }
-                    }
-                    if let container {
-                        insertDownload(container)
-                    } else {
-                        Task {
-                            while container == nil {
-                                try await Task.sleep(for: .seconds(1))
-                            }
-                            insertDownload(container!)
-                        }
-                    }
-                })
-                .onAppear {
-                    DownloadManager.shared.initialize()
-                    Task(priority: .background) {
-                        do {
-                            appState.activeDownloads += try await DownloadManager.shared.getActiveDownloads()
-                        } catch let error {
-                            print("Failed to load active downloads: \(error)")
-                        }
-                    }
-                    do {
-                        try LocalFileManager.shared.initialize()
-                    } catch let error {
-                        appState.downloadsSetupError = error
-                    }
-                    if appState.isOnMac {
-                        userSettings.forceLandscape = false
-                    }
-                    if userSettings.serverUrl != "", let url = URL(string: userSettings.serverUrl) {
-                        appState.client = EPGClient(endpoint: url.appending(path: "api"))
-                        appState.clientState = .notInitialized
-                        refreshServerInfo()
-                    } else {
-                        appState.clientState = .setupNeeded
                     }
                 }
+            })
+            .onReceive(DownloadManager.shared.events.downloadFailure, perform: { (url: URL, task: URLSessionDownloadTask, error: String) in
+                if let index = appState.activeDownloads.firstIndex(where: { $0.url == url }) {
+                    appState.activeDownloads[index].errorMessage = error
+                    appState.activeDownloads[index].videoItem.file.unavailableReason = error
+                    return
+                }
+                let insertDownload = { (container: ModelContainer) in
+                    do {
+                        guard let videoItem = try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first else {
+                            print("Local video item does not exist for: \(url)")
+                            return
+                        }
+                        appState.activeDownloads.append(ActiveDownload(url: url, videoItem: videoItem, downloadTask: task, progress: task.progress.fractionCompleted, errorMessage: error))
+                        videoItem.file.unavailableReason = error
+                    } catch let error {
+                        print("Failed to fetch video item: \(error.localizedDescription)")
+                    }
+                }
+                if let container {
+                    insertDownload(container)
+                } else {
+                    Task {
+                        while container == nil {
+                            try await Task.sleep(for: .seconds(1))
+                        }
+                        insertDownload(container!)
+                    }
+                }
+            })
+            .onAppear {
+                DownloadManager.shared.initialize()
+                Task(priority: .background) {
+                    do {
+                        appState.activeDownloads += try await DownloadManager.shared.getActiveDownloads()
+                    } catch let error {
+                        print("Failed to load active downloads: \(error)")
+                    }
+                }
+                do {
+                    try LocalFileManager.shared.initialize()
+                } catch let error {
+                    appState.downloadsSetupError = error
+                }
+                if appState.isOnMac {
+                    userSettings.forceLandscape = false
+                }
+                if userSettings.serverUrl != "", let url = URL(string: userSettings.serverUrl) {
+                    appState.client = EPGClient(endpoint: url.appending(path: "api"))
+                    appState.clientState = .notInitialized
+                    refreshServerInfo()
+                } else {
+                    appState.clientState = .setupNeeded
+                }
+            }
         }
     }
     

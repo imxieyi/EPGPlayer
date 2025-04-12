@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.modelContext) private var context
     @Environment(AppState.self) private var appState
     @EnvironmentObject private var userSettings: UserSettings
     @EnvironmentObject private var client: EPGClient
@@ -31,7 +32,7 @@ struct SettingsView: View {
                 debugSection
                 #endif
             }
-            .navigationTitle("EPGPlayer")
+            .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -179,6 +180,11 @@ struct SettingsView: View {
                 LocalFileManager.shared.deleteOrphans()
             } label: {
                 Text(verbatim: "Clean orphan files")
+            }
+            Button(role: .destructive) {
+                try! context.container.erase()
+            } label: {
+                Text(verbatim: "Clear SwiftData")
             }
         } header: {
             Label {

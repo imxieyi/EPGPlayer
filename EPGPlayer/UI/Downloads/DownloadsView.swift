@@ -83,7 +83,7 @@ struct DownloadsView: View {
                     }
                 }
             }
-            .navigationTitle("EPGPlayer")
+            .navigationTitle("Downloads")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

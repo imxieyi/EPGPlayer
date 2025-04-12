@@ -224,9 +224,6 @@
         }
       }
     },
-    "EPGPlayer" : {
-      "shouldTranslate" : false
-    },
     "EPGStation URL" : {
       "localizations" : {
         "zh-Hans" : {

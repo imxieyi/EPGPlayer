@@ -91,7 +91,7 @@ struct RecordingsView: View {
                     EmptyView()
                 }
             }
-            .navigationTitle("EPGPlayer")
+            .navigationTitle("Recordings")
             .navigationBarTitleDisplayMode(.inline)
         }
         .onChange(of: appState.isAuthenticating) { oldValue, newValue in
@@ -106,6 +106,11 @@ struct RecordingsView: View {
                 loadingState = .error(Text("Redirection detected"))
             } else if newValue == .setupNeeded {
                 loadingState = .error(Text("Please set EPGStation URL"))
+            }
+        }
+        .onAppear {
+            if recorded.isEmpty {
+                refresh()
             }
         }
     }
