@@ -7,11 +7,14 @@
 
 import os
 import SwiftUI
+import SwiftData
 import VLCKit
 
 fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct PlayerView: View {
+    @Environment(\.scenePhase) var scenePhase
+    @Environment(\.modelContext) private var context
     @Environment(AppState.self) private var appState
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var userSettings: UserSettings
@@ -25,6 +28,8 @@ struct PlayerView: View {
     
     @State var playbackSpeed: PlaybackSpeed = .x1
     @State var playerState: VLCMediaPlayerState = .opening
+    @State var playbackPosition: Double = 0
+    @State var loadedPlaybackPosition = false
     @State var hadErrorState = false
     @State var hadPlayingState = false
     @State var isPIPSupported = false
@@ -44,6 +49,8 @@ struct PlayerView: View {
     @State var idleTimer: Timer? = nil
     @State var uiHelper: UIHelper? = nil
     @State var lastMouseMoveHandled: TimeInterval = 0
+    
+    @State var savedPlaybackPosition: SavedPlaybackPosition? = nil
     
     @State var originalOrientation: UIInterfaceOrientation?
     
@@ -146,7 +153,7 @@ struct PlayerView: View {
                     Spacer()
                         .frame(width: paddingSize)
                     
-                    PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, playerEvents: playerEvents)
+                    PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, loadedPlaybackPosition: $loadedPlaybackPosition, playbackPosition: $playbackPosition, playerEvents: playerEvents)
                     
                     Spacer()
                         .frame(width: paddingSize)
@@ -176,6 +183,7 @@ struct PlayerView: View {
 //                })
             }
             setupMacFullscreenMonitoring()
+            fetchSavedPlaybackPosition()
         }
         .onDisappear {
             UIApplication.shared.removeUserActivityTracker()
@@ -193,7 +201,11 @@ struct PlayerView: View {
             }
             uiHelper?.stopMonitorMouseMovement()
             uiHelper?.showMouseCursor()
+            savePlaybackPosition()
         }
+        .onChange(of: scenePhase, { _, newValue in
+            savePlaybackPosition()
+        })
         .onChange(of: activeVideoTrack, { _, newValue in
             playerEvents.enableTrack.send(newValue)
         })
@@ -206,10 +218,13 @@ struct PlayerView: View {
         .onChange(of: playbackSpeed, { _, newValue in
             playerEvents.setPlaybackRate.send(newValue.rawValue)
         })
-        .onChange(of: hadPlayingState, { _, newValue in
-            if newValue {
+        .onChange(of: hadPlayingState, { oldValue, newValue in
+            if !oldValue && newValue {
                 resetIdleTimer()
                 setupMacMouseMonitoring()
+                if let savedPlaybackPosition {
+                    playerEvents.setPlaybackPosition.send(savedPlaybackPosition.position)
+                }
             }
         })
         .onReceive(playerEvents.addVideoTrack) { track in
@@ -363,6 +378,53 @@ struct PlayerView: View {
                 }
             }
         }
+    }
+    
+    func fetchSavedPlaybackPosition() {
+        let serverId: String?
+        if let localVideoItem = item.videoItem as? LocalVideoItem {
+            serverId = localVideoItem.recordedItem?.serverId
+        } else {
+            serverId = appState.serverId
+        }
+        guard let serverId else {
+            return
+        }
+        do {
+            let epgId = item.videoItem.epgId
+            guard let savedPlaybackPosition = try context.fetch(FetchDescriptor<SavedPlaybackPosition>(predicate: #Predicate { $0.serverId == serverId && $0.videoItemEpgId == epgId })).first else {
+                return
+            }
+            self.savedPlaybackPosition = savedPlaybackPosition
+            self.loadedPlaybackPosition = true
+            print("Loaded saved playback position: \(savedPlaybackPosition.position)")
+        } catch let error {
+            print("Failed to fetch saved playback position: \(error)")
+        }
+    }
+    
+    func savePlaybackPosition() {
+        guard hadPlayingState else {
+            return
+        }
+        if let savedPlaybackPosition {
+            savedPlaybackPosition.position = playbackPosition
+            print("Saved playback position: \(savedPlaybackPosition.position)")
+            return
+        }
+        let serverId: String?
+        if let localVideoItem = item.videoItem as? LocalVideoItem {
+            serverId = localVideoItem.recordedItem?.serverId
+        } else {
+            serverId = appState.serverId
+        }
+        guard let serverId else {
+            return
+        }
+        let savedPlaybackPosition = SavedPlaybackPosition(serverId: serverId, videoItemEpgId: item.videoItem.epgId, position: playbackPosition)
+        context.insert(savedPlaybackPosition)
+        self.savedPlaybackPosition = savedPlaybackPosition
+        print("Saved playback position: \(savedPlaybackPosition.position)")
     }
     
     func resetIdleTimer() {

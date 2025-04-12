@@ -14,6 +14,7 @@ final class AppState {
     
     var serverVersion: String = ""
     var serverError = Text(verbatim: "")
+    var serverId: String { client.endpoint.absoluteString }
     
     var isAuthenticating = false
     var clientState: ClientState = .notInitialized

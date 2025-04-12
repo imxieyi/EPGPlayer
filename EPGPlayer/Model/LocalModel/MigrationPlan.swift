@@ -9,14 +9,19 @@ import SwiftData
 
 enum LocalSchemaMigrationPlan: @preconcurrency SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [LocalSchemaV1.self, LocalSchemaV2.self]
+        [LocalSchemaV1.self, LocalSchemaV2.self, LocalSchemaV3.self]
     }
     @MainActor static var stages: [MigrationStage] {
-        [migrateV1toV2]
+        [migrateV1toV2, migrateV2toV3]
     }
     
     @MainActor static let migrateV1toV2 = MigrationStage.lightweight(
         fromVersion: LocalSchemaV1.self,
         toVersion: LocalSchemaV2.self
+    )
+    
+    @MainActor static let migrateV2toV3 = MigrationStage.lightweight(
+        fromVersion: LocalSchemaV2.self,
+        toVersion: LocalSchemaV3.self
     )
 }

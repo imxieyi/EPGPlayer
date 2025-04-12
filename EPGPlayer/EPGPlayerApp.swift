@@ -24,7 +24,7 @@ struct EPGPlayerApp: App {
     
     init() {
         do {
-            modelContainer = try ModelContainer(for: Schema(versionedSchema: LocalSchemaV2.self), migrationPlan: LocalSchemaMigrationPlan.self)
+            modelContainer = try ModelContainer(for: Schema(versionedSchema: LocalSchemaV3.self), migrationPlan: LocalSchemaMigrationPlan.self)
             modelSetupError = nil
         } catch let error {
             modelContainer = nil

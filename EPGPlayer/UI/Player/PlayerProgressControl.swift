@@ -19,11 +19,12 @@ struct PlayerProgressControl: View {
     @Binding var playerState: VLCMediaPlayerState
     @Binding var hadErrorState: Bool
     @Binding var hadPlayingState: Bool
+    @Binding var loadedPlaybackPosition: Bool
+    @Binding var playbackPosition: Double
     @StateObject var playerEvents: PlayerEvents
     
     @State var videoLength: Double? = nil
     
-    @State var playbackPosition: Double = 0
     @State var playbackTime: Double = 0
     
     @State var isSeeking = false
@@ -55,7 +56,7 @@ struct PlayerProgressControl: View {
             ZStack (alignment: .top) {
                 if item.videoItem.type != .livestream {
                     HStack {
-                        if isSeeking, let videoLength {
+                        if isSeeking || (loadedPlaybackPosition && !(item.videoItem is LocalVideoItem)), let videoLength {
                             Text(verbatim: Duration.seconds(playbackPosition * videoLength).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
                         } else {
                             Text(verbatim: Duration.seconds(playbackTime).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))

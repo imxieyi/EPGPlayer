@@ -137,7 +137,7 @@ public struct RecordingDownloadMenu: View {
                         print("Failed to download thumbnail: \(error.localizedDescription)")
                     }
                 }
-                recordItem = LocalRecordedItem(serverId: appState.client.endpoint.absoluteString, epgId: item.epgId, name: item.name, channelName: item.channelName, startTime: item.startTime, endTime: item.endTime, shortDesc: item.shortDesc, extendedDesc: item.extendedDesc, thumbnail: thumbnailFile)
+                recordItem = LocalRecordedItem(serverId: appState.serverId, epgId: item.epgId, name: item.name, channelName: item.channelName, startTime: item.startTime, endTime: item.endTime, shortDesc: item.shortDesc, extendedDesc: item.extendedDesc, thumbnail: thumbnailFile)
                 context.insert(recordItem)
                 recordItem._videoItems = [videoItem]
             }

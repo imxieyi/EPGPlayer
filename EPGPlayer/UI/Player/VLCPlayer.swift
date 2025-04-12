@@ -245,6 +245,7 @@ class VLCPlayerViewController: UIViewController {
     }
     
     override func viewDidDisappear(_ animated: Bool) {
+        mediaPlayer.media?.parseStop()
         mediaPlayer.stop()
         pipController?.invalidatePlaybackState()
         

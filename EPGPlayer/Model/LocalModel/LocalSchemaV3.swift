@@ -1,17 +1,22 @@
 //
-//  LocalSchemaV1.swift
+//  LocalSchemaV3.swift
 //  EPGPlayer
 //
-//  Created by Yi Xie on 2025/04/11.
+//  Created by Yi Xie on 2025/04/13.
 //
 
 import Foundation
 import SwiftData
 
-enum LocalSchemaV2: VersionedSchema {
-    static var versionIdentifier: Schema.Version { Schema.Version(2, 0, 0) }
+typealias LocalRecordedItem = LocalSchemaV3.LocalRecordedItem
+typealias LocalVideoItem = LocalSchemaV3.LocalVideoItem
+typealias LocalFile = LocalSchemaV3.LocalFile
+typealias SavedPlaybackPosition = LocalSchemaV3.SavedPlaybackPosition
+
+enum LocalSchemaV3: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
     static var models: [any PersistentModel.Type] {
-        [LocalRecordedItem.self, LocalVideoItem.self, LocalFile.self]
+        [LocalRecordedItem.self, LocalVideoItem.self, LocalFile.self, SavedPlaybackPosition.self]
     }
     
     @Model
@@ -74,7 +79,7 @@ enum LocalSchemaV2: VersionedSchema {
             self.file = file
         }
     }
-
+    
     @Model
     class LocalFile {
         @Attribute(.unique) var id: UUID
@@ -89,6 +94,19 @@ enum LocalSchemaV2: VersionedSchema {
             self.id = UUID()
             self.available = false
             self.unavailableReason = nil
+        }
+    }
+    
+    @Model
+    class SavedPlaybackPosition {
+        var serverId: String
+        var videoItemEpgId: Int
+        var position: Double
+        
+        init(serverId: String, videoItemEpgId: Int, position: Double) {
+            self.serverId = serverId
+            self.videoItemEpgId = videoItemEpgId
+            self.position = position
         }
     }
 }
