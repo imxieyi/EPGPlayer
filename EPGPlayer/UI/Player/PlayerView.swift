@@ -381,6 +381,9 @@ struct PlayerView: View {
     }
     
     func fetchSavedPlaybackPosition() {
+        guard item.videoItem.type != .livestream else {
+            return
+        }
         let serverId: String?
         if let localVideoItem = item.videoItem as? LocalVideoItem {
             serverId = localVideoItem.recordedItem?.serverId
@@ -404,7 +407,7 @@ struct PlayerView: View {
     }
     
     func savePlaybackPosition() {
-        guard hadPlayingState else {
+        guard hadPlayingState && item.videoItem.type != .livestream else {
             return
         }
         if let savedPlaybackPosition {
