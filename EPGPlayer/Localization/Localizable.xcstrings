@@ -4,16 +4,6 @@
     "%.1f%%" : {
       "shouldTranslate" : false
     },
-    "%lld video(s) downloaded in the background." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在后台下载了%lld个视频"
-          }
-        }
-      }
-    },
     "%llds" : {
       "localizations" : {
         "zh-Hans" : {
@@ -50,6 +40,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自动隐藏UI"
+          }
+        }
+      }
+    },
+    "Background downloads have been completed." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已完成后台下载"
           }
         }
       }
@@ -184,12 +184,12 @@
         }
       }
     },
-    "Downloads will continue in the background" : {
+    "Downloads will continue in the background. But killing the app will cancel all downloads." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载会在后台继续"
+            "value" : "下载会在后台继续，但强制关闭APP会导致下载中断。"
           }
         }
       }

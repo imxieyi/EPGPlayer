@@ -36,7 +36,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     
     func getActiveDownloads() async throws -> [ActiveDownload] {
         try await urlSession.allTasks.compactMap { task -> ActiveDownload? in
-            guard let url = task.originalRequest?.url else {
+            guard let url = task.originalRequest?.url, task.state != .completed else {
                 return nil
             }
             guard let videoItem = try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first,
@@ -71,6 +71,9 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     }
     
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        guard let task = task as? URLSessionDownloadTask else {
+            return
+        }
         guard let errorDesc = error?.localizedDescription else {
             return
         }
@@ -81,7 +84,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         }
         Task { @MainActor [self] in
             downloads.remove(url)
-            events.downloadFailure.send((url, errorDesc))
+            events.downloadFailure.send((url, task, errorDesc))
         }
     }
     
@@ -95,12 +98,12 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         }
         guard let response = downloadTask.response as? HTTPURLResponse else {
             logger.error("downloadTask.response is not HTTPURLResponse")
-            sendError(url, message: "downloadTask.response is not HTTPURLResponse")
+            sendError(url, task: downloadTask, message: "downloadTask.response is not HTTPURLResponse")
             return
         }
         guard response.statusCode == 200 else {
             logger.error("HTTP status code is not 200, but is \(response.statusCode)")
-            sendError(url, message: "HTTP status code is not 200, but is \(response.statusCode)")
+            sendError(url, task: downloadTask, message: "HTTP status code is not 200, but is \(response.statusCode)")
             return
         }
         do {
@@ -108,7 +111,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
                 try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first
             }) else {
                 logger.error("Cannot find video item associated with \(url)")
-                sendError(url, message: "Cannot find video item associated with \(url)")
+                sendError(url, task: downloadTask, message: "Cannot find video item associated with \(url)")
                 return
             }
             if videoItem.duration == nil, let media = VLCMedia(url: location) {
@@ -126,14 +129,14 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
             logger.info("Download succeeded for \(url)")
         } catch let error {
             logger.error("Failed to fetch video item associated with \(url): \(error)")
-            sendError(url, message: "Failed to fetch video item associated with \(url): \(error)")
+            sendError(url, task: downloadTask, message: "Failed to fetch video item associated with \(url): \(error)")
             return
         }
     }
     
-    nonisolated func sendError(_ url: URL, message: String) {
+    nonisolated func sendError(_ url: URL, task: URLSessionDownloadTask, message: String) {
         Task { @MainActor [self] in
-            events.downloadFailure.send((url, message))
+            events.downloadFailure.send((url, task, message))
         }
     }
     

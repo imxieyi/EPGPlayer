@@ -74,7 +74,8 @@ struct ActiveDownloadsView: View {
                 }
                 HStack {
                     Spacer()
-                    Text("Downloads will continue in the background")
+                    Text("Downloads will continue in the background. But killing the app will cancel all downloads.")
+                        .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
@@ -120,12 +121,12 @@ struct ActiveDownloadsView: View {
     
     func cancelDownload(_ download: ActiveDownload) {
         download.downloadTask.cancel()
-//        let recordItem = download.videoItem.recordedItem
-//        if let recordItem, recordItem.videoItems.count == 1 {
-//            context.delete(recordItem)
-//        } else {
-//            context.delete(download.videoItem)
-//        }
-//        appState.activeDownloads.removeAll(where: { $0 == download })
+        let recordItem = download.videoItem.recordedItem
+        if let recordItem, recordItem.videoItems.count == 1 {
+            context.delete(recordItem)
+        } else {
+            context.delete(download.videoItem)
+        }
+        appState.activeDownloads.removeAll(where: { $0 == download })
     }
 }

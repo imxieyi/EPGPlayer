@@ -10,5 +10,5 @@ import Foundation
 
 final class DownloadEvents: ObservableObject, Sendable {
     let downloadSuccess = PassthroughSubject<URL, Never>()
-    let downloadFailure = PassthroughSubject<(URL, String), Never>()
+    let downloadFailure = PassthroughSubject<(URL, URLSessionDownloadTask, String), Never>()
 }

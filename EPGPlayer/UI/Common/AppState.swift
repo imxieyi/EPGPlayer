@@ -23,7 +23,6 @@ final class AppState {
     var downloadsSetupError: Error? = nil
     
     var activeDownloads: [ActiveDownload] = []
-    var backgroundDownloadCount = 0
     
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
 }
