@@ -54,12 +54,12 @@
         }
       }
     },
-    "Caches" : {
+    "Calculating" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "缓存"
+            "value" : "计算中"
           }
         }
       }
@@ -70,16 +70,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
-          }
-        }
-      }
-    },
-    "Clear cache" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "清空缓存"
           }
         }
       }
@@ -164,6 +154,16 @@
         }
       }
     },
+    "Download size error: %@" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法获取已下载大小：%@"
+          }
+        }
+      }
+    },
     "Downloading" : {
       "localizations" : {
         "zh-Hans" : {
@@ -180,6 +180,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已下载"
+          }
+        }
+      }
+    },
+    "Downloads size: " : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已下载大小："
           }
         }
       }
@@ -287,12 +297,12 @@
         }
       }
     },
-    "Image cache size: %lld MB" : {
+    "Image cache size: %@" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "图片缓存大小：%lld MB"
+            "value" : "图片缓存大小：%@"
           }
         }
       }
@@ -515,6 +525,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度"
+          }
+        }
+      }
+    },
+    "Storage" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "存储空间"
           }
         }
       }

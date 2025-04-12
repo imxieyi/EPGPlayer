@@ -35,6 +35,12 @@ class LocalFileManager {
         try FileManager.default.removeItem(at: filesDir.appending(path: name))
     }
     
+    func totalSize() throws -> Int {
+        return try FileManager.default.contentsOfDirectory(at: filesDir, includingPropertiesForKeys: nil).reduce(0) { size, url in
+            size + (try url.resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize ?? 0)
+        }
+    }
+    
     func fixFilesAvailability() {
         guard let container else { return }
         Task(priority: .background) { @MainActor [filesDir] in

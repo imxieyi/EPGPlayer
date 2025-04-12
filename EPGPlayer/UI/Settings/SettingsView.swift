@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var serverUrl: String = ""
     @State private var showServerUrlInvalidAlert: Bool = false
     
+    @State private var currentDownloadsSize: Int? = nil
+    @State private var downloadSizeError: String? = nil
     @State private var currentCacheSize: Int = 0
     
     var body: some View {
@@ -23,7 +25,7 @@ struct SettingsView: View {
             Form {
                 serverSection
                 playerSection
-                cacheSection
+                storageSection
                 resetSection
                 #if DEBUG
                 debugSection
@@ -115,19 +117,45 @@ struct SettingsView: View {
         }
     }
     
-    var cacheSection: some View {
+    var storageSection: some View {
         Section {
-            Text("Image cache size: \(currentCacheSize / 1024 / 1024) MB")
-                .foregroundStyle(.gray)
-            Button("Clear cache") {
-                URLCache.imageCache.removeAllCachedResponses()
-                currentCacheSize = 0
+            Group {
+                if let downloadSizeError {
+                    Text("Download size error: \(downloadSizeError)")
+                } else {
+                    Text("Downloads size: ")
+                    + (currentDownloadsSize == nil ? Text("Calculating") : Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(currentDownloadsSize!))))
+                }
+            }
+            .foregroundStyle(.gray)
+            HStack {
+                Text("Image cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
+                    .foregroundStyle(.gray)
+                Spacer()
+                Button {
+                    URLCache.imageCache.removeAllCachedResponses()
+                    currentCacheSize = 0
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tint)
             }
         } header: {
-            Label("Caches", systemImage: "arrow.up.bin")
+            Label("Storage", systemImage: "internaldrive")
         }
         .onAppear {
             currentCacheSize = URLCache.imageCache.currentDiskUsage
+            currentDownloadsSize = nil
+            downloadSizeError = nil
+            Task(priority: .background) {
+                do {
+                    self.currentDownloadsSize = try LocalFileManager.shared.totalSize()
+                } catch let error {
+                    print("Failed to get total download size: \(error.localizedDescription)")
+                    downloadSizeError = error.localizedDescription
+                }
+            }
         }
     }
     
