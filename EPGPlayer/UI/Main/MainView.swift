@@ -25,7 +25,7 @@ struct MainView: View {
             }
             
             Tab("Live", systemImage: "dot.radiowaves.left.and.right", value: .live) {
-                LiveChannelsView(appState: appState, activeTab: $activeTab)
+                LiveChannelsView(activeTab: $activeTab)
             }
             
             Tab("Downloads", systemImage: "square.and.arrow.down", value: .downloads) {

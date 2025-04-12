@@ -119,6 +119,7 @@ struct ActiveDownloadsView: View {
             return
         }
         appState.activeDownloads[index] = ActiveDownload(url: download.url, videoItem: download.videoItem, downloadTask: downloadTask)
+        download.videoItem.file.unavailableReason = nil
     }
     
     func cancelDownload(_ download: ActiveDownload) {

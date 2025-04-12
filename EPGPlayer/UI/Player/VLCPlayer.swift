@@ -18,6 +18,8 @@ struct VLCPlayer: UIViewControllerRepresentable {
     let playerEvents: PlayerEvents
     
     @Binding var playerState: VLCMediaPlayerState
+    @Binding var hadErrorState: Bool
+    @Binding var hadPlayingState: Bool
 
     func makeUIViewController(context: Context) -> VLCPlayerViewController {
         let playerVC = VLCPlayerViewController()
@@ -52,6 +54,13 @@ struct VLCPlayer: UIViewControllerRepresentable {
             logger.debug("Player state changed: \(newState.rawValue)")
             Task { @MainActor [parent] in
                 parent.playerState = newState
+                if newState == .error {
+                    parent.hadErrorState = true
+                } else if newState == .opening {
+                    parent.hadErrorState = false
+                } else if newState == .playing {
+                    parent.hadPlayingState = true
+                }
             }
         }
         

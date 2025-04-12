@@ -60,7 +60,7 @@ struct DownloadsView: View {
                                                         errorAlertVideoItem = failedItem
                                                         showErrorAlert.toggle()
                                                     } label: {
-                                                        Text(verbatim: failedItem.file.unavailableReason!)
+                                                        Text(verbatim: failedItem.file.unavailableReason ?? "Unknown")
                                                             .lineLimit(1)
                                                     }
                                                 }

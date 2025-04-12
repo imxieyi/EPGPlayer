@@ -6,6 +6,7 @@
 //
 
 @preconcurrency import Combine
+import SwiftUI
 import VLCKit
 
 final class PlayerEvents: ObservableObject, Sendable {

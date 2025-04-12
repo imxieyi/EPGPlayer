@@ -1755,14 +1755,7 @@ components:
       description: コンフィグ
       type: object
       required:
-        - socketIOPort
-        - broadcast
-        - recorded
-        - encode
-        - urlscheme
-        - isEnableLiveStream
-        - isEnableTSRecordedStream
-        - isEnableEncodedRecordedStream
+        - streamConfig
       properties:
         socketIOPort:
           description: socket.io 通信で使用するポート
@@ -1825,31 +1818,35 @@ components:
               description: ライブストリーミング設定
               type: object
               properties:
-                m2ts:
-                  description: ライブ M2TS ストリーミング設定
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/M2TSStreamParam'
-                m2tsll:
-                  description: ライブ M2TS Low Latency (mpegts.js 用) ストリーミング設定
-                  type: array
-                  items:
-                    type: string
-                webm:
-                  description: ライブ WebM ストリーミング設定
-                  type: array
-                  items:
-                    type: string
-                mp4:
-                  description: ライブ MP4 ストリーミング設定
-                  type: array
-                  items:
-                    type: string
-                hls:
-                  description: ライブ HLS ストリーミング設定
-                  type: array
-                  items:
-                    type: string
+                ts:
+                  description: TS ストリーミング設定
+                  type: object
+                  properties:
+                    m2ts:
+                      description: ライブ M2TS ストリーミング設定
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/M2TSStreamParam'
+                    m2tsll:
+                      description: ライブ M2TS Low Latency (mpegts.js 用) ストリーミング設定
+                      type: array
+                      items:
+                        type: string
+                    webm:
+                      description: ライブ WebM ストリーミング設定
+                      type: array
+                      items:
+                        type: string
+                    mp4:
+                      description: ライブ MP4 ストリーミング設定
+                      type: array
+                      items:
+                        type: string
+                    hls:
+                      description: ライブ HLS ストリーミング設定
+                      type: array
+                      items:
+                        type: string
             recorded:
               description: 録画済みストリーミング設定
               type: object

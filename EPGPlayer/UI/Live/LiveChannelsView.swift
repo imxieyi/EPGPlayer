@@ -10,12 +10,13 @@ import CachedAsyncImage
 import OpenAPIRuntime
 
 struct LiveChannelsView: View {
-    @Bindable var appState: AppState
+    @Environment(AppState.self) private var appState
     @Binding var activeTab: TabSelection
     
     @State var loadingState = LoadingState.loading
     @State var loadingMoreState = LoadingState.loaded
     
+    @State var liveStreamConfig: Components.Schemas.Config.StreamConfigPayload.LivePayload.TsPayload? = nil
     @State var channels: [Components.Schemas.ChannelItem] = []
     
     var body: some View {
@@ -23,11 +24,23 @@ struct LiveChannelsView: View {
             Group {
                 if case .loading = loadingState {
                     ProgressView()
+                        .controlSize(.large)
                         .padding()
-                } else if case .loaded = loadingState {
+                } else if case .loaded = loadingState, let liveStreamConfig {
                     List(channels) { channel in
-                        Button {
-                            appState.playingItem = PlayerItem(videoItem: channel, title: channel.halfWidthName)
+                        Menu {
+                            if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
+                                LiveStreamSelectionMenu(channel: channel, format: "m2ts", formatName: "M2TS", selections: m2ts)
+                            }
+                            if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
+                                LiveStreamSelectionMenu(channel: channel, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
+                            }
+                            if let webm = liveStreamConfig.webm, !webm.isEmpty {
+                                LiveStreamSelectionMenu(channel: channel, format: "webm", formatName: "WebM", selections: webm)
+                            }
+                            if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
+                                LiveStreamSelectionMenu(channel: channel, format: "mp4", formatName: "MP4", selections: mp4)
+                            }
                         } label: {
                             HStack {
                                 CachedAsyncImage(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), urlCache: .imageCache) { phase in
@@ -50,9 +63,6 @@ struct LiveChannelsView: View {
                             }
                         }
                         .tint(.primary)
-                    }
-                    .refreshable {
-                        refresh()
                     }
                 } else if case .error(let message) = loadingState {
                     ContentUnavailableView {
@@ -77,7 +87,7 @@ struct LiveChannelsView: View {
                         }
                     }
                 } else {
-                    EmptyView()
+                    ContentUnavailableView("Unknown error", systemImage: "exclamationmark.triangle")
                 }
             }
             .navigationTitle("Live")
@@ -114,6 +124,11 @@ struct LiveChannelsView: View {
         Task {
             do {
                 try await Task.sleep(for: waitTime)
+                guard let liveStreamConfig = try await appState.client.api.getConfig().ok.body.json.streamConfig.live?.ts else {
+                    loadingState = .error(Text("Failed to load live stream config"))
+                    return
+                }
+                self.liveStreamConfig = liveStreamConfig
                 channels = try await appState.client.api.getChannels().ok.body.json.filter { $0._type == 1 }
                 loadingState = .loaded
                 print("Loaded \(channels.count) channels")

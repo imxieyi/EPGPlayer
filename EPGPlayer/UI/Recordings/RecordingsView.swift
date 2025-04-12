@@ -24,6 +24,7 @@ struct RecordingsView: View {
             Group {
                 if case .loading = loadingState {
                     ProgressView()
+                        .controlSize(.large)
                         .padding()
                 } else if case .loaded = loadingState {
                     ScrollView {
@@ -48,6 +49,7 @@ struct RecordingsView: View {
                         if recorded.count < totalCount {
                             if case .loading = loadingMoreState {
                                 ProgressView()
+                                    .controlSize(.large)
                             } else if case .error(let message) = loadingMoreState {
                                 ContentUnavailableView {
                                     Label("Error loading content", systemImage: "xmark.circle")

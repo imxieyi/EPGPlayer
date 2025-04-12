@@ -81,9 +81,17 @@ extension Components.Schemas.VideoFile: VideoItem {
     
 }
 
-extension Components.Schemas.ChannelItem: VideoItem {
+struct EPGLiveStreamItem: VideoItem {
+    let channel: Components.Schemas.ChannelItem
+    let format: String
+    let mode: Int
+    
+    var name: String {
+        "\(channel.name) - \(format) - \(mode)"
+    }
+    
     var epgId: Int {
-        id
+        channel.id
     }
     
     var type: VideoFileType {
@@ -95,7 +103,7 @@ extension Components.Schemas.ChannelItem: VideoItem {
     }
     
     var url: URL {
-        Components.Schemas.RecordedItem.endpoint.appending(path: "streams/live/\(id)/m2ts").appending(queryItems: [URLQueryItem(name: "mode", value: "3")])
+        Components.Schemas.RecordedItem.endpoint.appending(path: "streams/live/\(channel.id)/\(format)").appending(queryItems: [URLQueryItem(name: "mode", value: "\(mode)")])
     }
     
     var canPlay: Bool {

@@ -17,6 +17,8 @@ struct PlayerProgressControl: View {
     let item: PlayerItem
     
     @Binding var playerState: VLCMediaPlayerState
+    @Binding var hadErrorState: Bool
+    @Binding var hadPlayingState: Bool
     @StateObject var playerEvents: PlayerEvents
     
     @State var videoLength: Double? = nil
@@ -28,10 +30,10 @@ struct PlayerProgressControl: View {
     
     var body: some View {
         VStack {
-            Spacer()
-                .frame(height: 5)
-            
             if item.videoItem.type != .livestream {
+                Spacer()
+                    .frame(height: 5)
+                
                 Slider(value: $playbackPosition, onEditingChanged: { editing in
                     isSeeking = editing
                     if editing && playerState.isPlaying {
@@ -44,7 +46,10 @@ struct PlayerProgressControl: View {
                         }
                     }
                 })
-                .disabled(playerState == .opening)
+                .disabled(playerState == .opening || !hadPlayingState)
+            } else {
+                Spacer()
+                    .frame(height: 10)
             }
             
             ZStack (alignment: .top) {
@@ -60,8 +65,9 @@ struct PlayerProgressControl: View {
                 
                 HStack {
                     Spacer()
-                    if playerState == .opening {
+                    if playerState == .opening || (!hadPlayingState && !hadErrorState) {
                         ProgressView()
+                            .controlSize(.large)
                     } else {
                         if item.videoItem.type != .livestream {
                             Button {

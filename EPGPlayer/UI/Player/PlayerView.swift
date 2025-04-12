@@ -25,6 +25,8 @@ struct PlayerView: View {
     
     @State var playbackSpeed: PlaybackSpeed = .x1
     @State var playerState: VLCMediaPlayerState = .opening
+    @State var hadErrorState = false
+    @State var hadPlayingState = false
     @State var isPIPSupported = false
     @State var isPIPEnabled = false
     @State var isExternalPlay = false
@@ -47,7 +49,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoItem: item.videoItem, playerEvents: playerEvents, playerState: $playerState)
+            VLCPlayer(videoItem: item.videoItem, playerEvents: playerEvents, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .onTapGesture {
                     withAnimation(.default.speed(2)) {
@@ -68,6 +70,20 @@ struct PlayerView: View {
                     Spacer()
                 }
                 .foregroundStyle(.secondary)
+            }
+            
+            if !playerState.isPlaying && hadErrorState {
+                if hadErrorState {
+                    HStack {
+                        Spacer()
+                        VStack {
+                            Spacer()
+                            ContentUnavailableView("Unable to play", systemImage: "xmark.circle")
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                }
             }
             
             if userSettings.showPlayerStats {
@@ -130,7 +146,7 @@ struct PlayerView: View {
                     Spacer()
                         .frame(width: paddingSize)
                     
-                    PlayerProgressControl(item: item, playerState: $playerState, playerEvents: playerEvents)
+                    PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, playerEvents: playerEvents)
                     
                     Spacer()
                         .frame(width: paddingSize)
@@ -151,7 +167,6 @@ struct PlayerView: View {
         .persistentSystemOverlays(.hidden)
         .onAppear {
             UIApplication.shared.addUserActivityTracker()
-            resetIdleTimer()
             originalOrientation = appDelegate.windowScene?.interfaceOrientation
             if userSettings.forceLandscape {
                 appDelegate.orientationLock = .landscape
@@ -160,7 +175,7 @@ struct PlayerView: View {
 //                    logger.error("Unable to force landscape orientation: \(error)")
 //                })
             }
-            setupMacMonitoring()
+            setupMacFullscreenMonitoring()
         }
         .onDisappear {
             UIApplication.shared.removeUserActivityTracker()
@@ -190,6 +205,12 @@ struct PlayerView: View {
         })
         .onChange(of: playbackSpeed, { _, newValue in
             playerEvents.setPlaybackRate.send(newValue.rawValue)
+        })
+        .onChange(of: hadPlayingState, { _, newValue in
+            if newValue {
+                resetIdleTimer()
+                setupMacMouseMonitoring()
+            }
         })
         .onReceive(playerEvents.addVideoTrack) { track in
             videoTracks.append(track)
@@ -306,35 +327,41 @@ struct PlayerView: View {
         }
     }
     
-    func setupMacMonitoring() {
-        if !appState.isOnMac {
+    func setupMacFullscreenMonitoring() {
+        guard appState.isOnMac else {
             return
         }
         do {
             let uiHelper = try MacNativeBundle.loadUIHelper()
-            uiHelper.startMonitorMouseMovement {
-                uiHelper.showMouseCursor()
-                guard uiHelper.isMousePointerInWindow() else {
-                    return
-                }
-                let timestamp = Date().timeIntervalSinceReferenceDate
-                if timestamp - lastMouseMoveHandled < 0.3 {
-                    return
-                }
-                lastMouseMoveHandled = timestamp
-                resetIdleTimer()
-                if playerUIOpacity == 0 {
-                    withAnimation(.default.speed(2)) {
-                        playerUIOpacity = 1
-                    }
-                }
-            }
             uiHelper.startObservingFullScreenChange { isFullscreen in
                 isMacFullscreen = isFullscreen
             }
             self.uiHelper = uiHelper
         } catch let error {
             logger.error("Unable to load Mac UI helper: \(error)")
+        }
+    }
+    
+    func setupMacMouseMonitoring() {
+        guard appState.isOnMac, let uiHelper else {
+            return
+        }
+        uiHelper.startMonitorMouseMovement {
+            uiHelper.showMouseCursor()
+            guard uiHelper.isMousePointerInWindow() else {
+                return
+            }
+            let timestamp = Date().timeIntervalSinceReferenceDate
+            if timestamp - lastMouseMoveHandled < 0.3 {
+                return
+            }
+            lastMouseMoveHandled = timestamp
+            resetIdleTimer()
+            if playerUIOpacity == 0 {
+                withAnimation(.default.speed(2)) {
+                    playerUIOpacity = 1
+                }
+            }
         }
     }
     

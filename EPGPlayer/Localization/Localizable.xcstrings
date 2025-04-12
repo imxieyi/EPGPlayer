@@ -274,6 +274,16 @@
         }
       }
     },
+    "Failed to load live stream config" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法加载直播配置文件"
+          }
+        }
+      }
+    },
     "Force landscape" : {
       "localizations" : {
         "zh-Hans" : {
@@ -558,6 +568,26 @@
     },
     "TS" : {
       "shouldTranslate" : false
+    },
+    "Unable to play" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法播放"
+          }
+        }
+      }
+    },
+    "Unknown error" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知错误"
+          }
+        }
+      }
     },
     "Video" : {
       "localizations" : {

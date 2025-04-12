@@ -34,6 +34,7 @@ struct RecordingDetailView: View {
                                 .foregroundStyle(.placeholder)
                         } else {
                             ProgressView()
+                                .controlSize(.large)
                         }
                     }
                 }
