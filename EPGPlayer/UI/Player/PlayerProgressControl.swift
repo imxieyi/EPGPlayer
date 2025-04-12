@@ -55,7 +55,11 @@ struct PlayerProgressControl: View {
             ZStack (alignment: .top) {
                 if item.videoItem.type != .livestream {
                     HStack {
-                        Text(verbatim: Duration.seconds(playbackTime).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                        if isSeeking, let videoLength {
+                            Text(verbatim: Duration.seconds(playbackPosition * videoLength).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                        } else {
+                            Text(verbatim: Duration.seconds(playbackTime).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                        }
                         Spacer()
                         if let videoLength {
                             Text(verbatim: Duration.seconds(videoLength).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
