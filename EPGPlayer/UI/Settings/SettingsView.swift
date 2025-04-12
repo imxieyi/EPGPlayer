@@ -19,14 +19,18 @@ struct SettingsView: View {
     @State private var currentCacheSize: Int = 0
     
     var body: some View {
-        Form {
-            serverSection
-            playerSection
-            cacheSection
-            resetSection
-            #if DEBUG
-            debugSection
-            #endif
+        NavigationStack {
+            Form {
+                serverSection
+                playerSection
+                cacheSection
+                resetSection
+                #if DEBUG
+                debugSection
+                #endif
+            }
+            .navigationTitle("EPGPlayer")
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
     

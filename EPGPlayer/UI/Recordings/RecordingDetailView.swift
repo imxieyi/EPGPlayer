@@ -22,13 +22,19 @@ struct RecordingDetailView: View {
         ScrollView(.vertical) {
             VStack(alignment: .center) {
                 if let thumbnail = item.thumbnail {
-                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { image in
-                        image
-                            .resizable()
-                            .scaledToFit()
-                            .frame(maxWidth: 500)
-                    } placeholder: {
-                        ProgressView()
+                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: 500)
+                        } else if phase.error != nil {
+                            Image(systemName: "photo.badge.exclamationmark")
+                                .font(.system(size: 50))
+                                .foregroundStyle(.placeholder)
+                        } else {
+                            ProgressView()
+                        }
                     }
                 }
                 Text(verbatim: item.name)

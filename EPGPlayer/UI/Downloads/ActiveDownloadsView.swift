@@ -49,8 +49,10 @@ struct ActiveDownloadsView: View {
                                             Button {
                                                 restartDownload(download, index: index)
                                             } label: {
-                                                Label("Retry", systemImage: "arrow.counterclockwise")
+                                                Image(systemName: "arrow.counterclockwise")
                                             }
+                                            .buttonStyle(.plain)
+                                            .foregroundStyle(.tint)
                                         }
                                     }
                                 }

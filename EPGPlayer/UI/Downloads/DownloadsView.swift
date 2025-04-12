@@ -55,12 +55,21 @@ struct DownloadsView: View {
                     }
                 }
             }
+            .navigationTitle("EPGPlayer")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showActiveDownloads.toggle()
                     } label: {
-                        Image(systemName: "arrow.down.circle")
+                        let errorCount = appState.activeDownloads.count(where: { $0.errorMessage != nil })
+                        if errorCount > 0 {
+                            Image(systemName: "exclamationmark.circle")
+                                .foregroundStyle(.red)
+                                .badge(errorCount)
+                        } else {
+                            Image(systemName: "arrow.down.circle")
+                        }
                     }
                 }
             }

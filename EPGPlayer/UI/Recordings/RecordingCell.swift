@@ -35,17 +35,28 @@ struct RecordingCell: View {
         VStack {
             ZStack {
                 if let thumbnail = item.thumbnail {
-                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { image in
-                        image
-                            .resizable()
-                            .scaledToFit()
-                    } placeholder: {
-                        ZStack(alignment: .center) {
-                            Color.clear
-                            ProgressView()
+                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        } else if phase.error != nil {
+                            ZStack(alignment: .top) {
+                                Color.clear
+                                Image(systemName: "photo.badge.exclamationmark")
+                                    .font(.system(size: 100))
+                                    .foregroundStyle(.placeholder)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(16/9, contentMode: .fit)
+                        } else {
+                            ZStack(alignment: .center) {
+                                Color.clear
+                                ProgressView()
+                            }
+                            .frame(maxWidth: .infinity)
+                            .aspectRatio(16/9, contentMode: .fit)
                         }
-                        .frame(maxWidth: .infinity)
-                        .aspectRatio(16/9, contentMode: .fit)
                     }
                 } else {
                     ZStack(alignment: .center) {
