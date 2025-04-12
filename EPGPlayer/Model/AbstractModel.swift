@@ -32,6 +32,7 @@ protocol VideoItem {
 enum VideoFileType: Codable {
     case ts
     case encoded
+    case livestream
     
     var text: Text {
         switch self {
@@ -39,6 +40,8 @@ enum VideoFileType: Codable {
             return Text("TS")
         case .encoded:
             return Text("Encoded")
+        case .livestream:
+            return Text("Live")
         }
     }
 }

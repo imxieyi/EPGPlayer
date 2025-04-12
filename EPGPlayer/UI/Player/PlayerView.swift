@@ -47,7 +47,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoURL: item.videoItem.url, playerEvents: playerEvents, playerState: $playerState)
+            VLCPlayer(videoItem: item.videoItem, playerEvents: playerEvents, playerState: $playerState)
                 .ignoresSafeArea(edges: .vertical)
                 .onTapGesture {
                     withAnimation(.default.speed(2)) {
@@ -225,17 +225,19 @@ struct PlayerView: View {
     
     var playerMenu: some View {
         Menu {
-            Picker(selection: $playbackSpeed) {
-                ForEach(PlaybackSpeed.all) { speed in
-                    Text(verbatim: speed.text)
-                        .tag(speed)
+            if item.videoItem.type != .livestream {
+                Picker(selection: $playbackSpeed) {
+                    ForEach(PlaybackSpeed.all) { speed in
+                        Text(verbatim: speed.text)
+                            .tag(speed)
+                    }
+                } label: {
+                    Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
                 }
-            } label: {
-                Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
+                .pickerStyle(.menu)
+                
+                Divider()
             }
-            .pickerStyle(.menu)
-            
-            Divider()
             
             if !videoTracks.isEmpty {
                 Picker(selection: $activeVideoTrack) {

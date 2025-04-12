@@ -80,3 +80,25 @@ extension Components.Schemas.VideoFile: VideoItem {
     }
     
 }
+
+extension Components.Schemas.ChannelItem: VideoItem {
+    var epgId: Int {
+        id
+    }
+    
+    var type: VideoFileType {
+        .livestream
+    }
+    
+    var fileSize: Int64 {
+        0
+    }
+    
+    var url: URL {
+        Components.Schemas.RecordedItem.endpoint.appending(path: "streams/live/\(id)/m2ts").appending(queryItems: [URLQueryItem(name: "mode", value: "3")])
+    }
+    
+    var canPlay: Bool {
+        true
+    }
+}

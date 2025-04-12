@@ -317,6 +317,16 @@
         }
       }
     },
+    "Live" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "直播"
+          }
+        }
+      }
+    },
     "Login" : {
       "localizations" : {
         "zh-Hans" : {

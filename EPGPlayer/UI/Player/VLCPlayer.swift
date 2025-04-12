@@ -14,7 +14,7 @@ import Combine
 fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct VLCPlayer: UIViewControllerRepresentable {
-    let videoURL: URL
+    let videoItem: any VideoItem
     let playerEvents: PlayerEvents
     
     @Binding var playerState: VLCMediaPlayerState
@@ -23,15 +23,15 @@ struct VLCPlayer: UIViewControllerRepresentable {
         let playerVC = VLCPlayerViewController()
         playerVC.delegate = context.coordinator
         playerVC.playerEvents = playerEvents
-        playerVC.videoURL = videoURL
+        playerVC.videoItem = videoItem
         return playerVC
     }
 
     func updateUIViewController(_ uiViewController: VLCPlayerViewController, context: Context) {
-        guard uiViewController.videoURL != videoURL else {
+        guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
-        uiViewController.videoURL = videoURL
+        uiViewController.videoItem = videoItem
         uiViewController.reload()
     }
     
@@ -89,7 +89,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
 
 class VLCPlayerViewController: UIViewController {
     var mediaPlayer = VLCMediaPlayer()
-    var videoURL: URL?
+    var videoItem: VideoItem?
     var delegate: VLCPlayer.Coordinator?
     var playerEvents: PlayerEvents?
     
@@ -114,17 +114,7 @@ class VLCPlayerViewController: UIViewController {
         }
         mediaPlayer.delegate = delegate
 
-        if let url = videoURL {
-            logger.debug("Media URL: \(url.absoluteString)")
-            let media = VLCMedia(url: url)
-            media?.delegate = delegate
-            media?.parse(options: [.parseForced], timeout: .max)
-            mediaPlayer.media = media
-            HTTPCookieStorage.shared.cookies?.forEach { cookie in
-                media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
-            }
-            mediaPlayer.play()
-        }
+        reload()
     }
     
     var togglePlayListener: AnyCancellable?
@@ -146,7 +136,11 @@ class VLCPlayerViewController: UIViewController {
                 return
             }
             if player.isPlaying {
-                player.pause()
+                if self?.videoItem?.type == .livestream {
+                    player.stop()
+                } else {
+                    player.pause()
+                }
             } else {
                 player.play()
             }
@@ -244,6 +238,8 @@ class VLCPlayerViewController: UIViewController {
     override func viewDidDisappear(_ animated: Bool) {
         mediaPlayer.stop()
         pipController?.invalidatePlaybackState()
+        
+        // Prevent VLC deadlock causing main thread blocking.
         Task.detached(priority: .background) { [mediaPlayer] in
             while mediaPlayer.state != .stopped {
                 logger.warning("VLCPlayer not stopped")
@@ -261,10 +257,17 @@ class VLCPlayerViewController: UIViewController {
     }
     
     func reload() {
-        if let url = videoURL {
-            let media = VLCMedia(url: url)
+        if let videoItem {
+            logger.debug("Media URL: \(videoItem.url.absoluteString)")
+            let media = VLCMedia(url: videoItem.url)
             media?.delegate = delegate
+            if videoItem.type != .livestream {
+                media?.parse(options: [.parseForced], timeout: .max)
+            }
             mediaPlayer.media = media
+            HTTPCookieStorage.shared.cookies?.forEach { cookie in
+                media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
+            }
             mediaPlayer.play()
         } else {
             mediaPlayer.stop()
@@ -289,23 +292,30 @@ extension VLCPlayerViewController: @preconcurrency VLCPictureInPictureMediaContr
     }
     
     func pause() {
-        mediaPlayer.pause()
+        if videoItem?.type == .livestream {
+            mediaPlayer.stop()
+        } else {
+            mediaPlayer.pause()
+        }
     }
     
     func seek(by offset: Int64) async {
+        guard videoItem?.type != .livestream else {
+            return
+        }
         mediaPlayer.jump(withOffset: Int32(offset))
     }
     
     func mediaLength() -> Int64 {
-        return Int64(mediaPlayer.media?.length.value?.intValue ?? 0)
+        return videoItem?.type != .livestream ? Int64(mediaPlayer.media?.length.value?.intValue ?? 0) : 0
     }
     
     func mediaTime() -> Int64 {
-        return Int64(mediaPlayer.time.intValue)
+        return videoItem?.type != .livestream ? Int64(mediaPlayer.time.intValue) : 0
     }
     
     func isMediaSeekable() -> Bool {
-        return mediaPlayer.isSeekable
+        return mediaPlayer.isSeekable && videoItem?.type != .livestream
     }
     
     func isMediaPlaying() -> Bool {

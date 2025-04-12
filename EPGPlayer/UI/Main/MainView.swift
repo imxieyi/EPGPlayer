@@ -23,6 +23,11 @@ struct MainView: View {
             Tab("Recordings", systemImage: "recordingtape", value: .recordings) {
                 RecordingsView(appState: appState, activeTab: $activeTab)
             }
+            
+            Tab("Live", systemImage: "dot.radiowaves.left.and.right", value: .live) {
+                LiveChannelsView(appState: appState, activeTab: $activeTab)
+            }
+            
             Tab("Downloads", systemImage: "square.and.arrow.down", value: .downloads) {
                 DownloadsView()
             }
@@ -59,6 +64,7 @@ struct MainView: View {
 }
 
 enum TabSelection: String, Hashable {
+    case live
     case recordings
     case downloads
     case settings

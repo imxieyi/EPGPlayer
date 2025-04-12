@@ -31,26 +31,30 @@ struct PlayerProgressControl: View {
             Spacer()
                 .frame(height: 5)
             
-            Slider(value: $playbackPosition, onEditingChanged: { editing in
-                isSeeking = editing
-                if editing && playerState.isPlaying {
-                    playerEvents.togglePlay.send()
-                }
-                if !editing {
-                    playerEvents.setPlaybackPosition.send(playbackPosition)
-                    if !playerState.isPlaying {
+            if item.videoItem.type != .livestream {
+                Slider(value: $playbackPosition, onEditingChanged: { editing in
+                    isSeeking = editing
+                    if editing && playerState.isPlaying {
                         playerEvents.togglePlay.send()
                     }
-                }
-            })
-            .disabled(playerState == .opening)
+                    if !editing {
+                        playerEvents.setPlaybackPosition.send(playbackPosition)
+                        if !playerState.isPlaying {
+                            playerEvents.togglePlay.send()
+                        }
+                    }
+                })
+                .disabled(playerState == .opening)
+            }
             
             ZStack (alignment: .top) {
-                HStack {
-                    Text(verbatim: Duration.seconds(playbackTime).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
-                    Spacer()
-                    if let videoLength {
-                        Text(verbatim: Duration.seconds(videoLength).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                if item.videoItem.type != .livestream {
+                    HStack {
+                        Text(verbatim: Duration.seconds(playbackTime).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                        Spacer()
+                        if let videoLength {
+                            Text(verbatim: Duration.seconds(videoLength).formatted(.time(pattern: .minuteSecond(padMinuteToLength: 2))))
+                        }
                     }
                 }
                 
@@ -59,37 +63,47 @@ struct PlayerProgressControl: View {
                     if playerState == .opening {
                         ProgressView()
                     } else {
-                        Button {
-                            seekBy(seconds: -10)
-                        } label: {
-                            Image(systemName: "10.arrow.trianglehead.counterclockwise")
-                                .font(.system(size: 25))
+                        if item.videoItem.type != .livestream {
+                            Button {
+                                seekBy(seconds: -10)
+                            } label: {
+                                Image(systemName: "10.arrow.trianglehead.counterclockwise")
+                                    .font(.system(size: 25))
+                            }
+                            .disabled(videoLength == nil)
+                            
+                            Spacer()
+                                .frame(width: 15)
+                            
+                            Button {
+                                playerEvents.togglePlay.send()
+                            } label: {
+                                Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .scaledToFit()
+                            }
+                            
+                            Spacer()
+                                .frame(width: 15)
+                            
+                            Button {
+                                seekBy(seconds: 30)
+                            } label: {
+                                Image(systemName: "30.arrow.trianglehead.clockwise")
+                                    .font(.system(size: 25))
+                            }
+                            .disabled(videoLength == nil)
+                        } else {
+                            Button {
+                                playerEvents.togglePlay.send()
+                            } label: {
+                                Image(systemName: playerState.isPlaying ? "stop.fill" : "play.fill")
+                                    .resizable()
+                                    .frame(width: 30, height: 30)
+                                    .scaledToFit()
+                            }
                         }
-                        .disabled(videoLength == nil)
-                        
-                        Spacer()
-                            .frame(width: 15)
-                        
-                    
-                        Button {
-                            playerEvents.togglePlay.send()
-                        } label: {
-                            Image(systemName: playerState.isPlaying ? "pause.fill" : "play.fill")
-                                .resizable()
-                                .frame(width: 30, height: 30)
-                                .scaledToFit()
-                        }
-                        
-                        Spacer()
-                            .frame(width: 15)
-                        
-                        Button {
-                            seekBy(seconds: 30)
-                        } label: {
-                            Image(systemName: "30.arrow.trianglehead.clockwise")
-                                .font(.system(size: 25))
-                        }
-                        .disabled(videoLength == nil)
                     }
                     Spacer()
                 }
