@@ -226,20 +226,16 @@ struct SettingsView: View {
                     Label("Packages", systemImage: "shippingbox")
                 }
                 
-                if let vlcLicenseURL = Bundle.main.url(forResource: "VLCKitLicense", withExtension: "txt") {
-                    NavigationLink {
-                        LicenseView(name: "VLCKit", url: vlcLicenseURL)
-                    } label: {
-                        Label("VLCKit", image: "VLCLogo")
-                    }
+                NavigationLink {
+                    LicenseView(name: "VLCKit")
+                } label: {
+                    Label("VLCKit", image: "VLCLogo")
                 }
                 
-                if let epgLicenseURL = Bundle.main.url(forResource: "EPGLicense", withExtension: "txt") {
-                    NavigationLink {
-                        LicenseView(name: "EPGStation", url: epgLicenseURL)
-                    } label: {
-                        Label("EPGStation", systemImage: "tv")
-                    }
+                NavigationLink {
+                    LicenseView(name: "EPGStation")
+                } label: {
+                    Label("EPGStation", systemImage: "tv")
                 }
             } label: {
                 HStack {

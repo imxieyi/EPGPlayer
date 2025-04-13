@@ -9,7 +9,6 @@ import SwiftUI
 
 struct LicenseView: View {
     let name: String
-    let url: URL
     
     @State var content: String? = nil
     
@@ -48,6 +47,9 @@ struct LicenseView: View {
     
     func getContent() -> String {
         do {
+            guard let url = Bundle.main.url(forResource: name, withExtension: "txt") else {
+                return "License file \(name).txt not found"
+            }
             return try String(contentsOf: url, encoding: .utf8)
         } catch let error {
             return "Failed to load \(name) license: \(error.localizedDescription)"
