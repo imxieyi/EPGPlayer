@@ -3,6 +3,16 @@
     {
       "filename" : "vlc-svgrepo-com.svg",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "vlc-svgrepo-com-light.svg",
+      "idiom" : "universal"
     }
   ],
   "info" : {
