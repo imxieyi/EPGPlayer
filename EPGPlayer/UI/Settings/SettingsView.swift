@@ -5,7 +5,9 @@
 //  Created by Yi Xie on 2025/03/30.
 //
 
+import Foundation
 import SwiftUI
+import LicenseList
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
@@ -30,6 +32,7 @@ struct SettingsView: View {
                 playerSection
                 storageSection
                 resetSection
+                aboutSection
                 #if DEBUG
                 debugSection
                 #endif
@@ -43,10 +46,10 @@ struct SettingsView: View {
         Section {
             if userSettings.serverUrl != "" {
                 Text(verbatim: userSettings.serverUrl)
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.secondary)
                 if appState.serverVersion != "" {
                     Text("Server version: \(appState.serverVersion)")
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.secondary)
                 } else if appState.clientState == .authNeeded {
                     Button("Login") {
                         appState.isAuthenticating = true
@@ -57,7 +60,7 @@ struct SettingsView: View {
                 }
             } else {
                 Text("Please set EPGStation URL")
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.secondary)
             }
             
             Button("Set URL") {
@@ -130,7 +133,7 @@ struct SettingsView: View {
                     + (currentDownloadsSize == nil ? Text("Calculating") : Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(currentDownloadsSize!))))
                 }
             }
-            .foregroundStyle(.gray)
+            .foregroundStyle(.secondary)
             
             Group {
                 if let downloadSizeError {
@@ -140,11 +143,11 @@ struct SettingsView: View {
                     + (currentDatabaseSize == nil ? Text("Calculating") : Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(currentDatabaseSize!))))
                 }
             }
-            .foregroundStyle(.gray)
+            .foregroundStyle(.secondary)
             
             HStack {
                 Text("Image cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     URLCache.imageCache.removeAllCachedResponses()
@@ -195,6 +198,67 @@ struct SettingsView: View {
             }
         } header: {
             Label("Reset", systemImage: "arrow.counterclockwise")
+        }
+    }
+    
+    var aboutSection: some View {
+        let appName = Bundle.main.infoDictionary?[kCFBundleNameKey as String] as? String
+        return Section {
+            Button {
+                UIApplication.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer")!)
+            } label: {
+                HStack {
+                    Text("\(appName ?? "EPGPlayer") on GitHub")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.primary)
+            
+            Menu {
+                NavigationLink {
+                    LicenseListView()
+                        .licenseViewStyle(.withRepositoryAnchorLink)
+                        .navigationTitle("Licenses")
+                        .navigationBarTitleDisplayMode(.inline)
+                } label: {
+                    Label("Packages", systemImage: "shippingbox")
+                }
+                
+                if let vlcLicenseURL = Bundle.main.url(forResource: "VLCKitLicense", withExtension: "txt") {
+                    NavigationLink {
+                        LicenseView(name: "VLCKit", url: vlcLicenseURL)
+                    } label: {
+                        Label("VLCKit", image: "VLCLogo")
+                    }
+                }
+                
+                if let epgLicenseURL = Bundle.main.url(forResource: "EPGLicense", withExtension: "txt") {
+                    NavigationLink {
+                        LicenseView(name: "EPGStation", url: epgLicenseURL)
+                    } label: {
+                        Label("EPGStation", systemImage: "tv")
+                    }
+                }
+            } label: {
+                HStack {
+                    Text("Licenses")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .foregroundStyle(.primary)
+        } header: {
+            Label("About", systemImage: "info.circle")
+        } footer: {
+            if let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String,
+               let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+                Text(verbatim: "\(appName ?? "EPGPlayer") \(shortVersion) (\(buildNumber))")
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
     

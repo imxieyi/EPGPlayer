@@ -64,6 +64,9 @@ struct LiveChannelsView: View {
                         }
                         .tint(.primary)
                     }
+                    .refreshable {
+                        refresh()
+                    }
                 } else if case .error(let message) = loadingState {
                     ContentUnavailableView {
                         if appState.clientState == .setupNeeded {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A4BA3BC2DABF6DB00E9DF5D /* LicenseList in Frameworks */ = {isa = PBXBuildFile; productRef = 8A4BA3BB2DABF6DB00E9DF5D /* LicenseList */; };
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
@@ -107,6 +108,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A4BA3BC2DABF6DB00E9DF5D /* LicenseList in Frameworks */,
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
@@ -230,6 +232,7 @@
 				8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
 				8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
 				8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
+				8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -560,6 +563,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cybozu/LicenseList.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.1;
+			};
+		};
 		8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-openapi-generator";
@@ -595,6 +606,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		8A4BA3BB2DABF6DB00E9DF5D /* LicenseList */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */;
+			productName = LicenseList;
+		};
 		8A7667E52D946A54008E69F7 /* OpenAPIRuntime */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
