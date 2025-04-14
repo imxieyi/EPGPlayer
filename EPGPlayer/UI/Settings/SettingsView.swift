@@ -81,6 +81,8 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) {
                     serverUrl = userSettings.serverUrl
                 }
+            } message: {
+                Text("Don't add \"/api\" at the end of URL.")
             }
             .alert("Invalid URL", isPresented: $showServerUrlInvalidAlert) {
                 Button("Close", role: .cancel) {
@@ -146,12 +148,14 @@ struct SettingsView: View {
             .foregroundStyle(.secondary)
             
             HStack {
-                Text("Image cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
+                Text("Cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     URLCache.imageCache.removeAllCachedResponses()
-                    currentCacheSize = 0
+                    DispatchQueue.main.async {
+                        currentCacheSize = URLCache.imageCache.currentDiskUsage
+                    }
                 } label: {
                     Image(systemName: "trash")
                 }
@@ -209,6 +213,18 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Text("\(appName ?? "EPGPlayer") on GitHub")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.primary)
+            
+            Button {
+                UIApplication.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer/issues/new")!)
+            } label: {
+                HStack {
+                    Text("Report issues")
                     Spacer()
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.secondary)

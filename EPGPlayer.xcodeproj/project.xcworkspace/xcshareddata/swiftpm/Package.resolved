@@ -1,13 +1,13 @@
 {
-  "originHash" : "f12633c02aff425d2d202c4a24631f40a60a209734735e14a3208cab1a03945b",
+  "originHash" : "684c47c7082e17efe6dd771b2ff90c667c20f78691397846b51c7365f1e1a44e",
   "pins" : [
     {
       "identity" : "dynamic",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/mhdhejazi/Dynamic.git",
       "state" : {
-        "revision" : "ab9a2570862d54aed2663691bb767f881226a12f",
-        "version" : "1.2.0"
+        "branch" : "master",
+        "revision" : "772883073d044bc754d401cabb6574624eb3778f"
       }
     },
     {

@@ -121,6 +121,7 @@ class VLCPlayerViewController: UIViewController {
             mediaPlayer.drawable = self
             playerEvents?.setExternalPlay.send(false)
         }
+        mediaPlayer.audio?.passthrough = true
         mediaPlayer.delegate = delegate
 
         reload()

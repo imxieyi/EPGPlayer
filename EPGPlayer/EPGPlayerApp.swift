@@ -110,6 +110,11 @@ struct EPGPlayerApp: App {
                         } catch let error {
                             print("Failed to schedule notification: \(error.localizedDescription)")
                         }
+                        do {
+                            try await UNUserNotificationCenter.current().setBadgeCount(0)
+                        } catch let error {
+                            print("Failed to update badge cound: \(error.localizedDescription)")
+                        }
                     }
                 }
             })
