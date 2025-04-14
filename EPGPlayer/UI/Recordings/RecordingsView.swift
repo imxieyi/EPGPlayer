@@ -21,94 +21,52 @@ struct RecordingsView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if case .loading = loadingState {
-                    ProgressView()
-                        .controlSize(.large)
-                        .padding()
-                } else if case .loaded = loadingState {
-                    ScrollView {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
-                            ForEach(recorded) { item in
-                                NavigationLink {
-                                    RecordingDetailView(item: item)
-                                } label: {
-                                    RecordingCell(item: item)
-                                }
-                                .tint(.primary)
-                                .id(item.id)
+            ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
+                refresh(waitTime: waitTime)
+            }, content: {
+                ScrollView {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
+                        ForEach(recorded) { item in
+                            NavigationLink {
+                                RecordingDetailView(item: item)
+                            } label: {
+                                RecordingCell(item: item)
                             }
-                            if case .loaded = loadingMoreState, recorded.count < totalCount {
-                                Spacer()
-                                    .onAppear {
-                                        loadMore()
-                                    }
-                            }
+                            .tint(.primary)
+                            .id(item.id)
                         }
-                        .padding(.horizontal)
-                        if recorded.count < totalCount {
-                            if case .loading = loadingMoreState {
-                                ProgressView()
-                                    .controlSize(.large)
-                            } else if case .error(let message) = loadingMoreState {
-                                ContentUnavailableView {
-                                    Label("Error loading content", systemImage: "xmark.circle")
-                                } description: {
-                                    message
-                                }
-                            }
-                        }
-                        
-                        if appState.isOnMac {
+                        if case .loaded = loadingMoreState, recorded.count < totalCount {
                             Spacer()
-                                .frame(height: 10)
+                                .onAppear {
+                                    loadMore()
+                                }
                         }
                     }
-                    .refreshable {
-                        refresh()
-                    }
-                } else if case .error(let message) = loadingState {
-                    ContentUnavailableView {
-                        if appState.clientState == .setupNeeded {
-                            Label("Setup needed", systemImage: "exclamationmark.triangle")
-                        } else if appState.clientState == .authNeeded {
-                            Label("Authentication required", systemImage: "exclamationmark.triangle")
-                        } else {
-                            Label("Error loading content", systemImage: "xmark.circle")
-                        }
-                    } description: {
-                        message
-                    } actions: {
-                        if appState.clientState == .authNeeded {
-                            Button("Login") {
-                                appState.isAuthenticating = true
-                            }
-                        } else if appState.clientState == .setupNeeded {
-                            Button("Go to settings") {
-                                activeTab = .settings
+                    .padding(.horizontal)
+                    if recorded.count < totalCount {
+                        if case .loading = loadingMoreState {
+                            ProgressView()
+                                .controlSize(.large)
+                        } else if case .error(let message) = loadingMoreState {
+                            ContentUnavailableView {
+                                Label("Error loading content", systemImage: "xmark.circle")
+                            } description: {
+                                message
                             }
                         }
                     }
-                } else {
-                    EmptyView()
+                    
+                    if appState.isOnMac {
+                        Spacer()
+                            .frame(height: 10)
+                    }
                 }
-            }
+                .refreshable {
+                    refresh()
+                }
+            })
             .navigationTitle("Recordings")
             .navigationBarTitleDisplayMode(.inline)
-        }
-        .onChange(of: appState.isAuthenticating) { oldValue, newValue in
-            if oldValue && !newValue {
-                refresh(waitTime: .seconds(1))
-            }
-        }
-        .onChange(of: appState.clientState) { _, newValue in
-            if newValue == .initialized {
-                refresh()
-            } else if newValue == .authNeeded {
-                loadingState = .error(Text("Redirection detected"))
-            } else if newValue == .setupNeeded {
-                loadingState = .error(Text("Please set EPGStation URL"))
-            }
         }
         .onAppear {
             if recorded.isEmpty {
@@ -119,7 +77,6 @@ struct RecordingsView: View {
     
     func refresh(waitTime: Duration = .zero) {
         guard appState.clientState == .initialized else {
-            loadingState = .error(appState.serverError)
             return
         }
         recorded = []
@@ -137,11 +94,6 @@ struct RecordingsView: View {
                 print("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
                 print("Failed to load recordings: \(error)")
-                if let error = error as? ClientError, error.response?.status.kind == .redirection {
-                    appState.clientState = .authNeeded
-                    loadingState = .error(Text("Redirection detected"))
-                    return
-                }
                 loadingState = .error(Text(verbatim: error.localizedDescription))
                 records = []
             }
@@ -166,7 +118,7 @@ struct RecordingsView: View {
         loadingMoreState = .loading
         Task {
             while case .loading = loadingState {
-                try await Task.sleep(for: .milliseconds(100))
+                try await Task.sleep(for: .milliseconds(300))
             }
             if case .error(_) = loadingState {
                 return
@@ -185,12 +137,6 @@ struct RecordingsView: View {
             }
         }
     }
-}
-
-enum LoadingState {
-    case loading
-    case error(Text)
-    case loaded
 }
 
 extension Components.Schemas.RecordedItem: Identifiable {

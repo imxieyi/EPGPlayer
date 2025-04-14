@@ -51,11 +51,15 @@ struct SettingsView: View {
                     Text("Server version: \(appState.serverVersion)")
                         .foregroundStyle(.secondary)
                 } else if appState.clientState == .authNeeded {
+                    if let clientError = appState.clientError {
+                        clientError
+                            .foregroundStyle(.orange)
+                    }
                     Button("Login") {
                         appState.isAuthenticating = true
                     }
                 } else {
-                    appState.serverError
+                    (appState.clientError ?? Text("Unknown error"))
                         .foregroundStyle(.red)
                 }
             } else {

@@ -21,12 +21,10 @@ struct LiveChannelsView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                if case .loading = loadingState {
-                    ProgressView()
-                        .controlSize(.large)
-                        .padding()
-                } else if case .loaded = loadingState, let liveStreamConfig {
+            ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
+                refresh(waitTime: waitTime)
+            } content: {
+                if let liveStreamConfig {
                     List(channels) { channel in
                         Menu {
                             if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
@@ -67,51 +65,15 @@ struct LiveChannelsView: View {
                     .refreshable {
                         refresh()
                     }
-                } else if case .error(let message) = loadingState {
-                    ContentUnavailableView {
-                        if appState.clientState == .setupNeeded {
-                            Label("Setup needed", systemImage: "exclamationmark.triangle")
-                        } else if appState.clientState == .authNeeded {
-                            Label("Authentication required", systemImage: "exclamationmark.triangle")
-                        } else {
-                            Label("Error loading content", systemImage: "xmark.circle")
-                        }
-                    } description: {
-                        message
-                    } actions: {
-                        if appState.clientState == .authNeeded {
-                            Button("Login") {
-                                appState.isAuthenticating = true
-                            }
-                        } else if appState.clientState == .setupNeeded {
-                            Button("Go to settings") {
-                                activeTab = .settings
-                            }
-                        }
-                    }
                 } else {
-                    ContentUnavailableView("Unknown error", systemImage: "exclamationmark.triangle")
+                    ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
                 }
             }
             .navigationTitle("Live")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .onChange(of: appState.isAuthenticating) { oldValue, newValue in
-            if oldValue && !newValue {
-                refresh(waitTime: .seconds(1))
-            }
-        }
-        .onChange(of: appState.clientState) { _, newValue in
-            if newValue == .initialized {
-                refresh()
-            } else if newValue == .authNeeded {
-                loadingState = .error(Text("Redirection detected"))
-            } else if newValue == .setupNeeded {
-                loadingState = .error(Text("Please set EPGStation URL"))
-            }
-        }
         .onAppear {
-            if channels.isEmpty {
+            if channels.isEmpty || liveStreamConfig == nil {
                 refresh()
             }
         }
@@ -119,7 +81,6 @@ struct LiveChannelsView: View {
     
     func refresh(waitTime: Duration = .zero) {
         guard appState.clientState == .initialized else {
-            loadingState = .error(appState.serverError)
             return
         }
         channels = []
@@ -137,11 +98,6 @@ struct LiveChannelsView: View {
                 print("Loaded \(channels.count) channels")
             } catch let error {
                 print("Failed to load recordings: \(error)")
-                if let error = error as? ClientError, error.response?.status.kind == .redirection {
-                    appState.clientState = .authNeeded
-                    loadingState = .error(Text("Redirection detected"))
-                    return
-                }
                 loadingState = .error(Text(verbatim: error.localizedDescription))
             }
         }

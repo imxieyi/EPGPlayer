@@ -56,13 +56,7 @@ struct EPGPlayerApp: App {
                 guard oldValue != newValue else {
                     return
                 }
-                if newValue != "", let url = URL(string: newValue) {
-                    appState.client = EPGClient(endpoint: url.appending(path: "api"))
-                    appState.clientState = .notInitialized
-                    refreshServerInfo()
-                    return
-                }
-                appState.client = EPGClient()
+                refreshClient(newValue)
             })
             .onChange(of: appState.isAuthenticating) { oldValue, newValue in
                 if oldValue && !newValue {
@@ -164,13 +158,21 @@ struct EPGPlayerApp: App {
                 if appState.isOnMac {
                     userSettings.forceLandscape = false
                 }
-                if userSettings.serverUrl != "", let url = URL(string: userSettings.serverUrl) {
-                    appState.client = EPGClient(endpoint: url.appending(path: "api"))
-                    appState.clientState = .notInitialized
-                    refreshServerInfo()
-                } else {
-                    appState.clientState = .setupNeeded
-                }
+                refreshClient(userSettings.serverUrl)
+            }
+        }
+    }
+    
+    func refreshClient(_ urlString: String) {
+        appState.clientError = nil
+        if urlString != "", let url = URL(string: urlString) {
+            appState.clientState = .notInitialized
+            appState.client = EPGClient(endpoint: url.appending(path: "api"))
+            refreshServerInfo()
+        } else {
+            appState.clientState = .setupNeeded
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                appState.client = EPGClient()
             }
         }
     }
@@ -178,19 +180,27 @@ struct EPGPlayerApp: App {
     func refreshServerInfo(waitTime: Duration = .zero) {
         Task {
             do {
+                appState.clientState = .notInitialized
+                appState.serverVersion = ""
                 try await Task.sleep(for: waitTime)
                 appState.serverVersion = try await appState.client.api.getVersion().ok.body.json.version
+                appState.clientState = .initialized
             } catch let error {
                 print("Failed to get server version: \(error)")
-                if let error = error as? ClientError, error.response?.status.kind == .redirection {
-                    appState.clientState = .authNeeded
-                    appState.serverError = Text("Redirection detected")
-                    return
+                if let error = error as? ClientError {
+                    if error.response?.status == .unauthorized {
+                        appState.clientState = .authNeeded
+                        appState.clientError = Text(verbatim: "401 Unauthorized")
+                        return
+                    } else if error.response?.status.kind == .redirection {
+                        appState.clientState = .authNeeded
+                        appState.clientError = Text("Redirection detected")
+                        return
+                    }
                 }
-                appState.serverError = Text("Failed to get server version: \(error.localizedDescription)")
+                appState.clientError = Text("Failed to get server version: \(error.localizedDescription)")
+                appState.clientState = .error
             }
-            
-            appState.clientState = .initialized
         }
     }
 }

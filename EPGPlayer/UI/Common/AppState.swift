@@ -13,11 +13,11 @@ final class AppState {
     var client = EPGClient()
     
     var serverVersion: String = ""
-    var serverError = Text(verbatim: "")
     var serverId: String { client.endpoint.absoluteString }
     
     var isAuthenticating = false
     var clientState: ClientState = .notInitialized
+    var clientError: Text? = nil
     
     var playingItem: PlayerItem? = nil
     
@@ -33,6 +33,7 @@ enum ClientState {
     case initialized
     case authNeeded
     case setupNeeded
+    case error
 }
 
 class PlayerItem: Identifiable {
