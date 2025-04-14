@@ -47,7 +47,7 @@ struct PlayerView: View {
     @State var textTracks: [MediaTrack] = []
     
     @State var idleTimer: Timer? = nil
-    @State var uiHelper: UIHelper? = nil
+    @State var macHelper: MacNativeHelper? = nil
     @State var lastMouseMoveHandled: TimeInterval = 0
     
     @State var savedPlaybackPosition: SavedPlaybackPosition? = nil
@@ -61,6 +61,11 @@ struct PlayerView: View {
                 .onTapGesture {
                     withAnimation(.default.speed(2)) {
                         playerUIOpacity = playerUIOpacity == 0 ? 1 : 0
+                    }
+                }
+                .onTapGesture(count: 2) {
+                    if let macHelper {
+                        macHelper.toggleFullscreen()
                     }
                 }
             
@@ -128,9 +133,9 @@ struct PlayerView: View {
                             }
                         }
                         
-                        if let uiHelper {
+                        if let macHelper {
                             Button {
-                                uiHelper.toggleFullscreen()
+                                macHelper.toggleFullscreen()
                             } label: {
                                 Image(systemName: isMacFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                             }
@@ -199,8 +204,8 @@ struct PlayerView: View {
             if let idleTimer {
                 idleTimer.invalidate()
             }
-            uiHelper?.stopMonitorMouseMovement()
-            uiHelper?.showMouseCursor()
+            macHelper?.stopMonitorMouseMovement()
+            macHelper?.showMouseCursor()
             savePlaybackPosition()
         }
         .onChange(of: scenePhase, { _, newValue in
@@ -347,23 +352,23 @@ struct PlayerView: View {
             return
         }
         do {
-            let uiHelper = try MacNativeBundle.loadUIHelper()
-            uiHelper.startObservingFullScreenChange { isFullscreen in
+            let macHelper = try MacNativeHelper()
+            macHelper.startObservingFullScreenChange { isFullscreen in
                 isMacFullscreen = isFullscreen
             }
-            self.uiHelper = uiHelper
+            self.macHelper = macHelper
         } catch let error {
             logger.error("Unable to load Mac UI helper: \(error)")
         }
     }
     
     func setupMacMouseMonitoring() {
-        guard appState.isOnMac, let uiHelper else {
+        guard appState.isOnMac, let macHelper else {
             return
         }
-        uiHelper.startMonitorMouseMovement {
-            uiHelper.showMouseCursor()
-            guard uiHelper.isMousePointerInWindow() else {
+        macHelper.startMonitorMouseMovement {
+            macHelper.showMouseCursor()
+            guard macHelper.isMousePointerInWindow() else {
                 return
             }
             let timestamp = Date().timeIntervalSinceReferenceDate
@@ -440,8 +445,8 @@ struct PlayerView: View {
         idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(userSettings.inactiveTimer), repeats: false) { _ in
             Task {
                 await MainActor.run {
-                    if let uiHelper, uiHelper.isMousePointerInWindow() {
-                        uiHelper.hideMouseCursor()
+                    if let macHelper, macHelper.isMousePointerInWindow() {
+                        macHelper.hideMouseCursor()
                     }
                     withAnimation(.default.speed(2)) {
                         playerUIOpacity = 0
