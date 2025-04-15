@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import OpenAPIRuntime
+import KeychainSwift
 @preconcurrency import UserNotifications
 
 @main
@@ -60,7 +61,7 @@ struct EPGPlayerApp: App {
             })
             .onChange(of: appState.isAuthenticating) { oldValue, newValue in
                 if oldValue && !newValue {
-                    refreshServerInfo(waitTime: .seconds(1))
+                    refreshClient(userSettings.serverUrl, waitTime: .seconds(1))
                 }
             }
             .onChange(of: appState.activeDownloads, initial: true, { oldValue, newValue in
@@ -163,12 +164,16 @@ struct EPGPlayerApp: App {
         }
     }
     
-    func refreshClient(_ urlString: String) {
+    func refreshClient(_ urlString: String, waitTime: Duration = .zero) {
         appState.clientError = nil
         if urlString != "", let url = URL(string: urlString) {
             appState.clientState = .notInitialized
-            appState.client = EPGClient(endpoint: url.appending(path: "api"))
-            refreshServerInfo()
+            var headers: [String : String] = [:]
+            if let basicAuth = KeychainSwift().get("basic:\(urlString)") {
+                headers["authorization"] = "Basic \(basicAuth)"
+            }
+            appState.client = EPGClient(endpoint: url.appending(path: "api"), headers: headers)
+            refreshServerInfo(waitTime: waitTime)
         } else {
             appState.clientState = .setupNeeded
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -191,9 +196,19 @@ struct EPGPlayerApp: App {
                     if error.response?.status == .unauthorized {
                         appState.clientState = .authNeeded
                         appState.clientError = Text(verbatim: "401 Unauthorized")
+                        if let wwwAuthticate = error.response?.headerFields[.wwwAuthenticate] {
+                            if wwwAuthticate.hasPrefix("Basic") {
+                                appState.authType = .basicAuth
+                            } else {
+                                appState.authType = .unknown(wwwAuthticate)
+                            }
+                        } else {
+                            appState.clientState = .error
+                        }
                         return
                     } else if error.response?.status.kind == .redirection {
                         appState.clientState = .authNeeded
+                        appState.authType = .redirect
                         appState.clientError = Text("Redirection detected")
                         return
                     }

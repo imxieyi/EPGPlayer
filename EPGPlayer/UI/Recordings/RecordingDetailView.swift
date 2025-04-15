@@ -22,7 +22,7 @@ struct RecordingDetailView: View {
         ScrollView(.vertical) {
             VStack(alignment: .center) {
                 if let thumbnail = item.thumbnail {
-                    CachedAsyncImage(url: thumbnail, urlCache: .imageCache) { phase in
+                    AsyncImageWithHeaders(url: thumbnail, headers: appState.client.headers) { phase in
                         if let image = phase.image {
                             image
                                 .resizable()

@@ -9,6 +9,7 @@ import WebKit
 
 struct AuthWebView: UIViewRepresentable {
     let url: URL
+    let expectedContentType: String
     
     @Binding var isAuthenticaing: Bool
     
@@ -23,21 +24,33 @@ struct AuthWebView: UIViewRepresentable {
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self, expectedUrl: url)
+        Coordinator(parent: self, expectedUrl: url, expectedContentType: expectedContentType)
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
-        
         let parent: AuthWebView
         let expectedUrl: URL
+        let expectedContentType: String
         
-        init(parent: AuthWebView, expectedUrl: URL) {
+        private var contentType: String?
+        
+        init(parent: AuthWebView, expectedUrl: URL, expectedContentType: String) {
             self.parent = parent
             self.expectedUrl = expectedUrl
+            self.expectedContentType = expectedContentType
+        }
+        
+        func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
+            contentType = (navigationResponse.response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Type")
+            return .allow
         }
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            if webView.url == expectedUrl {
+            guard let contentType else {
+                return
+            }
+            print("Webview content type: \(contentType)")
+            if webView.url == expectedUrl && contentType.lowercased().hasPrefix(expectedContentType) {
                 parent.isAuthenticaing = false
             }
         }

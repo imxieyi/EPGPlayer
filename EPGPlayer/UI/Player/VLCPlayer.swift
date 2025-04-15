@@ -15,6 +15,7 @@ fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGP
 
 struct VLCPlayer: UIViewControllerRepresentable {
     let videoItem: any VideoItem
+    let httpHeaders: [String: String]
     let playerEvents: PlayerEvents
     
     @Binding var playerState: VLCMediaPlayerState
@@ -26,6 +27,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.delegate = context.coordinator
         playerVC.playerEvents = playerEvents
         playerVC.videoItem = videoItem
+        playerVC.httpHeaders = httpHeaders
         return playerVC
     }
 
@@ -34,6 +36,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
             return
         }
         uiViewController.videoItem = videoItem
+        uiViewController.httpHeaders = httpHeaders
         uiViewController.reload()
     }
     
@@ -98,6 +101,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
 
 class VLCPlayerViewController: UIViewController {
     var mediaPlayer = VLCMediaPlayer()
+    var httpHeaders: [String: String]?
     var videoItem: VideoItem?
     var delegate: VLCPlayer.Coordinator?
     var playerEvents: PlayerEvents?
@@ -251,7 +255,7 @@ class VLCPlayerViewController: UIViewController {
         pipController?.invalidatePlaybackState()
         
         // Prevent VLC deadlock causing main thread blocking.
-        Task.detached(priority: .background) { [mediaPlayer] in
+        Task(priority: .background) { [mediaPlayer] in
             while mediaPlayer.state != .stopped {
                 logger.warning("VLCPlayer not stopped")
                 try await Task.sleep(for: .milliseconds(100))
@@ -278,6 +282,10 @@ class VLCPlayerViewController: UIViewController {
             mediaPlayer.media = media
             HTTPCookieStorage.shared.cookies?.forEach { cookie in
                 media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
+            }
+            httpHeaders?.forEach { (key: String, value: String) in
+                media?.storeHeader(forName: key, value: value)
+                print("Store header: \(key)")
             }
             mediaPlayer.play()
         } else {

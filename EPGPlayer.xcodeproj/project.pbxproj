@@ -7,11 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8A4BA3BC2DABF6DB00E9DF5D /* LicenseList in Frameworks */ = {isa = PBXBuildFile; productRef = 8A4BA3BB2DABF6DB00E9DF5D /* LicenseList */; };
 		8A4BA5682DAD344500E9DF5D /* Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = 8A4BA5672DAD344500E9DF5D /* Dynamic */; };
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
+		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -87,8 +87,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A4BA5682DAD344500E9DF5D /* Dynamic in Frameworks */,
-				8A4BA3BC2DABF6DB00E9DF5D /* LicenseList in Frameworks */,
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
+				8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
 			);
@@ -190,8 +190,8 @@
 				8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
 				8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
 				8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
-				8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */,
 				8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */,
+				8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -445,14 +445,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/cybozu/LicenseList.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.0.1;
-			};
-		};
 		8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/mhdhejazi/Dynamic.git";
@@ -493,14 +485,17 @@
 				minimumVersion = 2.1.1;
 			};
 		};
+		8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/evgenyneu/keychain-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		8A4BA3BB2DABF6DB00E9DF5D /* LicenseList */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8A4BA3BA2DABF6DB00E9DF5D /* XCRemoteSwiftPackageReference "LicenseList" */;
-			productName = LicenseList;
-		};
 		8A4BA5672DAD344500E9DF5D /* Dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */;
@@ -525,6 +520,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
 			productName = CachedAsyncImage;
+		};
+		8AA515152DADAE38006C7AA7 /* KeychainSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */;
+			productName = KeychainSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

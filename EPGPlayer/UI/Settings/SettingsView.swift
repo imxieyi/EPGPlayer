@@ -7,13 +7,12 @@
 
 import Foundation
 import SwiftUI
-import LicenseList
+//import LicenseList
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppState.self) private var appState
     @EnvironmentObject private var userSettings: UserSettings
-    @EnvironmentObject private var client: EPGClient
     
     @State private var showServerUrlAlert: Bool = false
     @State private var serverUrl: String = ""
@@ -237,14 +236,14 @@ struct SettingsView: View {
             .tint(.primary)
             
             Menu {
-                NavigationLink {
-                    LicenseListView()
-                        .licenseViewStyle(.withRepositoryAnchorLink)
-                        .navigationTitle("Licenses")
-                        .navigationBarTitleDisplayMode(.inline)
-                } label: {
-                    Label("Packages", systemImage: "shippingbox")
-                }
+//                NavigationLink {
+//                    LicenseListView()
+//                        .licenseViewStyle(.withRepositoryAnchorLink)
+//                        .navigationTitle("Licenses")
+//                        .navigationBarTitleDisplayMode(.inline)
+//                } label: {
+//                    Label("Packages", systemImage: "shippingbox")
+//                }
                 
                 NavigationLink {
                     LicenseView(name: "VLCKit")

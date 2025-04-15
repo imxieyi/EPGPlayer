@@ -407,6 +407,16 @@
         }
       }
     },
+    "Login info" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "登录信息"
+          }
+        }
+      }
+    },
     "Never" : {
       "localizations" : {
         "zh-Hans" : {
@@ -447,8 +457,15 @@
         }
       }
     },
-    "Packages" : {
-      "shouldTranslate" : false
+    "Password" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "密码"
+          }
+        }
+      }
     },
     "Play" : {
       "localizations" : {
@@ -651,6 +668,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知错误"
+          }
+        }
+      }
+    },
+    "Unsupported auth type" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的认证方式"
+          }
+        }
+      }
+    },
+    "Username" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "用户名"
           }
         }
       }

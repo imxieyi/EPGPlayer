@@ -19,15 +19,19 @@ class EPGClient: ObservableObject {
     }
     
     let endpoint: URL!
+    let headers: [String: String]
     
-    init(endpoint: URL? = nil) {
+    init(endpoint: URL? = nil, headers: [String: String] = [:]) {
+        self.headers = headers
         guard let endpoint else {
             apiClient = nil
             self.endpoint = nil
             return
         }
         self.endpoint = endpoint
-        let session = URLSession(configuration: .default, delegate: Delegate(), delegateQueue: OperationQueue.main)
+        let configuration = URLSessionConfiguration.default
+        configuration.httpAdditionalHeaders = headers
+        let session = URLSession(configuration: configuration, delegate: Delegate(), delegateQueue: OperationQueue.main)
         apiClient = Client(serverURL: endpoint, transport: URLSessionTransport(configuration: URLSessionTransport.Configuration(session: session)))
     }
     

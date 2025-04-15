@@ -17,6 +17,7 @@ final class AppState {
     
     var isAuthenticating = false
     var clientState: ClientState = .notInitialized
+    var authType: AuthType = .redirect
     var clientError: Text? = nil
     
     var playingItem: PlayerItem? = nil
@@ -34,6 +35,12 @@ enum ClientState {
     case authNeeded
     case setupNeeded
     case error
+}
+
+enum AuthType {
+    case redirect
+    case basicAuth
+    case unknown(String)
 }
 
 class PlayerItem: Identifiable {

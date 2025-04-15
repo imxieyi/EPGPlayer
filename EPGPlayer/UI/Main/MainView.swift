@@ -48,16 +48,27 @@ struct MainView: View {
         }
         .sheet(isPresented: $appState.isAuthenticating) {
             NavigationView {
-                AuthWebView(url: appState.client.endpoint.appending(path: "version"), isAuthenticaing: $appState.isAuthenticating)
-                    .navigationTitle("Login")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Close") {
-                                appState.isAuthenticating = false
-                            }
+                Group {
+                    switch appState.authType {
+                    case .redirect:
+                        AuthWebView(url: appState.client.endpoint.appending(path: "version"), expectedContentType: "application/json", isAuthenticaing: $appState.isAuthenticating)
+                            .navigationTitle("Login")
+                    case .basicAuth:
+                        BasicAuthView()
+                            .navigationTitle("Login")
+                    case .unknown(let type):
+                        ContentUnavailableView("Unsupported auth type", systemImage: "lock.trianglebadge.exclamationmark", description: Text(verbatim: type))
+                            .navigationTitle("Error")
+                    }
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Close") {
+                            appState.isAuthenticating = false
                         }
                     }
+                }
             }
         }
     }

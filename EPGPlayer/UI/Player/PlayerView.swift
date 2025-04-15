@@ -56,7 +56,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoItem: item.videoItem, playerEvents: playerEvents, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
+            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .onTapGesture {
                     withAnimation(.default.speed(2)) {

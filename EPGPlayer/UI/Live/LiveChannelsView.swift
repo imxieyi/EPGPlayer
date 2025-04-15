@@ -41,7 +41,7 @@ struct LiveChannelsView: View {
                             }
                         } label: {
                             HStack {
-                                CachedAsyncImage(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), urlCache: .imageCache) { phase in
+                                AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), headers: appState.client.headers) { phase in
                                     if let image = phase.image {
                                         image
                                             .resizable()
