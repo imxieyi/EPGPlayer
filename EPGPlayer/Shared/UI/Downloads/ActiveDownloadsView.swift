@@ -74,6 +74,7 @@ struct ActiveDownloadsView: View {
                         }
                     }
                 }
+                #if !os(macOS)
                 HStack {
                     Spacer()
                     Text("Downloads will continue in the background. But killing the app will cancel all downloads.")
@@ -81,11 +82,14 @@ struct ActiveDownloadsView: View {
                         .foregroundStyle(.secondary)
                     Spacer()
                 }
+                #endif
             }
-            .navigationBarTitle("Downloading")
+            .navigationTitle("Downloading")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: appState.isNativeMac ? .cancellationAction : .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
@@ -111,6 +115,10 @@ struct ActiveDownloadsView: View {
                 monitoringTask?.cancel()
             }
         }
+        #if os(macOS)
+        .frame(width: 400)
+        .presentationSizing(.form.fitted(horizontal: false, vertical: true))
+        #endif
     }
     
     func restartDownload(_ download: ActiveDownload, index: Int) {

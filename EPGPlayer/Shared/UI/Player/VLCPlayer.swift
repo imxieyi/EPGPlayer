@@ -21,8 +21,26 @@ struct VLCPlayer: UIViewControllerRepresentable {
     @Binding var playerState: VLCMediaPlayerState
     @Binding var hadErrorState: Bool
     @Binding var hadPlayingState: Bool
-
+    
+    #if !os(macOS)
     func makeUIViewController(context: Context) -> VLCPlayerViewController {
+        return makeViewController(context: context)
+    }
+    
+    func updateUIViewController(_ uiViewController: VLCPlayerViewController, context: Context) {
+        updateViewController(uiViewController, context: context)
+    }
+    #else
+    func makeNSViewController(context: Context) -> VLCPlayerViewController {
+        return makeViewController(context: context)
+    }
+    
+    func updateNSViewController(_ nsViewController: VLCPlayerViewController, context: Context) {
+        updateViewController(nsViewController, context: context)
+    }
+    #endif
+
+    func makeViewController(context: Context) -> VLCPlayerViewController {
         let playerVC = VLCPlayerViewController()
         playerVC.delegate = context.coordinator
         playerVC.playerEvents = playerEvents
@@ -31,7 +49,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         return playerVC
     }
 
-    func updateUIViewController(_ uiViewController: VLCPlayerViewController, context: Context) {
+    func updateViewController(_ uiViewController: VLCPlayerViewController, context: Context) {
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
@@ -114,19 +132,25 @@ class VLCPlayerViewController: UIViewController {
         super.viewDidLoad()
         
         videoView = UIView(frame: view.bounds)
+        
+        #if os(macOS)
+        videoView.autoresizingMask = [.width, .height]
+        mediaPlayer.drawable = videoView
+        #else
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         videoView.isUserInteractionEnabled = false
-        view.addSubview(videoView)
-        
         if let externalView = ExternalDisplayHelper.instance.delegate?.viewController.view {
             mediaPlayer.drawable = externalView
             playerEvents?.setExternalPlay.send(true)
         } else {
-            mediaPlayer.drawable = self
+            mediaPlayer.drawable = videoView
             playerEvents?.setExternalPlay.send(false)
         }
+        #endif
         mediaPlayer.audio?.passthrough = true
         mediaPlayer.delegate = delegate
+        
+        view.addSubview(videoView)
 
         reload()
     }
@@ -226,6 +250,7 @@ class VLCPlayerViewController: UIViewController {
                 pipController.stopPictureInPicture()
             }
         })
+        #if !os(macOS)
         externalDisplayObservation = ExternalDisplayHelper.instance.observe(\.delegate, options: [.old, .new], changeHandler: { [weak self] helper, change in
             Task { @MainActor in
                 let newMediaPlayer = VLCMediaPlayer()
@@ -247,6 +272,7 @@ class VLCPlayerViewController: UIViewController {
                 self?.mediaPlayer.position = oldPosition
             }
         })
+        #endif
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -269,6 +295,7 @@ class VLCPlayerViewController: UIViewController {
         setPlaybackPositionListener?.cancel()
         setPlaybackTimeListener?.cancel()
         togglePIPModeListener?.cancel()
+        externalDisplayObservation?.invalidate()
     }
     
     func reload() {

@@ -52,7 +52,9 @@ struct PlayerView: View {
     
     @State var savedPlaybackPosition: SavedPlaybackPosition? = nil
     
+    #if !os(macOS)
     @State var originalOrientation: UIInterfaceOrientation?
+    #endif
     
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -119,6 +121,7 @@ struct PlayerView: View {
                             Image(systemName: "xmark")
                                 .contentShape(Rectangle())
                         }
+                        .buttonStyle(.borderless)
                         
                         Text(verbatim: item.title)
                             .lineLimit(1)
@@ -139,9 +142,12 @@ struct PlayerView: View {
                             } label: {
                                 Image(systemName: isMacFullscreen ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                             }
+                            .buttonStyle(.borderless)
                         }
                         
                         playerMenu
+                            .menuStyle(.button)
+                            .buttonStyle(.borderless)
                         
                         Spacer()
                             .frame(width: paddingSize)
@@ -178,6 +184,7 @@ struct PlayerView: View {
         .background(.black)
         .persistentSystemOverlays(.hidden)
         .onAppear {
+            #if !os(macOS)
             UIApplication.shared.addUserActivityTracker()
             originalOrientation = appDelegate.windowScene?.interfaceOrientation
             if userSettings.forceLandscape {
@@ -187,10 +194,12 @@ struct PlayerView: View {
 //                    logger.error("Unable to force landscape orientation: \(error)")
 //                })
             }
+            #endif
             setupMacFullscreenMonitoring()
             fetchSavedPlaybackPosition()
         }
         .onDisappear {
+            #if !os(macOS)
             UIApplication.shared.removeUserActivityTracker()
             if userSettings.forceLandscape {
                 appDelegate.orientationLock = .allButUpsideDown
@@ -201,6 +210,7 @@ struct PlayerView: View {
                 appDelegate.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
 //                appDelegate.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .allButUpsideDown))
             }
+            #endif
             if let idleTimer {
                 idleTimer.invalidate()
             }

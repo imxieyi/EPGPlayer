@@ -85,7 +85,11 @@ struct RecordingDetailView: View {
                                 Text("Play")
                             }
                         }
+                        .menuStyle(.button)
+                        .buttonStyle(.borderless)
                         RecordingDownloadMenu(item: item)
+                            .menuStyle(.button)
+                            .buttonStyle(.borderless)
                     }
                 }
                 

@@ -47,17 +47,30 @@
 			membershipExceptions = (
 				Dependency/.gitkeep,
 				Info.plist,
-				"Utils/MacNativeHelper/EPGPlayer-Bridging-Header.h",
+				"Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h",
 			);
+			platformFiltersByRelativePath = {
+				Platform/iOS/AppDelegate.swift = (ios, );
+				Platform/iOS/ExternalDisplay/ExternalDisplayHelper.swift = (ios, );
+				Platform/iOS/ExternalDisplay/ExternalLaunchScreen.storyboard = (ios, );
+				Platform/iOS/ExternalDisplay/ExternalSceneDelegate.swift = (ios, );
+				Platform/iOS/InteractDetection.swift = (ios, );
+				Platform/iOS/MacNativeHelper/MacNative.h = (ios, );
+				Platform/iOS/MacNativeHelper/MacNative.m = (ios, );
+				Platform/iOS/MacNativeHelper/MacNativeHelper.swift = (ios, );
+				Platform/macOS/AppDelegate.swift = (macos, );
+				Platform/macOS/MacNativeHelper.swift = (macos, );
+				Platform/macOS/UIKitTypes.swift = (macos, );
+			};
 			privateHeaders = (
-				Utils/MacNativeHelper/MacNative.h,
+				Platform/iOS/MacNativeHelper/MacNative.h,
 			);
 			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		8A7668582D95CE81008E69F7 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
+		8A6197DD2DAEE293004461F6 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
 				Dependency/VLCKit.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
@@ -74,7 +87,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				8A7668812D993761008E69F7 /* Exceptions for "EPGPlayer" folder in "EPGPlayer" target */,
-				8A7668582D95CE81008E69F7 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
+				8A6197DD2DAEE293004461F6 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
 			);
 			path = EPGPlayer;
 			sourceTree = "<group>";
@@ -362,8 +375,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -376,12 +391,17 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.EPGPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Utils/MacNativeHelper/EPGPlayer-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h";
+				"SWIFT_OBJC_BRIDGING_HEADER[sdk=macosx*]" = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -395,8 +415,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -409,12 +431,17 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.EPGPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Utils/MacNativeHelper/EPGPlayer-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h";
+				"SWIFT_OBJC_BRIDGING_HEADER[sdk=macosx*]" = "";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

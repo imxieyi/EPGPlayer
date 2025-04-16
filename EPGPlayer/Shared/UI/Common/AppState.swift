@@ -26,7 +26,17 @@ final class AppState {
     
     var activeDownloads: [ActiveDownload] = []
     
+    #if os(macOS)
+    let isNativeMac = true
+    #else
+    let isNativeMac = false
+    #endif
+    
+    #if os(macOS)
+    let isOnMac = true
+    #else
     let isOnMac: Bool = ProcessInfo().isiOSAppOnMac
+    #endif
 }
 
 enum ClientState {

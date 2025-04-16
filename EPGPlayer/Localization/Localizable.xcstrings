@@ -528,6 +528,9 @@
         }
       }
     },
+    "Refresh" : {
+
+    },
     "Report issues" : {
       "localizations" : {
         "zh-Hans" : {

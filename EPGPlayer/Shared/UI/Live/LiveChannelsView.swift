@@ -60,6 +60,8 @@ struct LiveChannelsView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+                        .menuStyle(.button)
+                        .buttonStyle(.borderless)
                         .tint(.primary)
                     }
                     .refreshable {
@@ -69,8 +71,21 @@ struct LiveChannelsView: View {
                     ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
                 }
             }
+            #if os(macOS)
+            .toolbar(content: {
+                ToolbarItem(placement: .navigation) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                }
+            })
+            #endif
             .navigationTitle("Live")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
         }
         .onAppear {
             if channels.isEmpty || liveStreamConfig == nil {

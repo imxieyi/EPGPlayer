@@ -25,6 +25,11 @@ struct RecordingsView: View {
                 refresh(waitTime: waitTime)
             }, content: {
                 ScrollView {
+                    #if os(macOS)
+                    Spacer()
+                        .frame(height: 10)
+                    #endif
+                    
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
                         ForEach(recorded) { item in
                             NavigationLink {
@@ -32,6 +37,9 @@ struct RecordingsView: View {
                             } label: {
                                 RecordingCell(item: item)
                             }
+                            #if os(macOS)
+                            .buttonStyle(.borderless)
+                            #endif
                             .tint(.primary)
                             .id(item.id)
                         }
@@ -56,17 +64,30 @@ struct RecordingsView: View {
                         }
                     }
                     
-                    if appState.isOnMac {
-                        Spacer()
-                            .frame(height: 10)
-                    }
+                    #if os(macOS)
+                    Spacer()
+                        .frame(height: 10)
+                    #endif
                 }
                 .refreshable {
                     refresh()
                 }
             })
+            #if os(macOS)
+            .toolbar(content: {
+                ToolbarItem(placement: .navigation) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                }
+            })
+            #endif
             .navigationTitle("Recordings")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
         }
         .onAppear {
             if recorded.isEmpty {

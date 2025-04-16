@@ -81,6 +81,7 @@ struct PlayerProgressControl: View {
                                 Image(systemName: "10.arrow.trianglehead.counterclockwise")
                                     .font(.system(size: 25))
                             }
+                            .buttonStyle(.borderless)
                             .disabled(videoLength == nil)
                             
                             Spacer()
@@ -94,6 +95,7 @@ struct PlayerProgressControl: View {
                                     .frame(width: 30, height: 30)
                                     .scaledToFit()
                             }
+                            .buttonStyle(.borderless)
                             
                             Spacer()
                                 .frame(width: 15)
@@ -104,6 +106,7 @@ struct PlayerProgressControl: View {
                                 Image(systemName: "30.arrow.trianglehead.clockwise")
                                     .font(.system(size: 25))
                             }
+                            .buttonStyle(.borderless)
                             .disabled(videoLength == nil)
                         } else {
                             Button {
@@ -114,6 +117,7 @@ struct PlayerProgressControl: View {
                                     .frame(width: 30, height: 30)
                                     .scaledToFit()
                             }
+                            .buttonStyle(.borderless)
                         }
                     }
                     Spacer()

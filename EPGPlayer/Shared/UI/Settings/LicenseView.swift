@@ -34,7 +34,9 @@ struct LicenseView: View {
                     }
                 }
                 .navigationTitle(name)
+                #if !os(macOS)
                 .navigationBarTitleDisplayMode(.inline)
+                #endif
                 .onAppear {
                     Task {
                         content = getContent()

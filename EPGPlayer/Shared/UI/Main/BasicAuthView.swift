@@ -22,11 +22,15 @@ struct BasicAuthView: View {
                 TextField("Username", text: $username)
                     .textContentType(.username)
                     .autocorrectionDisabled()
+                    #if !os(macOS)
                     .textInputAutocapitalization(.never)
+                    #endif
                 TextField("Password", text: $password)
                     .textContentType(.password)
                     .autocorrectionDisabled()
+                    #if !os(macOS)
                     .textInputAutocapitalization(.never)
+                    #endif
             } header: {
                 Label("Login info", systemImage: "key")
             }
@@ -46,5 +50,6 @@ struct BasicAuthView: View {
                     .foregroundStyle(.red)
             }
         }
+        .formStyle(.grouped)
     }
 }

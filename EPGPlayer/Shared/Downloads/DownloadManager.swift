@@ -8,7 +8,6 @@
 import os
 import Foundation
 import SwiftData
-import UIKit
 import VLCKit
 
 fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "downloader")
@@ -25,9 +24,13 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     private override init() {}
     
     func initialize() {
+        #if os(macOS)
+        let config = URLSessionConfiguration.default
+        #else
         let config = URLSessionConfiguration.background(withIdentifier: "EPGSession")
         config.isDiscretionary = false
         config.sessionSendsLaunchEvents = true
+        #endif
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: nil)
         Task(priority: .background) {
             downloads = await Set(urlSession.allTasks.compactMap { $0.originalRequest?.url })
@@ -59,7 +62,8 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         downloads.insert(url)
         return backgroundTask
     }
-    
+
+    #if !os(macOS)
     nonisolated func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         Task { @MainActor in
             guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
@@ -69,6 +73,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
             backgroundCompletionHandler()
         }
     }
+    #endif
     
     nonisolated func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
         guard let task = task as? URLSessionDownloadTask else {

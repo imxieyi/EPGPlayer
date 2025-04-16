@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import OpenAPIRuntime
 import VLCKit
+import UserNotifications
 
 public struct RecordingDownloadMenu: View {
     @Environment(\.modelContext) private var context

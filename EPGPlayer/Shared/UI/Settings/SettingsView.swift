@@ -36,8 +36,11 @@ struct SettingsView: View {
                 debugSection
                 #endif
             }
+            .formStyle(.grouped)
             .navigationTitle("Settings")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
         }
     }
     
@@ -71,7 +74,9 @@ struct SettingsView: View {
             }
             .alert("Set EPGStation URL", isPresented: $showServerUrlAlert) {
                 TextField("EPGStation URL", text: $serverUrl, prompt: Text(verbatim: "https://example.com"))
+                    #if !os(macOS)
                     .textInputAutocapitalization(.never)
+                    #endif
                     .autocorrectionDisabled()
                     .textContentType(.URL)
                 Button("Done") {
@@ -212,7 +217,11 @@ struct SettingsView: View {
         let appName = Bundle.main.infoDictionary?[kCFBundleNameKey as String] as? String
         return Section {
             Button {
+                #if os(macOS)
+                NSWorkspace.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer")!)
+                #else
                 UIApplication.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer")!)
+                #endif
             } label: {
                 HStack {
                     Text("\(appName ?? "EPGPlayer") on GitHub")
@@ -221,10 +230,15 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .buttonStyle(.borderless)
             .tint(.primary)
             
             Button {
+                #if os(macOS)
+                NSWorkspace.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer/issues/new")!)
+                #else
                 UIApplication.shared.open(URL(string: "https://github.com/imxieyi/EPGPlayer/issues/new")!)
+                #endif
             } label: {
                 HStack {
                     Text("Report issues")
@@ -233,6 +247,7 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .buttonStyle(.borderless)
             .tint(.primary)
             
             Menu {
@@ -259,11 +274,15 @@ struct SettingsView: View {
             } label: {
                 HStack {
                     Text("Licenses")
+                    #if !os(macOS)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.secondary)
+                    #endif
                 }
             }
+            .menuStyle(.button)
+            .buttonStyle(.borderless)
             .foregroundStyle(.primary)
         } header: {
             Label("About", systemImage: "info.circle")

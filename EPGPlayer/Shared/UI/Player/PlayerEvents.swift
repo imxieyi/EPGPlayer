@@ -33,6 +33,7 @@ final class PlayerEvents: ObservableObject, Sendable {
     
     let userInteracted = PassthroughSubject<Void, Never>()
     
+    #if !os(macOS)
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserInteraction), name: .userActivityDetected, object: nil)
     }
@@ -44,6 +45,7 @@ final class PlayerEvents: ObservableObject, Sendable {
     @objc private func handleUserInteraction(_ notification: Notification) {
         userInteracted.send()
     }
+    #endif
 }
 
 struct MediaTrack: Hashable, Identifiable {

@@ -41,6 +41,7 @@ struct DownloadsView: View {
                                             .tint(.primary)
                                             .id(item)
                                     }
+                                    .buttonStyle(.borderless)
                                     .contextMenu {
                                         Button(role: .destructive) {
                                             context.delete(item)
@@ -63,6 +64,7 @@ struct DownloadsView: View {
                                                         Text(verbatim: failedItem.file.unavailableReason ?? "Unknown")
                                                             .lineLimit(1)
                                                     }
+                                                    .buttonStyle(.borderless)
                                                 }
                                                 .tint(.red)
                                             }
@@ -84,7 +86,9 @@ struct DownloadsView: View {
                 }
             }
             .navigationTitle("Downloads")
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

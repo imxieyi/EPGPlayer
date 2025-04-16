@@ -13,14 +13,27 @@ struct AuthWebView: UIViewRepresentable {
     
     @Binding var isAuthenticaing: Bool
     
+    #if !os(macOS)
     func makeUIView(context: Context) -> WKWebView {
+        return makeView(context: context)
+    }
+    
+    func updateUIView(_ uiView: WKWebView, context: Context) {
+    }
+    #else
+    func makeNSView(context: Context) -> WKWebView {
+        return makeView(context: context)
+    }
+    
+    func updateNSView(_ nsView: NSViewType, context: Context) {
+    }
+    #endif
+    
+    func makeView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.load(URLRequest(url: url))
         webView.navigationDelegate = context.coordinator
         return webView
-    }
-    
-    func updateUIView(_ uiView: WKWebView, context: Context) {
     }
     
     func makeCoordinator() -> Coordinator {
