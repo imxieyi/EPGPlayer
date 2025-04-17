@@ -56,26 +56,30 @@ struct RecordingDetailView: View {
                     Divider()
                     HStack(alignment: .center, spacing: 20) {
                         Menu {
-                            Section("TS") {
-                                ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
-                                    Button {
-                                        appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
-                                    } label: {
-                                        Text(verbatim: videoItem.name)
-                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                            if item.videoItems.contains(where: { $0.type == .ts }) {
+                                Section("TS") {
+                                    ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
+                                        Button {
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                        } label: {
+                                            Text(verbatim: videoItem.name)
+                                            Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                                        }
+                                        .disabled(!videoItem.canPlay)
                                     }
-                                    .disabled(!videoItem.canPlay)
                                 }
                             }
-                            Section("Encoded") {
-                                ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
-                                    Button {
-                                        appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
-                                    } label: {
-                                        Text(verbatim: videoItem.name)
-                                        Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                            if item.videoItems.contains(where: { $0.type == .encoded }) {
+                                Section("Encoded") {
+                                    ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
+                                        Button {
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                        } label: {
+                                            Text(verbatim: videoItem.name)
+                                            Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                                        }
+                                        .disabled(!videoItem.canPlay)
                                     }
-                                    .disabled(!videoItem.canPlay)
                                 }
                             }
                         } label: {

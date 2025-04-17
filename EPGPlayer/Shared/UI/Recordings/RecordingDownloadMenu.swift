@@ -32,26 +32,30 @@ public struct RecordingDownloadMenu: View {
     public var body: some View {
         if let videoFiles = (item as? Components.Schemas.RecordedItem)?.videoFiles {
             Menu {
-                Section("TS") {
-                    ForEach(videoFiles.filter({ $0._type == .ts })) { videoFile in
-                        Button {
-                            startDownloding(videoFile: videoFile)
-                        } label: {
-                            Text(verbatim: videoFile.name)
-                            Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                if videoFiles.contains(where: { $0._type == .ts }) {
+                    Section("TS") {
+                        ForEach(videoFiles.filter({ $0._type == .ts })) { videoFile in
+                            Button {
+                                startDownloding(videoFile: videoFile)
+                            } label: {
+                                Text(verbatim: videoFile.name)
+                                Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                            }
+                            .disabled(storedItem.contains(where: { $0.videoItems.contains(where: { $0.epgId == videoFile.epgId }) }))
                         }
-                        .disabled(storedItem.contains(where: { $0.videoItems.contains(where: { $0.epgId == videoFile.epgId }) }))
                     }
                 }
-                Section("Encoded") {
-                    ForEach(videoFiles.filter({ $0._type == .encoded })) { videoFile in
-                        Button {
-                            startDownloding(videoFile: videoFile)
-                        } label: {
-                            Text(verbatim: videoFile.name)
-                            Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                if videoFiles.contains(where: { $0._type == .encoded }) {
+                    Section("Encoded") {
+                        ForEach(videoFiles.filter({ $0._type == .encoded })) { videoFile in
+                            Button {
+                                startDownloding(videoFile: videoFile)
+                            } label: {
+                                Text(verbatim: videoFile.name)
+                                Text(verbatim: ByteCountFormatter().string(fromByteCount: Int64(videoFile.size)))
+                            }
+                            .disabled(storedItem.contains(where: { $0.videoItems.contains(where: { $0.epgId == videoFile.epgId }) }))
                         }
-                        .disabled(storedItem.contains(where: { $0.videoItems.contains(where: { $0.epgId == videoFile.epgId }) }))
                     }
                 }
             } label: {
@@ -63,23 +67,27 @@ public struct RecordingDownloadMenu: View {
             }
         } else if let item = item as? LocalRecordedItem {
             Menu {
-                Section("TS") {
-                    ForEach(item._videoItems.filter({ $0.type == .ts })) { videoItem in
-                        Button {
-                            deleteDownloaded(videoItem: videoItem)
-                        } label: {
-                            Text(verbatim: videoItem.name)
-                            Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                if item._videoItems.contains(where: { $0.type == .ts }) {
+                    Section("TS") {
+                        ForEach(item._videoItems.filter({ $0.type == .ts })) { videoItem in
+                            Button {
+                                deleteDownloaded(videoItem: videoItem)
+                            } label: {
+                                Text(verbatim: videoItem.name)
+                                Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                            }
                         }
                     }
                 }
-                Section("Encoded") {
-                    ForEach(item._videoItems.filter({ $0.type == .encoded })) { videoItem in
-                        Button {
-                            deleteDownloaded(videoItem: videoItem)
-                        } label: {
-                            Text(verbatim: videoItem.name)
-                            Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                if item._videoItems.contains(where: { $0.type == .encoded }) {
+                    Section("Encoded") {
+                        ForEach(item._videoItems.filter({ $0.type == .encoded })) { videoItem in
+                            Button {
+                                deleteDownloaded(videoItem: videoItem)
+                            } label: {
+                                Text(verbatim: videoItem.name)
+                                Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                            }
                         }
                     }
                 }
