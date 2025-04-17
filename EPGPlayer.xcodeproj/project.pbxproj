@@ -39,6 +39,7 @@
 
 /* Begin PBXFileReference section */
 		8A7744582D92C2F30080D3BA /* EPGPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EPGPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AA227102DAEC89500348381 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -120,6 +121,7 @@
 		8A77444F2D92C2F30080D3BA = {
 			isa = PBXGroup;
 			children = (
+				8AA227102DAEC89500348381 /* README.md */,
 				8A77445A2D92C2F30080D3BA /* EPGPlayer */,
 				8A7744592D92C2F30080D3BA /* Products */,
 				440125368C107C8675F64AE8 /* Frameworks */,
