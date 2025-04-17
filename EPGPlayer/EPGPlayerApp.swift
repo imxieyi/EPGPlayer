@@ -68,7 +68,11 @@ struct EPGPlayerApp: App {
                 let count = newValue.count
                 Task(priority: .background) {
                     do {
+                        #if os(macOS)
+                        NSApplication.shared.dockTile.badgeLabel = (count > 0) ? String(count) : nil
+                        #else
                         try await UNUserNotificationCenter.current().setBadgeCount(count)
+                        #endif
                     } catch let error {
                         print("Failed to set badge count: \(error.localizedDescription)")
                     }
