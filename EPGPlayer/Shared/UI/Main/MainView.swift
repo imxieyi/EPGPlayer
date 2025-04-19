@@ -27,7 +27,7 @@ struct MainView: View {
                         AuthWebView(url: appState.client.endpoint.appending(path: "version"), expectedContentType: "application/json", isAuthenticaing: $appState.isAuthenticating)
                             .navigationTitle("Login")
                             .toolbar {
-                                ToolbarItem(placement: appState.isNativeMac ? .cancellationAction : .topBarTrailing) {
+                                ToolbarItem(placement: appState.isOnMac ? .cancellationAction : .topBarTrailing) {
                                     Button("Close") {
                                         appState.isAuthenticating = false
                                     }
@@ -52,7 +52,7 @@ struct MainView: View {
                         .navigationBarTitleDisplayMode(.inline)
                         #endif
                         .toolbar {
-                            ToolbarItem(placement: appState.isNativeMac ? .cancellationAction : .topBarTrailing) {
+                            ToolbarItem(placement: appState.isOnMac ? .cancellationAction : .topBarTrailing) {
                                 Button("Close") {
                                     appState.isAuthenticating = false
                                 }

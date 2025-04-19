@@ -89,7 +89,7 @@ struct ActiveDownloadsView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
-                ToolbarItem(placement: appState.isNativeMac ? .cancellationAction : .topBarTrailing) {
+                ToolbarItem(placement: appState.isOnMac ? .cancellationAction : .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {

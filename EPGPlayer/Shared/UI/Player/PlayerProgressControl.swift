@@ -126,26 +126,36 @@ struct PlayerProgressControl: View {
             }
         }
         .onAppear {
-            if let item = item.videoItem as? Components.Schemas.VideoFile {
-                Task {
-                    do {
-                        videoLength = try await appState.client.api.getVideosVideoFileIdDuration(Operations.GetVideosVideoFileIdDuration.Input(path: Operations.GetVideosVideoFileIdDuration.Input.Path(videoFileId: item.id))).ok.body.json.duration
-                    } catch let error {
-                        logger.error("Failed to get video length: \(error)")
-                    }
-                }
+            reload()
+        }
+        .onChange(of: item.id, { oldValue, newValue in
+            guard oldValue != newValue else {
                 return
             }
-            if let item = item.videoItem as? LocalVideoItem, let duration = item.duration {
-                videoLength = duration
-            }
-        }
+            reload()
+        })
         .onReceive(playerEvents.updatePosition) { position in
             guard !isSeeking else {
                 return
             }
             playbackPosition = position.position
             playbackTime = Double(position.time) / 1000
+        }
+    }
+    
+    func reload() {
+        if let item = item.videoItem as? Components.Schemas.VideoFile {
+            Task {
+                do {
+                    videoLength = try await appState.client.api.getVideosVideoFileIdDuration(Operations.GetVideosVideoFileIdDuration.Input(path: Operations.GetVideosVideoFileIdDuration.Input.Path(videoFileId: item.id))).ok.body.json.duration
+                } catch let error {
+                    logger.error("Failed to get video length: \(error)")
+                }
+            }
+            return
+        }
+        if let item = item.videoItem as? LocalVideoItem, let duration = item.duration {
+            videoLength = duration
         }
     }
     

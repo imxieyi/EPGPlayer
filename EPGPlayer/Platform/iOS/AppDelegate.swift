@@ -38,9 +38,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, ObservableObject {
     var orientationLock = UIInterfaceOrientationMask.allButUpsideDown
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        if ProcessInfo().isiOSAppOnMac {
-            overrideCatalystScaleFactor()
-        }
         return true
     }
     

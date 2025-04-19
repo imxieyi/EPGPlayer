@@ -1,14 +1,6 @@
 {
-  "originHash" : "7d139295e520fbb295611bb28ba012ca8116a5f03204ed1b26b4a47a0db821d9",
+  "originHash" : "d23b16fbe444e4f16ee5a31154a196f567366c37903d4d4677c51be3f292d2c7",
   "pins" : [
-    {
-      "identity" : "dynamic",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mhdhejazi/Dynamic.git",
-      "state" : {
-        "revision" : "772883073d044bc754d401cabb6574624eb3778f"
-      }
-    },
     {
       "identity" : "keychain-swift",
       "kind" : "remoteSourceControl",

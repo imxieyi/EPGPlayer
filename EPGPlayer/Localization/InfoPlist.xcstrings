@@ -11,7 +11,8 @@
             "value" : "EPGPlayer"
           }
         }
-      }
+      },
+      "shouldTranslate" : false
     },
     "NSUserNotificationsUsageDescription" : {
       "extractionState" : "manual",

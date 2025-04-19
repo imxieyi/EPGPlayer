@@ -131,12 +131,14 @@ class VLCPlayerViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        videoView = UIView(frame: view.bounds)
-        
         #if os(macOS)
+        videoView = DisabledView(frame: view.bounds)
+        
         videoView.autoresizingMask = [.width, .height]
         mediaPlayer.drawable = videoView
         #else
+        videoView = UIView(frame: view.bounds)
+        
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         videoView.isUserInteractionEnabled = false
         if let externalView = ExternalDisplayHelper.instance.delegate?.viewController.view {
@@ -320,6 +322,14 @@ class VLCPlayerViewController: UIViewController {
         }
     }
 }
+
+#if os(macOS)
+class DisabledView: NSView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        return nil
+    }
+}
+#endif
 
 extension VLCPlayerViewController: @preconcurrency VLCDrawable {
     func addSubview(_ view: UIView!) {

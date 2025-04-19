@@ -38,14 +38,15 @@ struct EPGPlayerApp: App {
         Window("EPGPlayer", id: "main") {
             mainBody
         }
-        .defaultSize(width: 1000, height: 650)
+        .defaultSize(width: 1600, height: 900)
         
-        WindowGroup("Player", id: "player-window") {
+        Window("Player", id: "player-window") {
              Group {
                  if let item = appState.playingItem {
                      PlayerView(item: item)
                          .environment(appState)
                          .environmentObject(userSettings)
+                         .navigationTitle(item.title)
                          .onDisappear {
                              appState.playingItem = nil
                          }
@@ -55,7 +56,7 @@ struct EPGPlayerApp: App {
                  }
              }
         }
-        .windowResizability(.contentSize)
+        .defaultSize(width: 1600, height: 900)
         #else
         WindowGroup {
             mainBody

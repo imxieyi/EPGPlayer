@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8A4BA5682DAD344500E9DF5D /* Dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = 8A4BA5672DAD344500E9DF5D /* Dynamic */; };
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
@@ -48,7 +47,6 @@
 			membershipExceptions = (
 				Dependency/.gitkeep,
 				Info.plist,
-				"Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h",
 			);
 			platformFiltersByRelativePath = {
 				Platform/iOS/AppDelegate.swift = (ios, );
@@ -56,16 +54,10 @@
 				Platform/iOS/ExternalDisplay/ExternalLaunchScreen.storyboard = (ios, );
 				Platform/iOS/ExternalDisplay/ExternalSceneDelegate.swift = (ios, );
 				Platform/iOS/InteractDetection.swift = (ios, );
-				Platform/iOS/MacNativeHelper/MacNative.h = (ios, );
-				Platform/iOS/MacNativeHelper/MacNative.m = (ios, );
-				Platform/iOS/MacNativeHelper/MacNativeHelper.swift = (ios, );
 				Platform/macOS/AppDelegate.swift = (macos, );
-				Platform/macOS/MacNativeHelper.swift = (macos, );
+				Platform/macOS/MacHelper.swift = (macos, );
 				Platform/macOS/UIKitTypes.swift = (macos, );
 			};
-			privateHeaders = (
-				Platform/iOS/MacNativeHelper/MacNative.h,
-			);
 			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -100,7 +92,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8A4BA5682DAD344500E9DF5D /* Dynamic in Frameworks */,
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
 				8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
@@ -205,7 +196,6 @@
 				8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */,
 				8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
 				8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
-				8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */,
 				8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -402,8 +392,6 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h";
-				"SWIFT_OBJC_BRIDGING_HEADER[sdk=macosx*]" = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -442,8 +430,6 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "EPGPlayer/Platform/iOS/MacNativeHelper/EPGPlayer-Bridging-Header.h";
-				"SWIFT_OBJC_BRIDGING_HEADER[sdk=macosx*]" = "";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -474,14 +460,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mhdhejazi/Dynamic.git";
-			requirement = {
-				kind = revision;
-				revision = 772883073d044bc754d401cabb6574624eb3778f;
-			};
-		};
 		8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-openapi-generator";
@@ -525,11 +503,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		8A4BA5672DAD344500E9DF5D /* Dynamic */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8A4BA5662DAD344500E9DF5D /* XCRemoteSwiftPackageReference "Dynamic" */;
-			productName = Dynamic;
-		};
 		8A7667E52D946A54008E69F7 /* OpenAPIRuntime */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
