@@ -166,12 +166,30 @@ struct PlayerView: View {
                 .background(.black.opacity(0.7))
                 .opacity(playerUIOpacity)
                 
-                if appState.isOnMac {
-                    Color.black
-                        .frame(height: 10)
-                        .opacity(playerUIOpacity * 0.7)
-                }
+                #if os(macOS)
+                Color.black
+                    .frame(height: 10)
+                    .opacity(playerUIOpacity * 0.7)
+                #endif
             }
+            
+            #if os(macOS)
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    playerMenu
+                        .font(.title)
+                        .menuStyle(.button)
+                        .buttonStyle(.plain)
+                        .opacity(playerUIOpacity)
+                    Spacer()
+                        .frame(width: 70)
+                }
+                Spacer()
+                    .frame(height: 18)
+            }
+            #endif
         }
         .preferredColorScheme(.dark)
         .tint(.primary)
@@ -357,7 +375,7 @@ struct PlayerView: View {
         } label: {
             ZStack(alignment: .center) {
                 Color.clear
-                Image(systemName: "ellipsis")
+                Image(systemName: "gearshape.fill")
             }
             .frame(width: 20, height: 20, alignment: .center)
             .contentShape(Rectangle())
