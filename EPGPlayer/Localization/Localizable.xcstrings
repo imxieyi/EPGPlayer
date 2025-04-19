@@ -14,12 +14,24 @@
             "state" : "translated",
             "value" : "GitHub上的%@"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub上の%@"
+          }
         }
       }
     },
     "%llds" : {
       "localizations" : {
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld秒"
+          }
+        },
+        "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld秒"
@@ -34,6 +46,12 @@
             "state" : "translated",
             "value" : "关于"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "概要"
+          }
         }
       }
     },
@@ -43,6 +61,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "确定？"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "よろしいですか？"
           }
         }
       }
@@ -54,6 +78,12 @@
             "state" : "translated",
             "value" : "音频"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "音声"
+          }
         }
       }
     },
@@ -63,6 +93,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要认证"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認証が必要です"
           }
         }
       }
@@ -77,6 +113,12 @@
             "state" : "translated",
             "value" : "自动隐藏UI"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UIを自動的に隠す"
+          }
         }
       }
     },
@@ -86,6 +128,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已完成后台下载"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バックグラウンドダウンロードが完了しました。"
           }
         }
       }
@@ -97,6 +145,12 @@
             "state" : "translated",
             "value" : "缓存大小：%@"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キャッシュサイズ：%@"
+          }
         }
       }
     },
@@ -106,6 +160,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "计算中"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "計算中"
           }
         }
       }
@@ -117,6 +177,12 @@
             "state" : "translated",
             "value" : "取消"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キャンセル"
+          }
         }
       }
     },
@@ -126,6 +192,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除登录信息"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン情報を消去"
           }
         }
       }
@@ -137,6 +209,12 @@
             "state" : "translated",
             "value" : "关闭"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "閉じる"
+          }
         }
       }
     },
@@ -146,6 +224,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続ける"
           }
         }
       }
@@ -157,6 +241,12 @@
             "state" : "translated",
             "value" : "数据库错误："
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データベースエラー：%@"
+          }
         }
       }
     },
@@ -166,6 +256,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "数据库初始化失败"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データベースのセットアップに失敗しました"
           }
         }
       }
@@ -177,6 +273,12 @@
             "state" : "translated",
             "value" : "数据库大小："
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "データベースサイズ："
+          }
         }
       }
     },
@@ -186,6 +288,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除"
           }
         }
       }
@@ -197,6 +305,12 @@
             "state" : "translated",
             "value" : "请不要在地址末尾添加“/api”"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLの末尾に「/api」を追加しないでください。"
+          }
         }
       }
     },
@@ -206,6 +320,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "完成"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完了"
           }
         }
       }
@@ -217,6 +337,12 @@
             "state" : "translated",
             "value" : "下载"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード"
+          }
         }
       }
     },
@@ -226,6 +352,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载完成"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード完了"
           }
         }
       }
@@ -237,6 +369,12 @@
             "state" : "translated",
             "value" : "无法获取已下载大小：%@"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードサイズの取得エラー：%@"
+          }
         }
       }
     },
@@ -246,6 +384,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在下载"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード中"
           }
         }
       }
@@ -257,6 +401,12 @@
             "state" : "translated",
             "value" : "已下载"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード済み"
+          }
         }
       }
     },
@@ -266,6 +416,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已下载大小："
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード済みサイズ："
           }
         }
       }
@@ -277,6 +433,12 @@
             "state" : "translated",
             "value" : "下载会在后台继续，但强制关闭APP会导致下载中断。"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードはバックグラウンドで続行されますが、アプリを強制終了するとすべてのダウンロードがキャンセルされます。"
+          }
         }
       }
     },
@@ -287,6 +449,12 @@
             "state" : "translated",
             "value" : "启用字幕"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕を有効にする"
+          }
         }
       }
     },
@@ -296,6 +464,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已编码"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エンコード済み"
           }
         }
       }
@@ -310,6 +484,12 @@
             "state" : "translated",
             "value" : "EPGStation地址"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPGStationアドレス"
+          }
         }
       }
     },
@@ -319,6 +499,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "错误"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エラー"
           }
         }
       }
@@ -330,6 +516,12 @@
             "state" : "translated",
             "value" : "无法加载内容"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コンテンツの読み込みエラー"
+          }
         }
       }
     },
@@ -339,6 +531,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "错误"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "エラー"
           }
         }
       }
@@ -350,6 +548,12 @@
             "state" : "translated",
             "value" : "无法获取服务器版本：%@"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーバージョンの取得に失敗しました：%@"
+          }
         }
       }
     },
@@ -359,6 +563,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法加载直播配置文件"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライブストリーム設定の読み込みに失敗しました"
           }
         }
       }
@@ -370,6 +580,12 @@
             "state" : "translated",
             "value" : "强制横屏"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "横向きに固定"
+          }
         }
       }
     },
@@ -379,6 +595,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往设置"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定に移動"
           }
         }
       }
@@ -390,6 +612,12 @@
             "state" : "translated",
             "value" : "HTTP头"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTPヘッダー"
+          }
         }
       }
     },
@@ -399,6 +627,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无效地址"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無効なURL"
           }
         }
       }
@@ -410,6 +644,12 @@
             "state" : "translated",
             "value" : "许可证"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライセンス"
+          }
         }
       }
     },
@@ -419,6 +659,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "直播"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ライブ"
           }
         }
       }
@@ -430,6 +676,12 @@
             "state" : "translated",
             "value" : "登录"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン"
+          }
         }
       }
     },
@@ -439,6 +691,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "登录信息"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ログイン情報"
           }
         }
       }
@@ -450,6 +708,12 @@
             "state" : "translated",
             "value" : "从不"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "しない"
+          }
         }
       }
     },
@@ -459,6 +723,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "没有已下载的视频"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード済みのビデオはありません"
           }
         }
       }
@@ -470,6 +740,12 @@
             "state" : "translated",
             "value" : "没有下载中的视频"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロード中のビデオはありません"
+          }
         }
       }
     },
@@ -479,6 +755,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未选择媒体"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メディアが選択されていません"
           }
         }
       }
@@ -490,6 +772,12 @@
             "state" : "translated",
             "value" : "无"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "なし"
+          }
         }
       }
     },
@@ -499,6 +787,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "密码"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "パスワード"
           }
         }
       }
@@ -510,6 +804,12 @@
             "state" : "translated",
             "value" : "播放"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再生"
+          }
         }
       }
     },
@@ -519,6 +819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "播放器"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤー"
           }
         }
       }
@@ -530,6 +836,12 @@
             "state" : "translated",
             "value" : "播放器设置"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤー設定"
+          }
         }
       }
     },
@@ -540,6 +852,12 @@
             "state" : "translated",
             "value" : "在外置显示器播放中"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "外部ディスプレイで再生中"
+          }
         }
       }
     },
@@ -549,6 +867,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请设置EPGStation的地址"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPGStationのURLを設定してください"
           }
         }
       }
@@ -561,6 +885,12 @@
             "state" : "translated",
             "value" : "录像"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "録画"
+          }
         }
       }
     },
@@ -570,6 +900,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "检测到重定向"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リダイレクトが検出されました"
           }
         }
       }
@@ -581,6 +917,12 @@
             "state" : "translated",
             "value" : "刷新"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更新"
+          }
         }
       }
     },
@@ -591,6 +933,12 @@
             "state" : "translated",
             "value" : "汇报问题"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "問題を報告"
+          }
         }
       }
     },
@@ -600,6 +948,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重置"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リセット"
           }
         }
       }
@@ -612,6 +966,12 @@
             "state" : "translated",
             "value" : "服务器设置"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバー設定"
+          }
         }
       }
     },
@@ -621,6 +981,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "服务器版本：%@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーバージョン：%@"
           }
         }
       }
@@ -632,6 +998,12 @@
             "state" : "translated",
             "value" : "设置EPGStation的地址"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPGStationのURLを設定"
+          }
         }
       }
     },
@@ -641,6 +1013,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置地址"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "URLを設定"
           }
         }
       }
@@ -652,6 +1030,12 @@
             "state" : "translated",
             "value" : "设置"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定"
+          }
         }
       }
     },
@@ -661,6 +1045,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "需要设置"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "設定が必要です"
           }
         }
       }
@@ -672,12 +1062,24 @@
             "state" : "translated",
             "value" : "显示统计信息"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "統計情報を表示"
+          }
         }
       }
     },
     "Speed" : {
       "localizations" : {
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "速度"
+          }
+        },
+        "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "速度"
@@ -692,12 +1094,24 @@
             "state" : "translated",
             "value" : "存储空间"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ストレージ"
+          }
         }
       }
     },
     "Subtitle" : {
       "localizations" : {
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕"
+          }
+        },
+        "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "字幕"
@@ -712,6 +1126,12 @@
             "state" : "translated",
             "value" : "不支持%@的认证方式，请尝试使用自定义HTTP头登录。"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "認証方法%@はサポートされていません。カスタムHTTPヘッダーでサインインしてみてください。"
+          }
         }
       }
     },
@@ -725,6 +1145,12 @@
             "state" : "translated",
             "value" : "无法播放"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再生できません"
+          }
         }
       }
     },
@@ -734,6 +1160,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知错误"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不明なエラー"
           }
         }
       }
@@ -745,6 +1177,12 @@
             "state" : "translated",
             "value" : "用户名"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ユーザー名"
+          }
         }
       }
     },
@@ -755,12 +1193,24 @@
             "state" : "translated",
             "value" : "视频"
           }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ビデオ"
+          }
         }
       }
     },
     "Warning" : {
       "localizations" : {
         "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告"
+          }
+        },
+        "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "警告"
@@ -774,6 +1224,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "如果你的服务器需要认证，你将会被登出。重启app后生效。"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サーバーが認証を必要とする場合、サインアウトされます。変更を適用するにはアプリを再起動してください。"
           }
         }
       }
