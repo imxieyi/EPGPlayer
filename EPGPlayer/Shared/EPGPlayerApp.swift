@@ -35,11 +35,6 @@ struct EPGPlayerApp: App {
     
     var body: some Scene {
         #if os(macOS)
-        Window("EPGPlayer", id: "main") {
-            mainBody
-        }
-        .defaultSize(width: 1600, height: 900)
-        
         Window("Player", id: "player-window") {
              Group {
                  if let item = appState.playingItem {
@@ -56,6 +51,15 @@ struct EPGPlayerApp: App {
                  }
              }
         }
+        .defaultLaunchBehavior(.suppressed)
+        .restorationBehavior(.disabled)
+        .windowIdealSize(.maximum)
+        .defaultSize(width: 1600, height: 900)
+        
+        Window("EPGPlayer", id: "main") {
+            mainBody
+        }
+        .defaultLaunchBehavior(.presented)
         .defaultSize(width: 1600, height: 900)
         #else
         WindowGroup {
