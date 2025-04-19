@@ -98,7 +98,7 @@ struct RecordingCell: View {
                     }
                     .padding(.all, 4)
                     .frame(maxWidth: .infinity)
-                    .background(.thinMaterial)
+                    .background(.regularMaterial)
                 }
             }
             .frame(maxWidth: .infinity)

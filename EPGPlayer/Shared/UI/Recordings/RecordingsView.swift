@@ -75,7 +75,7 @@ struct RecordingsView: View {
             })
             #if os(macOS)
             .toolbar(content: {
-                ToolbarItem(placement: .navigation) {
+                ToolbarItem(placement: .primaryAction) {
                     Button {
                         refresh()
                     } label: {

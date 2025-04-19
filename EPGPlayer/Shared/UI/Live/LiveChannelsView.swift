@@ -73,7 +73,7 @@ struct LiveChannelsView: View {
             }
             #if os(macOS)
             .toolbar(content: {
-                ToolbarItem(placement: .navigation) {
+                ToolbarItem(placement: .primaryAction) {
                     Button {
                         refresh()
                     } label: {

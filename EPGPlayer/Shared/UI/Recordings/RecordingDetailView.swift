@@ -15,6 +15,7 @@ struct RecordingDetailView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
+    @Environment(\.openWindow) private var openWindow // Add environment for opening windows
     
     var item: RecordedItem
     
@@ -61,6 +62,9 @@ struct RecordingDetailView: View {
                                     ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
                                         Button {
                                             appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            #if os(macOS)
+                                            openWindow(id: "player-window")
+                                            #endif
                                         } label: {
                                             Text(verbatim: videoItem.name)
                                             Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
@@ -73,7 +77,14 @@ struct RecordingDetailView: View {
                                 Section("Encoded") {
                                     ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            let playableItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            // Set the playing item in appState. The player window observes this.
+                                            appState.playingItem = playableItem
+                                            #if os(macOS)
+                                            // Open/focus the single player window. It will update based on appState.playingItem.
+                                            openWindow(id: "player-window")
+                                            #endif
+                                            // On iOS, setting playingItem triggers the .fullScreenCover
                                         } label: {
                                             Text(verbatim: videoItem.name)
                                             Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
@@ -114,7 +125,7 @@ struct RecordingDetailView: View {
                     .frame(height: 10)
             }
         }
-        .navigationTitle("Detail")
+        .navigationTitle(item.name)
     }
 }
 

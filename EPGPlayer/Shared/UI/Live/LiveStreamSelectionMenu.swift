@@ -10,6 +10,7 @@ import OpenAPIRuntime
 
 struct LiveStreamSelectionMenu: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.openWindow) private var openWindow // Add environment for opening windows
     
     let channel: Components.Schemas.ChannelItem
     let format: String
@@ -20,7 +21,14 @@ struct LiveStreamSelectionMenu: View {
         Menu {
             ForEach(0..<selections.count, id: \.self) { index in
                 Button {
-                    appState.playingItem = PlayerItem(videoItem: EPGLiveStreamItem(channel: channel, format: format, mode: index), title: channel.name)
+                    let playableItem = PlayerItem(videoItem: EPGLiveStreamItem(channel: channel, format: format, mode: index), title: channel.name)
+                    // Set the playing item in appState. The player window observes this.
+                    appState.playingItem = playableItem
+                    #if os(macOS)
+                    // Open/focus the single player window.
+                    openWindow(id: "player-window")
+                    #endif
+                    // On iOS, setting playingItem triggers the .fullScreenCover
                 } label: {
                     Text(verbatim: selections[index])
                 }
