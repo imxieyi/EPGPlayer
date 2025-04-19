@@ -164,7 +164,8 @@ struct SettingsView: View {
                 Spacer()
                 Button {
                     URLCache.imageCache.removeAllCachedResponses()
-                    DispatchQueue.main.async {
+                    Task {
+                        try await Task.sleep(for: .milliseconds(100))
                         currentCacheSize = URLCache.imageCache.currentDiskUsage
                     }
                 } label: {
