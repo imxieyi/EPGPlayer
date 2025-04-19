@@ -145,7 +145,7 @@ class VLCPlayerViewController: UIViewController {
             mediaPlayer.drawable = externalView
             playerEvents?.setExternalPlay.send(true)
         } else {
-            mediaPlayer.drawable = videoView
+            mediaPlayer.drawable = self
             playerEvents?.setExternalPlay.send(false)
         }
         #endif
