@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import KeychainSwift
 import OpenAPIRuntime
 
 @Observable
@@ -25,6 +26,8 @@ final class AppState {
     var downloadsSetupError: Error? = nil
     
     var activeDownloads: [ActiveDownload] = []
+    
+    var keychain: KeychainSwift! = nil
     
     #if os(macOS)
     let isOnMac = true

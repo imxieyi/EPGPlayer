@@ -37,6 +37,16 @@
         }
       }
     },
+    "Are you sure?" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "确定？"
+          }
+        }
+      }
+    },
     "Audio" : {
       "localizations" : {
         "zh-Hans" : {
@@ -56,6 +66,9 @@
           }
         }
       }
+    },
+    "Authorization" : {
+      "shouldTranslate" : false
     },
     "Auto hide UI" : {
       "localizations" : {
@@ -107,12 +120,12 @@
         }
       }
     },
-    "Clear cookies" : {
+    "Clear login info" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "清除cookies"
+            "value" : "清除登录信息"
           }
         }
       }
@@ -123,6 +136,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "继续"
           }
         }
       }
@@ -359,6 +382,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "前往设置"
+          }
+        }
+      }
+    },
+    "HTTP Header" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HTTP头"
           }
         }
       }
@@ -675,6 +708,16 @@
         }
       }
     },
+    "The authentication method %@ is not supported. Please try signing in with a custom HTTP header." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持%@的认证方式，请尝试使用自定义HTTP头登录。"
+          }
+        }
+      }
+    },
     "TS" : {
       "shouldTranslate" : false
     },
@@ -694,16 +737,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未知错误"
-          }
-        }
-      }
-    },
-    "Unsupported auth type" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不支持的认证方式"
           }
         }
       }
@@ -730,6 +763,26 @@
     },
     "VLCKit" : {
       "shouldTranslate" : false
+    },
+    "Warning" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "警告"
+          }
+        }
+      }
+    },
+    "You will be signed out if your server requires authentication. Restart the app to apply the changes." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果你的服务器需要认证，你将会被登出。重启app后生效。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

@@ -18,6 +18,9 @@ struct SettingsView: View {
     @State private var serverUrl: String = ""
     @State private var showServerUrlInvalidAlert: Bool = false
     
+    @State private var showResetAlert: Bool = false
+    @State private var resetAlertMessage: Text? = nil
+    
     @State private var currentDownloadsSize: Int? = nil
     @State private var downloadSizeError: String? = nil
     @State private var currentDatabaseSize: Int? = nil
@@ -205,8 +208,25 @@ struct SettingsView: View {
     
     var resetSection: some View {
         Section {
-            Button("Clear cookies", role: .destructive) {
-                HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+            Button("Clear login info", role: .destructive) {
+                resetAlertMessage = Text("You will be signed out if your server requires authentication. Restart the app to apply the changes.")
+                showResetAlert.toggle()
+            }
+            .alert("Are you sure?", isPresented: $showResetAlert) {
+                Button("Continue", role: .destructive) {
+                    DispatchQueue.global(qos: .background).async {
+                        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+                    }
+                    if !appState.keychain.clear() {
+                        print("Failed to clear keychain")
+                    }
+                }
+                Button("Cancel", role: .cancel) {
+                }
+            } message: {
+                if let resetAlertMessage {
+                    resetAlertMessage
+                }
             }
         } header: {
             Label("Reset", systemImage: "arrow.counterclockwise")

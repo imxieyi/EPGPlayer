@@ -42,12 +42,11 @@ struct MainView: View {
                         Group {
                             if case .basicAuth = appState.authType {
                                 BasicAuthView()
-                                    .navigationTitle("Login")
                             } else if case .unknown(let type) = appState.authType {
-                                ContentUnavailableView("Unsupported auth type", systemImage: "lock.trianglebadge.exclamationmark", description: Text(verbatim: type))
-                                    .navigationTitle("Error")
+                                CustomAuthView(authType: type)
                             }
                         }
+                        .navigationTitle("Login")
                         #if !os(macOS)
                         .navigationBarTitleDisplayMode(.inline)
                         #endif
@@ -60,7 +59,7 @@ struct MainView: View {
                         }
                     }
                     #if os(macOS)
-                    .frame(width: 400, height: 300)
+//                    .frame(width: 400, height: 300)
                     #endif
                 }
             }

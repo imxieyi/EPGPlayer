@@ -183,6 +183,7 @@ struct EPGPlayerApp: App {
             }
         })
         .onAppear {
+            setupKeychain()
             DownloadManager.shared.initialize()
             Task(priority: .background) {
                 do {
@@ -203,13 +204,20 @@ struct EPGPlayerApp: App {
         }
     }
     
+    func setupKeychain() {
+        appState.keychain = KeychainSwift()
+        if let teamId = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String {
+            appState.keychain.accessGroup = "\(teamId)com.imxieyi.EPGPlayer"
+        }
+    }
+    
     func refreshClient(_ urlString: String, waitTime: Duration = .zero) {
         appState.clientError = nil
         if urlString != "", let url = URL(string: urlString) {
             appState.clientState = .notInitialized
             var headers: [String : String] = [:]
-            if let basicAuth = KeychainSwift().get("basic:\(urlString)") {
-                headers["authorization"] = "Basic \(basicAuth)"
+            if let authHeader = appState.keychain.get("auth_header:\(urlString)") {
+                headers["authorization"] = authHeader
             }
             appState.client = EPGClient(endpoint: url.appending(path: "api"), headers: headers)
             refreshServerInfo(waitTime: waitTime)
