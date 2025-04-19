@@ -303,9 +303,6 @@
     "EPGPlayer" : {
       "shouldTranslate" : false
     },
-    "EPGStation" : {
-      "shouldTranslate" : false
-    },
     "EPGStation URL" : {
       "localizations" : {
         "zh-Hans" : {
@@ -760,9 +757,6 @@
           }
         }
       }
-    },
-    "VLCKit" : {
-      "shouldTranslate" : false
     },
     "Warning" : {
       "localizations" : {

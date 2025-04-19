@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftUI
-//import LicenseList
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var context
@@ -18,6 +17,7 @@ struct SettingsView: View {
     @State private var serverUrl: String = ""
     @State private var showServerUrlInvalidAlert: Bool = false
     
+    @State private var showLicenseList: Bool = false
     @State private var showResetAlert: Bool = false
     @State private var resetAlertMessage: Text? = nil
     
@@ -270,40 +270,21 @@ struct SettingsView: View {
             .buttonStyle(.borderless)
             .tint(.primary)
             
-            Menu {
-//                NavigationLink {
-//                    LicenseListView()
-//                        .licenseViewStyle(.withRepositoryAnchorLink)
-//                        .navigationTitle("Licenses")
-//                        .navigationBarTitleDisplayMode(.inline)
-//                } label: {
-//                    Label("Packages", systemImage: "shippingbox")
-//                }
-                
-                NavigationLink {
-                    LicenseView(name: "VLCKit")
-                } label: {
-                    Label("VLCKit", image: "VLCLogo")
-                }
-                
-                NavigationLink {
-                    LicenseView(name: "EPGStation")
-                } label: {
-                    Label("EPGStation", systemImage: "tv")
-                }
+            Button {
+                showLicenseList.toggle()
             } label: {
                 HStack {
                     Text("Licenses")
-                    #if !os(macOS)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.secondary)
-                    #endif
                 }
             }
-            .menuStyle(.button)
+            .navigationDestination(isPresented: $showLicenseList, destination: {
+                LicenseList()
+            })
             .buttonStyle(.borderless)
-            .foregroundStyle(.primary)
+            .tint(.primary)
         } header: {
             Label("About", systemImage: "info.circle")
         } footer: {

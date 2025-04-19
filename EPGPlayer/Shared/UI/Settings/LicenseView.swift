@@ -49,8 +49,8 @@ struct LicenseView: View {
     
     func getContent() -> String {
         do {
-            guard let url = Bundle.main.url(forResource: name, withExtension: "txt") else {
-                return "License file \(name).txt not found"
+            guard let url = Bundle.main.url(forResource: name, withExtension: "license") else {
+                return "License file \(name).license not found"
             }
             return try String(contentsOf: url, encoding: .utf8)
         } catch let error {
