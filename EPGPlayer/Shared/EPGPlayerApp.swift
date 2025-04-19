@@ -59,6 +59,8 @@ struct EPGPlayerApp: App {
         Window("EPGPlayer", id: "main") {
             mainBody
         }
+        .windowToolbarLabelStyle(fixed: .iconOnly)
+        .windowToolbarStyle(.unified)
         .defaultLaunchBehavior(.presented)
         .defaultSize(width: 1600, height: 900)
         #else

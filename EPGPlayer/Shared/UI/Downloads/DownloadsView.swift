@@ -90,7 +90,7 @@ struct DownloadsView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: appState.isOnMac ? .primaryAction : .topBarTrailing) {
                     Button {
                         showActiveDownloads.toggle()
                     } label: {
