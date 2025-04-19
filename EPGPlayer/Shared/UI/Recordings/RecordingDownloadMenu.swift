@@ -131,6 +131,7 @@ public struct RecordingDownloadMenu: View {
                 thumbnailFetch: if let thumbnail = item.thumbnail {
                     let configuration = URLSessionConfiguration.default
                     configuration.urlCache = .imageCache
+                    configuration.httpAdditionalHeaders = appState.client.headers
                     do {
                         let (data, response) = try await URLSession(configuration: configuration).data(from: thumbnail)
                         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
@@ -158,7 +159,7 @@ public struct RecordingDownloadMenu: View {
                 print("Failed to get video length: \(error.localizedDescription)")
             }
             
-            guard let downloadTask = DownloadManager.shared.startDownloading(url: videoFile.url, expectedBytes: videoFile.fileSize) else {
+            guard let downloadTask = DownloadManager.shared.startDownloading(url: videoFile.url, expectedBytes: videoFile.fileSize, headers: appState.client.headers) else {
                 print("Failed to start download")
                 return
             }
@@ -172,6 +173,7 @@ public struct RecordingDownloadMenu: View {
             fatalError("videoItem.recordedItem should not be nil")
         }
         recordedItem._videoItems.removeAll(where: { $0 == videoItem })
+        appState.activeDownloads.removeAll { $0.videoItem == videoItem }
         context.delete(videoItem)
         if recordedItem.videoItems.isEmpty {
             context.delete(recordedItem)

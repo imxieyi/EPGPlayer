@@ -38,13 +38,20 @@ struct EPGPlayerApp: App {
         Window("Player", id: "player-window") {
              Group {
                  if let item = appState.playingItem {
-                     PlayerView(item: item)
-                         .environment(appState)
-                         .environmentObject(userSettings)
-                         .navigationTitle(item.title)
-                         .onDisappear {
-                             appState.playingItem = nil
+                     Group {
+                         if let modelContainer {
+                             PlayerView(item: item)
+                                 .modelContainer(modelContainer)
+                         } else {
+                             PlayerView(item: item)
                          }
+                     }
+                     .environment(appState)
+                     .environmentObject(userSettings)
+                     .navigationTitle(item.title)
+                     .onDisappear {
+                         appState.playingItem = nil
+                     }
                  } else {
                      ContentUnavailableView("No media selected", systemImage: "play.slash")
                          .padding()

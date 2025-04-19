@@ -116,13 +116,12 @@ struct ActiveDownloadsView: View {
             }
         }
         #if os(macOS)
-        .frame(width: 400)
-        .presentationSizing(.form.fitted(horizontal: false, vertical: true))
+        .presentationSizing(.form)
         #endif
     }
     
     func restartDownload(_ download: ActiveDownload, index: Int) {
-        guard let downloadTask = DownloadManager.shared.startDownloading(url: download.url, expectedBytes: download.videoItem.fileSize) else {
+        guard let downloadTask = DownloadManager.shared.startDownloading(url: download.url, expectedBytes: download.videoItem.fileSize, headers: appState.client.headers) else {
             appState.activeDownloads[index].errorMessage = "Failed to restart"
             return
         }

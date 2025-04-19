@@ -44,6 +44,7 @@ struct DownloadsView: View {
                                     .buttonStyle(.borderless)
                                     .contextMenu {
                                         Button(role: .destructive) {
+                                            appState.activeDownloads.removeAll { $0.videoItem.recordedItem == item }
                                             context.delete(item)
                                         } label: {
                                             Label("Delete", systemImage: "trash")

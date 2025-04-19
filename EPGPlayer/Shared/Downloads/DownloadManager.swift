@@ -51,17 +51,28 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         }
     }
     
-    func startDownloading(url: URL, expectedBytes: Int64) -> URLSessionDownloadTask? {
+    func startDownloading(url: URL, expectedBytes: Int64, headers: [String: String]?) -> URLSessionDownloadTask? {
         guard !downloads.contains(url) else {
             logger.warning("URL \(url) already started downloading")
             return nil
         }
-        let backgroundTask = urlSession.downloadTask(with: url)
-        backgroundTask.countOfBytesClientExpectsToReceive = expectedBytes
-        backgroundTask.resume()
+        var request = URLRequest(url: url)
+        headers?.forEach { (key: String, value: String) in
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+        let downloadTask = urlSession.downloadTask(with: request)
+        downloadTask.countOfBytesClientExpectsToReceive = expectedBytes
+        downloadTask.resume()
         downloads.insert(url)
-        return backgroundTask
+        return downloadTask
     }
+    
+    #if os(macOS)
+    nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        downloadTask.progress.totalUnitCount = totalBytesExpectedToWrite
+        downloadTask.progress.completedUnitCount = totalBytesWritten
+    }
+    #endif
 
     #if !os(macOS)
     nonisolated func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {

@@ -58,9 +58,6 @@ struct MainView: View {
                             }
                         }
                     }
-                    #if os(macOS)
-//                    .frame(width: 400, height: 300)
-                    #endif
                 }
             }
     }
