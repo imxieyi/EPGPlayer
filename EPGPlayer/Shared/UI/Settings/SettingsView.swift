@@ -44,6 +44,9 @@ struct SettingsView: View {
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            .navigationDestination(isPresented: $showLicenseList, destination: {
+                LicenseList()
+            })
         }
     }
     
@@ -281,9 +284,6 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .navigationDestination(isPresented: $showLicenseList, destination: {
-                LicenseList()
-            })
             .buttonStyle(.borderless)
             .tint(.primary)
         } header: {
