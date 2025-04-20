@@ -1,0 +1,30 @@
+name: Xcode - Build and Analyze
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build and analyse EPGPlayer using xcodebuild command
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Disable Xcode plugin verification
+        run: |
+          defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
+      - name: Get VLCKit
+        run: |
+          wget --no-verbose $(curl --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' https://api.github.com/repos/imxieyi/vlckit/releases/latest | jq -r '.assets[] | select(.name | contains ("xcframework")) | .browser_download_url')
+          unzip VLCKit.xcframework.zip
+          mv VLCKit.xcframework EPGPlayer/Dependency/
+      - name: Build iOS
+        run: |
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -destination "generic/platform=iOS" | xcpretty && exit ${PIPESTATUS[0]}
+      - name: Build macOS
+        run: |
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}
