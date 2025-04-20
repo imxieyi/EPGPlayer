@@ -62,8 +62,10 @@ struct PlayerView: View {
             VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .gesture(TapGesture().onEnded {
-                    withAnimation(.default.speed(2)) {
-                        playerUIOpacity = playerUIOpacity == 0 ? 1 : 0
+                    if playerUIOpacity == 1 {
+                        hidePlayerUI()
+                    } else {
+                        showPlayerUI()
                     }
                 })
                 #if os(macOS)
@@ -304,11 +306,11 @@ struct PlayerView: View {
             loadedPlaybackPosition = false
             hadErrorState = false
             hadPlayingState = false
-            playerUIOpacity = 1
             
             videoTracks = []
             audioTracks = []
             textTracks = []
+            showPlayerUI()
             resetIdleTimer()
             fetchSavedPlaybackPosition()
         }
@@ -405,6 +407,7 @@ struct PlayerView: View {
         macHelper.startMonitorMouseMovement {
             macHelper.showMouseCursor()
             guard macHelper.isMousePointerInWindow() else {
+                hidePlayerUI()
                 return
             }
             let timestamp = Date().timeIntervalSinceReferenceDate
@@ -413,14 +416,34 @@ struct PlayerView: View {
             }
             lastMouseMoveHandled = timestamp
             resetIdleTimer()
-            if playerUIOpacity == 0 {
-                withAnimation(.default.speed(2)) {
-                    playerUIOpacity = 1
-                }
-            }
+            showPlayerUI()
         }
     }
     #endif
+    
+    func showPlayerUI() {
+        if playerUIOpacity == 0 {
+            withAnimation(.default.speed(2)) {
+                playerUIOpacity = 1
+            }
+        }
+        #if os(macOS)
+        macHelper?.setWindowTitleBar(visible: true)
+        #endif
+    }
+    
+    func hidePlayerUI() {
+        if playerUIOpacity == 1 {
+            withAnimation(.default.speed(2)) {
+                playerUIOpacity = 0
+            }
+        }
+        #if os(macOS)
+        if let macHelper, !macHelper.isFullScreen {
+            macHelper.setWindowTitleBar(visible: false)
+        }
+        #endif
+    }
     
     func fetchSavedPlaybackPosition() {
         guard item.videoItem.type != .livestream else {
@@ -487,9 +510,7 @@ struct PlayerView: View {
                         macHelper.hideMouseCursor()
                     }
                     #endif
-                    withAnimation(.default.speed(2)) {
-                        playerUIOpacity = 0
-                    }
+                    hidePlayerUI()
                 }
             }
         }

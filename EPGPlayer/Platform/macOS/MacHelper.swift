@@ -25,6 +25,10 @@ class MacHelper {
     private var mouseMonitor: Any?
     private var fullScreenMonitors: [any NSObjectProtocol] = []
     
+    @MainActor var isFullScreen: Bool {
+        targetWindow.styleMask.contains(.fullScreen)
+    }
+    
     func startMonitorMouseMovement(_ callback: @escaping () -> Void) {
         stopMonitorMouseMovement()
         mouseMonitor = NSEvent.addLocalMonitorForEvents(matching: .mouseMoved, handler: { event in
@@ -47,6 +51,14 @@ class MacHelper {
     
     func hideMouseCursor() {
         CGDisplayHideCursor(kCGNullDirectDisplay)
+    }
+    
+    @MainActor func setWindowTitleBar(visible: Bool) {
+        targetWindow.standardWindowButton(.closeButton)?.isHidden = !visible
+        targetWindow.standardWindowButton(.miniaturizeButton)?.isHidden = !visible
+        targetWindow.standardWindowButton(.zoomButton)?.isHidden = !visible
+        targetWindow.titleVisibility = visible ? .visible : .hidden
+        targetWindow.titlebarAppearsTransparent = !visible
     }
     
     @MainActor func isMousePointerInWindow() -> Bool {
