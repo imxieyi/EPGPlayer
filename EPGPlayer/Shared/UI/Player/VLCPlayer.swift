@@ -301,6 +301,8 @@ class VLCPlayerViewController: UIViewController {
     }
     
     func reload() {
+        mediaPlayer.stop()
+        playerEvents?.resetPlayer.send()
         if let videoItem {
             logger.debug("Media URL: \(videoItem.url.absoluteString)")
             let media = VLCMedia(url: videoItem.url)
@@ -317,8 +319,6 @@ class VLCPlayerViewController: UIViewController {
                 print("Store header: \(key)")
             }
             mediaPlayer.play()
-        } else {
-            mediaPlayer.stop()
         }
     }
 }

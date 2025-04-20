@@ -184,7 +184,7 @@ struct PlayerView: View {
                         .buttonStyle(.plain)
                         .opacity(playerUIOpacity)
                     Spacer()
-                        .frame(width: 70)
+                        .frame(width: item.videoItem.type == .livestream ? 18 : 70)
                 }
                 Spacer()
                     .frame(height: 18)
@@ -296,6 +296,21 @@ struct PlayerView: View {
         })
         .onReceive(playerEvents.userInteracted) {
             resetIdleTimer()
+        }
+        .onReceive(playerEvents.resetPlayer) {
+            playbackSpeed = .x1
+            playerState = .opening
+            playbackPosition = 0
+            loadedPlaybackPosition = false
+            hadErrorState = false
+            hadPlayingState = false
+            playerUIOpacity = 1
+            
+            videoTracks = []
+            audioTracks = []
+            textTracks = []
+            resetIdleTimer()
+            fetchSavedPlaybackPosition()
         }
     }
     

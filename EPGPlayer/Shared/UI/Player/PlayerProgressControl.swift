@@ -141,6 +141,10 @@ struct PlayerProgressControl: View {
             playbackPosition = position.position
             playbackTime = Double(position.time) / 1000
         }
+        .onReceive(playerEvents.resetPlayer) {
+            videoLength = nil
+            playbackTime = 0
+        }
     }
     
     func reload() {
