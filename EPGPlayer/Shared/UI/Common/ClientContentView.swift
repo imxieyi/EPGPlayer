@@ -78,7 +78,10 @@ struct ClientContentView<Content: View>: View {
                 refresh(.seconds(1))
             }
         }
-        .onChange(of: appState.clientState, initial: true) { _, newValue in
+        .onChange(of: appState.clientState, initial: true) { oldValue, newValue in
+            guard oldValue != newValue else {
+                return
+            }
             switch newValue {
             case .notInitialized:
                 loadingState = .loading
