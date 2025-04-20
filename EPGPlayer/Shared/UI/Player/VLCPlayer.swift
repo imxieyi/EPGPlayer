@@ -309,13 +309,19 @@ class VLCPlayerViewController: UIViewController {
                 media?.parse(options: [.parseForced], timeout: .max)
             }
             mediaPlayer.media = media
-            HTTPCookieStorage.shared.cookies?.forEach { cookie in
-                media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
-                Logger.info("Store cookie for domain: \(pii: cookie.domain)")
-            }
-            httpHeaders?.forEach { (key: String, value: String) in
-                media?.storeHeader(forName: key, value: value)
-                Logger.info("Store header: \(key)")
+            if let media {
+                if let cookies = HTTPCookieStorage.shared.cookies(for: videoItem.url) {
+                    cookies.forEach { cookie in
+                        media.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
+                    }
+                    Logger.info("Stored \(cookies.count) cookies for player")
+                }
+                if let httpHeaders {
+                    httpHeaders.forEach { (key: String, value: String) in
+                        media.storeHeader(forName: key, value: value)
+                    }
+                    Logger.info("Stored \(httpHeaders.count) headers for player")
+                }
             }
             mediaPlayer.play()
         }
