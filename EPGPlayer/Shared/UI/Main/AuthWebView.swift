@@ -33,8 +33,12 @@ struct AuthWebView: UIViewRepresentable {
     
     func makeView(context: Context) -> WKWebView {
         let webView = WKWebView()
-        webView.load(URLRequest(url: url))
+        #if !os(macOS)
+        // Override UA to workaround Google's restricted_client error.
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/135.0.7049.83 Mobile/15E148 Safari/604.1"
+        #endif
         webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: url))
         return webView
     }
     
@@ -65,7 +69,7 @@ struct AuthWebView: UIViewRepresentable {
                 return
             }
             Logger.info("Webview content type: \(contentType)")
-            if webView.url == expectedUrl && contentType.lowercased().hasPrefix(expectedContentType) {
+            if (webView.url?.absoluteString.hasPrefix(expectedUrl.absoluteString) ?? false) && contentType.lowercased().hasPrefix(expectedContentType) {
                 parent.isAuthenticaing = false
             }
         }
