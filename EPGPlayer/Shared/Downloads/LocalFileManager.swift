@@ -52,9 +52,9 @@ class LocalFileManager {
                         file.available = true
                     }
                 }
-                print("Fixed availablility for \(unavailableFiles.count) files")
+                Logger.info("Fixed availablility for \(unavailableFiles.count) files")
             } catch let error {
-                print("Failed to fix files availablility: \(error)")
+                Logger.error("Failed to fix files availablility: \(error.localizedDescription)")
             }
         }
     }
@@ -70,11 +70,11 @@ class LocalFileManager {
                 do {
                     try FileManager.default.removeItem(at: content)
                 } catch let error {
-                    print("Failed to delete \(content.path()): \(error.localizedDescription)")
+                    Logger.error("Failed to delete \(pii: content.path()): \(error.localizedDescription)")
                 }
             }
         } catch let error {
-            print("Failed to delete orphan files: \(error)")
+            Logger.error("Failed to delete orphan files: \(error.localizedDescription)")
         }
     }
 }

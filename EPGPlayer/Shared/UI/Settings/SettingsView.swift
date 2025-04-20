@@ -194,7 +194,7 @@ struct SettingsView: View {
                             currentDatabaseSize = fileSize
                         }
                     } catch let error {
-                        print("Failed to get database size: \(error.localizedDescription)")
+                        Logger.error("Failed to get database size: \(error.localizedDescription)")
                         databaseSizeError = error.localizedDescription
                     }
                 } else {
@@ -204,7 +204,7 @@ struct SettingsView: View {
                 do {
                     self.currentDownloadsSize = try LocalFileManager.shared.totalSize()
                 } catch let error {
-                    print("Failed to get total download size: \(error.localizedDescription)")
+                    Logger.error("Failed to get total download size: \(error.localizedDescription)")
                     downloadSizeError = error.localizedDescription
                 }
             }
@@ -223,7 +223,7 @@ struct SettingsView: View {
                         HTTPCookieStorage.shared.removeCookies(since: .distantPast)
                     }
                     if !appState.keychain.clear() {
-                        print("Failed to clear keychain")
+                        Logger.error("Failed to clear keychain")
                     }
                 }
                 Button("Cancel", role: .cancel) {
@@ -316,6 +316,11 @@ struct SettingsView: View {
                 userSettings.reset()
             } label: {
                 Text(verbatim: "Reset settings")
+            }
+            Button(role: .destructive) {
+                _ = Array(arrayLiteral: 0)[2]
+            } label: {
+                Text(verbatim: "Trigger crash")
             }
         } header: {
             Label {

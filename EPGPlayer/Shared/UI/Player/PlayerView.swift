@@ -6,12 +6,9 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
-import os
 import SwiftUI
 import SwiftData
 import VLCKit
-
-fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct PlayerView: View {
     @Environment(\.scenePhase) var scenePhase
@@ -203,7 +200,7 @@ struct PlayerView: View {
             do {
                 self.macHelper = try MacHelper(window: "player-window")
             } catch let error {
-                logger.error("Unable to load Mac UI helper: \(error)")
+                Logger.error("Unable to load Mac UI helper: \(error)")
             }
             #else
             UIApplication.shared.addUserActivityTracker()
@@ -212,7 +209,7 @@ struct PlayerView: View {
                 appDelegate.orientationLock = .landscape
                 appDelegate.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
 //                appDelegate.windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .landscape), errorHandler: { error in
-//                    logger.error("Unable to force landscape orientation: \(error)")
+//                    Logger.error("Unable to force landscape orientation: \(error)")
 //                })
             }
             #endif
@@ -466,9 +463,9 @@ struct PlayerView: View {
             }
             self.savedPlaybackPosition = savedPlaybackPosition
             self.loadedPlaybackPosition = true
-            print("Loaded saved playback position: \(savedPlaybackPosition.position)")
+            Logger.info("Loaded saved playback position: \(savedPlaybackPosition.position)")
         } catch let error {
-            print("Failed to fetch saved playback position: \(error)")
+            Logger.error("Failed to fetch saved playback position: \(error.localizedDescription)")
         }
     }
     
@@ -478,7 +475,7 @@ struct PlayerView: View {
         }
         if let savedPlaybackPosition {
             savedPlaybackPosition.position = playbackPosition
-            print("Saved playback position: \(savedPlaybackPosition.position)")
+            Logger.info("Saved playback position: \(savedPlaybackPosition.position)")
             return
         }
         let serverId: String?
@@ -493,7 +490,7 @@ struct PlayerView: View {
         let savedPlaybackPosition = SavedPlaybackPosition(serverId: serverId, videoItemEpgId: item.videoItem.epgId, position: playbackPosition)
         context.insert(savedPlaybackPosition)
         self.savedPlaybackPosition = savedPlaybackPosition
-        print("Saved playback position: \(savedPlaybackPosition.position)")
+        Logger.info("Saved playback position: \(savedPlaybackPosition.position)")
     }
     
     func resetIdleTimer() {

@@ -4,8 +4,6 @@
 <dict>
 	<key>AppIdentifierPrefix</key>
 	<string>$(AppIdentifierPrefix)</string>
-	<key>ITSAppUsesNonExemptEncryption</key>
-	<false/>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>This app can download videos in the background. Grant permission if you want to receive notifications when download finishes.</string>
 	<key>UIApplicationSceneManifest</key>

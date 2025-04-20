@@ -141,7 +141,7 @@ struct DownloadsView: View {
                 do {
                     try LocalFileManager.shared.deleteFile(name: file.id.uuidString)
                 } catch let error {
-                    print("Failed to delete local file \(file.id.uuidString): \(error.localizedDescription)")
+                    Logger.error("Failed to delete local file \(pii: file.id.uuidString): \(error.localizedDescription)")
                 }
             }
         }

@@ -10,6 +10,9 @@ import SwiftUI
 import SwiftData
 import OpenAPIRuntime
 import KeychainSwift
+import FirebaseCore
+import FirebaseAnalytics
+import FirebaseCrashlytics
 @preconcurrency import UserNotifications
 
 @main
@@ -25,6 +28,22 @@ struct EPGPlayerApp: App {
     let modelSetupError: Error?
     
     init() {
+        if Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist") != nil {
+            #if os(macOS)
+            UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
+            #endif
+            FirebaseApp.configure()
+            #if DEBUG
+            Analytics.setAnalyticsCollectionEnabled(false)
+            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
+            #else
+            Analytics.setAnalyticsCollectionEnabled(true)
+            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+            #endif
+            Logger.initialize(crashlytics: true)
+        } else {
+            Logger.initialize(crashlytics: false)
+        }
         do {
             modelContainer = try ModelContainer(for: Schema(versionedSchema: LocalSchemaV3.self), migrationPlan: LocalSchemaMigrationPlan.self)
             modelSetupError = nil
@@ -118,7 +137,7 @@ struct EPGPlayerApp: App {
                     try await UNUserNotificationCenter.current().setBadgeCount(count)
                     #endif
                 } catch let error {
-                    print("Failed to set badge count: \(error.localizedDescription)")
+                    Logger.error("Failed to set badge count: \(error.localizedDescription)")
                 }
             }
         })
@@ -129,7 +148,7 @@ struct EPGPlayerApp: App {
             case .background, .inactive:
                 break
             @unknown default:
-                print("Unknown scene phase: \(newValue)")
+                Logger.error("Unknown scene phase: \(newValue)")
                 break
             }
         })
@@ -151,12 +170,12 @@ struct EPGPlayerApp: App {
                     do {
                         try await UNUserNotificationCenter.current().add(request)
                     } catch let error {
-                        print("Failed to schedule notification: \(error.localizedDescription)")
+                        Logger.error("Failed to schedule notification: \(error.localizedDescription)")
                     }
                     do {
                         try await UNUserNotificationCenter.current().setBadgeCount(0)
                     } catch let error {
-                        print("Failed to update badge cound: \(error.localizedDescription)")
+                        Logger.error("Failed to update badge cound: \(error.localizedDescription)")
                     }
                 }
             }
@@ -170,13 +189,13 @@ struct EPGPlayerApp: App {
             let insertDownload = { (container: ModelContainer) in
                 do {
                     guard let videoItem = try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first else {
-                        print("Local video item does not exist for: \(url)")
+                        Logger.error("Local video item does not exist for: \(pii: url.absoluteString)")
                         return
                     }
                     appState.activeDownloads.append(ActiveDownload(url: url, videoItem: videoItem, downloadTask: task, progress: task.progress.fractionCompleted, errorMessage: error))
                     videoItem.file.unavailableReason = error
                 } catch let error {
-                    print("Failed to fetch video item: \(error.localizedDescription)")
+                    Logger.error("Failed to fetch video item: \(error.localizedDescription)")
                 }
             }
             if let container {
@@ -197,7 +216,7 @@ struct EPGPlayerApp: App {
                 do {
                     appState.activeDownloads += try await DownloadManager.shared.getActiveDownloads()
                 } catch let error {
-                    print("Failed to load active downloads: \(error)")
+                    Logger.error("Failed to load active downloads: \(error.localizedDescription)")
                 }
             }
             do {
@@ -222,14 +241,17 @@ struct EPGPlayerApp: App {
     func refreshClient(_ urlString: String, waitTime: Duration = .zero) {
         appState.clientError = nil
         if urlString != "", let url = URL(string: urlString) {
+            Logger.info("Server URL set to \(pii: urlString)")
             appState.clientState = .notInitialized
             var headers: [String : String] = [:]
             if let authHeader = appState.keychain.get("auth_header:\(urlString)") {
+                Logger.info("Adding authentication header")
                 headers["authorization"] = authHeader
             }
             appState.client = EPGClient(endpoint: url.appending(path: "api"), headers: headers)
             refreshServerInfo(waitTime: waitTime)
         } else {
+            Logger.info("Server URL set to empty")
             appState.clientState = .setupNeeded
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 appState.client = EPGClient()
@@ -239,6 +261,7 @@ struct EPGPlayerApp: App {
     
     func refreshServerInfo(waitTime: Duration = .zero) {
         Task {
+            Logger.info("Refreshing server info")
             do {
                 appState.clientState = .notInitialized
                 appState.serverVersion = ""
@@ -246,7 +269,7 @@ struct EPGPlayerApp: App {
                 appState.serverVersion = try await appState.client.api.getVersion().ok.body.json.version
                 appState.clientState = .initialized
             } catch let error {
-                print("Failed to get server version: \(error)")
+                Logger.error("Failed to get server version: \(error)")
                 if let error = error as? ClientError {
                     if error.response?.status == .unauthorized {
                         appState.clientState = .authNeeded

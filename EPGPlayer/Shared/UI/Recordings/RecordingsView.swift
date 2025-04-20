@@ -113,9 +113,9 @@ struct RecordingsView: View {
                 totalCount = json.total
                 self.recorded = records
                 loadingState = .loaded
-                print("Loaded \(recorded.count) recordings (\(totalCount) total)")
+                Logger.info("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
-                print("Failed to load recordings: \(error)")
+                Logger.error("Failed to load recordings: \(error.localizedDescription)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))
                 records = []
             }
@@ -128,7 +128,7 @@ struct RecordingsView: View {
                     map[item.id] = item
                 }
             } catch let error {
-                print("Failed to load channels: \(error)")
+                Logger.error("Failed to load channels: \(error)")
             }
         }
     }
@@ -146,15 +146,15 @@ struct RecordingsView: View {
                 return
             }
             do {
-                print("Loading more with offset \(recorded.count)")
+                Logger.info("Loading more with offset \(recorded.count)")
                 let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
                 let json = try resp.ok.body.json
                 recorded += json.records
                 totalCount = json.total
                 loadingMoreState = .loaded
-                print("Loaded \(recorded.count) recordings (\(totalCount) total)")
+                Logger.info("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
-                print("Failed to load more recordings: \(error)")
+                Logger.error("Failed to load more recordings: \(error.localizedDescription)")
                 loadingMoreState = .error(Text(verbatim: error.localizedDescription))
             }
         }

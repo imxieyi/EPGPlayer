@@ -6,13 +6,10 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
-import os
 import AVKit
 @preconcurrency import VLCKit
 import SwiftUI
 import Combine
-
-fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct VLCPlayer: UIViewControllerRepresentable {
     let videoItem: any VideoItem
@@ -73,7 +70,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         }
         
         func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
-            logger.debug("Player state changed: \(newState.rawValue)")
+            Logger.debug("Player state changed: \(newState.rawValue)")
             Task { @MainActor [parent] in
                 parent.playerState = newState
                 if newState == .error {
@@ -87,19 +84,19 @@ struct VLCPlayer: UIViewControllerRepresentable {
         }
         
         func mediaPlayerTrackAdded(_ trackId: String, with trackType: VLCMedia.TrackType) {
-            logger.info("Track added: \(trackId) type \(trackType.rawValue)")
+            Logger.info("Track added: \(trackId) type \(trackType.rawValue)")
             Task { @MainActor [weak playerEvents] in
                 playerEvents?.getTrackInfo.send(trackId)
             }
         }
         
         func mediaPlayerLengthChanged(_ length: Int64) {
-            print("Length: \(length)")
+            Logger.info("Length of media: \(length)")
         }
         
         func mediaPlayerTimeChanged(_ aNotification: Notification) {
             guard let player = aNotification.object as? VLCMediaPlayer else {
-                print("mediaPlayerTimeChanged: wrong object type")
+                Logger.error("mediaPlayerTimeChanged: wrong notification object type")
                 return
             }
             if let stats = player.media?.statistics {
@@ -113,7 +110,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         }
         
         func mediaDidFinishParsing(_ aMedia: VLCMedia) {
-            logger.info("Finished parsing media, status \(aMedia.parsedStatus.rawValue), length \(aMedia.length)")
+            Logger.info("Finished parsing media, status \(aMedia.parsedStatus.rawValue), length \(aMedia.length)")
         }
     }
 }
@@ -170,7 +167,7 @@ class VLCPlayerViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         guard let playerEvents else {
-            fatalError("playerEvents should not be nil")
+            Logger.fatal("playerEvents should not be nil")
         }
         togglePlayListener = playerEvents.togglePlay.sink(receiveValue: { [weak self] _ in
             guard let player = self?.mediaPlayer else {
@@ -207,7 +204,7 @@ class VLCPlayerViewController: UIViewController {
                 return
             }
             guard track.id != "none" else {
-                print("Disabling track type \(track.name)")
+                Logger.info("Disabling track type \(track.name)")
                 switch track.name {
                 case "video":
                     player.videoTracks.forEach({ $0.isSelected = false })
@@ -216,11 +213,11 @@ class VLCPlayerViewController: UIViewController {
                 case "text":
                     player.textTracks.forEach({ $0.isSelected = false })
                 default:
-                    print("Unknown track type \(track.name)")
+                    Logger.error("Unknown track type \(track.name)")
                 }
                 return
             }
-            print("Enabling track \(track.id) \(track.name)")
+            Logger.info("Enabling track \(track.id) \(track.name)")
             player.videoTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
             player.audioTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
             player.textTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
@@ -286,10 +283,10 @@ class VLCPlayerViewController: UIViewController {
         // Prevent VLC deadlock causing main thread blocking.
         Task(priority: .background) { [mediaPlayer] in
             while mediaPlayer.state != .stopped {
-                logger.warning("VLCPlayer not stopped")
+                Logger.warning("VLCPlayer not stopped")
                 try await Task.sleep(for: .milliseconds(100))
             }
-            logger.warning("VLCPlayer stopped")
+            Logger.warning("VLCPlayer stopped")
         }
         togglePlayListener?.cancel()
         getTrackInfoListener?.cancel()
@@ -305,7 +302,7 @@ class VLCPlayerViewController: UIViewController {
         mediaPlayer.stop()
         playerEvents?.resetPlayer.send()
         if let videoItem {
-            logger.debug("Media URL: \(videoItem.url.absoluteString)")
+            Logger.info("Media URL: \(pii: videoItem.url.absoluteString)")
             let media = VLCMedia(url: videoItem.url)
             media?.delegate = delegate
             if videoItem.type != .livestream {
@@ -314,10 +311,11 @@ class VLCPlayerViewController: UIViewController {
             mediaPlayer.media = media
             HTTPCookieStorage.shared.cookies?.forEach { cookie in
                 media?.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
+                Logger.info("Store cookie for domain: \(pii: cookie.domain)")
             }
             httpHeaders?.forEach { (key: String, value: String) in
                 media?.storeHeader(forName: key, value: value)
-                print("Store header: \(key)")
+                Logger.info("Store header: \(key)")
             }
             mediaPlayer.play()
         }

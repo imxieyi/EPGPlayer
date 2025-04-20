@@ -153,3 +153,4 @@ Temporary Items
 .apdisk
 
 EPGPlayer/Dependency/VLCKit.xcframework
+GoogleService-Info.plist

@@ -6,11 +6,8 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
-import os
 import SwiftUI
 import VLCKit
-
-fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "player")
 
 struct PlayerProgressControl: View {
     @Environment(AppState.self) private var appState
@@ -154,7 +151,7 @@ struct PlayerProgressControl: View {
                 do {
                     videoLength = try await appState.client.api.getVideosVideoFileIdDuration(Operations.GetVideosVideoFileIdDuration.Input(path: Operations.GetVideosVideoFileIdDuration.Input.Path(videoFileId: item.id))).ok.body.json.duration
                 } catch let error {
-                    logger.error("Failed to get video length: \(error)")
+                    Logger.error("Failed to get video length: \(error)")
                 }
             }
             return

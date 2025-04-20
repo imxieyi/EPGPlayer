@@ -111,9 +111,9 @@ struct LiveChannelsView: View {
                 self.liveStreamConfig = liveStreamConfig
                 channels = try await appState.client.api.getChannels().ok.body.json.filter { $0._type == 1 }
                 loadingState = .loaded
-                print("Loaded \(channels.count) channels")
+                Logger.info("Loaded \(channels.count) channels")
             } catch let error {
-                print("Failed to load recordings: \(error)")
+                Logger.error("Failed to load recordings: \(error)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))
             }
         }

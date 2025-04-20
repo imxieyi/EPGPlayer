@@ -64,7 +64,7 @@ struct AuthWebView: UIViewRepresentable {
             guard let contentType else {
                 return
             }
-            print("Webview content type: \(contentType)")
+            Logger.info("Webview content type: \(contentType)")
             if webView.url == expectedUrl && contentType.lowercased().hasPrefix(expectedContentType) {
                 parent.isAuthenticaing = false
             }

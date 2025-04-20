@@ -7,23 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8A46FEEB2DB52ED2005DB469 /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 8A46FEEA2DB52ED2005DB469 /* Logging */; };
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
+		8A850F272DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F262DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport */; };
+		8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F282DB523A0004E9328 /* FirebaseCrashlytics */; };
 		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		8A4BA49E2DAC506300E9DF5D /* Embed PlugIns */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-			);
-			name = "Embed PlugIns";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		8A7744BA2D92DB920080D3BA /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -46,6 +39,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Dependency/.gitkeep,
+				"GoogleService-Info.plist",
 				Info.plist,
 			);
 			platformFiltersByRelativePath = {
@@ -92,8 +86,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8A46FEEB2DB52ED2005DB469 /* Logging in Frameworks */,
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
+				8A850F272DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
 				8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */,
+				8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
 			);
@@ -149,7 +146,8 @@
 				8A7744552D92C2F30080D3BA /* Frameworks */,
 				8A7744562D92C2F30080D3BA /* Resources */,
 				8A7744BA2D92DB920080D3BA /* Embed Frameworks */,
-				8A4BA49E2DAC506300E9DF5D /* Embed PlugIns */,
+				8A850F3A2DB52BEB004E9328 /* Copy GoogleService-Info.plist if exists */,
+				8A46FF4A2DB5563A005DB469 /* Upload Crashlytics symbols */,
 			);
 			buildRules = (
 			);
@@ -197,6 +195,8 @@
 				8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */,
 				8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
 				8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */,
+				8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -217,6 +217,53 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		8A46FF4A2DB5563A005DB469 /* Upload Crashlytics symbols */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			name = "Upload Crashlytics symbols";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [[ -f \"$SCRIPT_INPUT_FILE_3\" ]]; then\n    \"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\nelse\n    echo \"warning: GoogleService-Info.plist doesn't exist\"\nfi\n";
+		};
+		8A850F3A2DB52BEB004E9328 /* Copy GoogleService-Info.plist if exists */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/EPGPlayer/GoogleService-Info.plist",
+			);
+			name = "Copy GoogleService-Info.plist if exists";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\nif [[ -f \"$SCRIPT_INPUT_FILE_0\" ]]; then\n    cp \"$SCRIPT_INPUT_FILE_0\" \"$SCRIPT_OUTPUT_FILE_0\"\n    echo \"Copied GoogleService-Info.plist\"\nelse\n    echo \"warning: GoogleService-Info.plist doesn't exist\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8A7744542D92C2F30080D3BA /* Sources */ = {
@@ -370,11 +417,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = EPGPlayer/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -387,13 +436,13 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.EPGPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = NO;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -409,11 +458,13 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = EPGPlayer/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -426,6 +477,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = com.imxieyi.EPGPlayer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = NO;
@@ -462,6 +514,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-log.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.3;
+			};
+		};
 		8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-openapi-generator";
@@ -494,6 +554,14 @@
 				minimumVersion = 2.1.1;
 			};
 		};
+		8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.11.0;
+			};
+		};
 		8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/imxieyi/keychain-swift.git";
@@ -505,6 +573,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		8A46FEEA2DB52ED2005DB469 /* Logging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = Logging;
+		};
 		8A7667E52D946A54008E69F7 /* OpenAPIRuntime */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */;
@@ -524,6 +597,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
 			productName = CachedAsyncImage;
+		};
+		8A850F262DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsWithoutAdIdSupport;
+		};
+		8A850F282DB523A0004E9328 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		8AA515152DADAE38006C7AA7 /* KeychainSwift */ = {
 			isa = XCSwiftPackageProductDependency;

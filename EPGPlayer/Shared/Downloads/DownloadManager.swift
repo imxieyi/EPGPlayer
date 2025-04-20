@@ -6,12 +6,9 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
-import os
 import Foundation
 import SwiftData
 import VLCKit
-
-fileprivate let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "EPGPlayer", category: "downloader")
 
 @MainActor
 final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDelegate {
@@ -54,7 +51,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     
     func startDownloading(url: URL, expectedBytes: Int64, headers: [String: String]?) -> URLSessionDownloadTask? {
         guard !downloads.contains(url) else {
-            logger.warning("URL \(url) already started downloading")
+            Logger.warning("URL \(url) already started downloading")
             return nil
         }
         var request = URLRequest(url: url)
@@ -91,14 +88,12 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         guard let task = task as? URLSessionDownloadTask else {
             return
         }
-        guard let errorDesc = error?.localizedDescription else {
-            return
-        }
-        print("Task completed with error: \(errorDesc)")
+        let errorDesc = error?.localizedDescription ?? "Unknown error"
         guard let url = task.originalRequest?.url else {
-            logger.error("Cannot get original request URL")
+            Logger.error("Cannot get original request URL")
             return
         }
+        Logger.error("Download task for URL \(pii: url.absoluteString) completed with error: \(errorDesc)")
         Task { @MainActor [self] in
             downloads.remove(url)
             events.downloadFailure.send((url, task, errorDesc))
@@ -107,19 +102,19 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     
     nonisolated func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         guard let url = downloadTask.originalRequest?.url else {
-            logger.error("Cannot get original request URL")
+            Logger.error("Cannot get original request URL")
             return
         }
         Task { @MainActor [self] in
             downloads.remove(url)
         }
         guard let response = downloadTask.response as? HTTPURLResponse else {
-            logger.error("downloadTask.response is not HTTPURLResponse")
+            Logger.error("downloadTask.response for url \(pii: url.absoluteString) is not HTTPURLResponse")
             sendError(url, task: downloadTask, message: "downloadTask.response is not HTTPURLResponse")
             return
         }
         guard response.statusCode == 200 else {
-            logger.error("HTTP status code is not 200, but is \(response.statusCode)")
+            Logger.error("HTTP status code for url \(pii: url.absoluteString) is not 200, but is \(response.statusCode)")
             sendError(url, task: downloadTask, message: "HTTP status code is not 200, but is \(response.statusCode)")
             return
         }
@@ -127,7 +122,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
             guard let videoItem = try DispatchQueue.main.sync(execute: {
                 try container.mainContext.fetch(FetchDescriptor<LocalVideoItem>(predicate: #Predicate { $0.originalUrl == url })).first
             }) else {
-                logger.error("Cannot find video item associated with \(url)")
+                Logger.error("Cannot find video item associated with \(pii: url.absoluteString)")
                 sendError(url, task: downloadTask, message: "Cannot find video item associated with \(url)")
                 return
             }
@@ -143,9 +138,9 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
             Task { @MainActor [self] in
                 events.downloadSuccess.send(url)
             }
-            logger.info("Download succeeded for \(url)")
+            Logger.info("Download succeeded for \(pii: url.absoluteString)")
         } catch let error {
-            logger.error("Failed to fetch video item associated with \(url): \(error)")
+            Logger.error("Failed to fetch video item associated with \(pii: url.absoluteString): \(error.localizedDescription)")
             sendError(url, task: downloadTask, message: "Failed to fetch video item associated with \(url): \(error)")
             return
         }
