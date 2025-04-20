@@ -5,6 +5,7 @@
 //  Created by Yi Xie on 2023/01/03.
 //  Copyright © 2023 xieyi. All rights reserved.
 //
+//  SPDX-License-Identifier: MPL-2.0
 
 import Foundation
 import CoreGraphics

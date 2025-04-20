@@ -4,6 +4,7 @@
 //
 //  Created by Yi Xie on 2025/03/31.
 //
+//  SPDX-License-Identifier: MPL-2.0
 
 @preconcurrency import Combine
 import SwiftUI

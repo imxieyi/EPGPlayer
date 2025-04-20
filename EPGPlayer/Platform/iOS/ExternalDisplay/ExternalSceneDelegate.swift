@@ -4,6 +4,7 @@
 //
 //  Created by Yi Xie on 2023/11/01.
 //
+//  SPDX-License-Identifier: MPL-2.0
 
 import Foundation
 import SwiftUI

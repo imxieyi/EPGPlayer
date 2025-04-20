@@ -4,6 +4,8 @@
 //
 //  Created by Yi Xie on 2025/03/27.
 //
+//  SPDX-License-Identifier: MPL-2.0
+
 import Foundation
 import OpenAPIURLSession
 

@@ -4,6 +4,7 @@
 //
 //  Created by Yi Xie on 2025/04/13.
 //
+//  SPDX-License-Identifier: MPL-2.0
 
 import SwiftUI
 import OpenAPIRuntime

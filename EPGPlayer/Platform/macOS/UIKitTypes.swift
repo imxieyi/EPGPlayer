@@ -4,6 +4,7 @@
 //
 //  Created by Yi Xie on 2025/04/16.
 //
+//  SPDX-License-Identifier: MPL-2.0
 
 import AppKit
 import SwiftUI
