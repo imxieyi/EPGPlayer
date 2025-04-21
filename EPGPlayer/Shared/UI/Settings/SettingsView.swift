@@ -70,6 +70,18 @@ struct SettingsView: View {
                 } else {
                     (appState.clientError ?? Text("Unknown error"))
                         .foregroundStyle(.red)
+                    Button {
+                        appState.isAuthenticating = true
+                    } label: {
+                        HStack {
+                            Text("Open test page")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                    .tint(.primary)
                 }
             } else {
                 Text("Please set EPGStation URL")
