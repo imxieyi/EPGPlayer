@@ -15,7 +15,7 @@ class UserSettings: ObservableObject {
     @AppStorage("server_url") var serverUrl: String = ""
     
     // Player Settings
-    @AppStorage("enable_subtitles") var enableSubtitles = true
+    @AppStorage("enable_subtitles") var enableSubtitles = false
     @AppStorage("force_landscape") var forceLandscape = false
     @AppStorage("show_player_stats") var showPlayerStats = false
     @AppStorage("inactive_timer") var inactiveTimer = 5
