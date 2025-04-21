@@ -88,7 +88,9 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         guard let task = task as? URLSessionDownloadTask else {
             return
         }
-        let errorDesc = error?.localizedDescription ?? "Unknown error"
+        guard let errorDesc = error?.localizedDescription else {
+            return
+        }
         guard let url = task.originalRequest?.url else {
             Logger.error("Cannot get original request URL")
             return
