@@ -28,21 +28,23 @@ struct EPGPlayerApp: App {
     let modelSetupError: Error?
     
     init() {
-        if Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist") != nil {
-            #if os(macOS)
-            UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
-            #endif
-            FirebaseApp.configure()
-            #if DEBUG
-            Analytics.setAnalyticsCollectionEnabled(false)
-            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
-            #else
-            Analytics.setAnalyticsCollectionEnabled(true)
-            Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
-            #endif
-            Logger.initialize(crashlytics: true)
-        } else {
-            Logger.initialize(crashlytics: false)
+        DispatchQueue.main.async {
+            if Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist") != nil {
+                #if os(macOS)
+                UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
+                #endif
+                FirebaseApp.configure()
+                #if DEBUG
+                Analytics.setAnalyticsCollectionEnabled(false)
+                Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
+                #else
+                Analytics.setAnalyticsCollectionEnabled(true)
+                Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+                #endif
+                Logger.initialize(crashlytics: true)
+            } else {
+                Logger.initialize(crashlytics: false)
+            }
         }
         do {
             modelContainer = try ModelContainer(for: Schema(versionedSchema: LocalSchemaV3.self), migrationPlan: LocalSchemaMigrationPlan.self)
