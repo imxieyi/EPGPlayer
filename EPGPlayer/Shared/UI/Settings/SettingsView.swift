@@ -37,7 +37,9 @@ struct SettingsView: View {
                 resetSection
                 aboutSection
                 #if DEBUG
-                debugSection
+                if !userSettings.demoMode {
+                    debugSection
+                }
                 #endif
             }
             .formStyle(.grouped)
@@ -54,7 +56,17 @@ struct SettingsView: View {
     var serverSection: some View {
         Section {
             if userSettings.serverUrl != "" {
-                Text(verbatim: userSettings.serverUrl)
+                Group {
+                    #if DEBUG
+                    if userSettings.demoMode {
+                        Text(verbatim: "https://demo.example.com")
+                    } else {
+                        Text(verbatim: userSettings.serverUrl)
+                    }
+                    #else
+                    Text(verbatim: userSettings.serverUrl)
+                    #endif
+                }
                     .foregroundStyle(.secondary)
                 if appState.serverVersion != "" {
                     Text("Server version: \(appState.serverVersion)")
