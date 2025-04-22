@@ -22,6 +22,8 @@ final class AppState {
     var authType: AuthType = .redirect
     var clientError: Text? = nil
     
+    var searchQuery: SearchQuery? = nil
+    
     var playingItem: PlayerItem? = nil
     
     var downloadsSetupError: Error? = nil
@@ -35,6 +37,28 @@ final class AppState {
     #else
     let isOnMac = false
     #endif
+}
+
+struct SearchQuery: Equatable {
+    let keyword: String
+    let channel: SearchChannel?
+    
+    func apiQuery(offset: Int? = nil) -> Operations.GetRecorded.Input.Query {
+        return Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: offset, channelId: channel?.channelId, keyword: keyword)
+    }
+}
+
+struct SearchChannel: Hashable, Identifiable {
+    let name: String
+    let channelId: Int?
+    
+    var id: String {
+        if let channelId {
+            "\(channelId)"
+        } else {
+            name
+        }
+    }
 }
 
 enum ClientState {

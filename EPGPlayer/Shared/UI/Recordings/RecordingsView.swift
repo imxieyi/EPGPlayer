@@ -14,10 +14,13 @@ struct RecordingsView: View {
     @Bindable var appState: AppState
     @Binding var activeTab: TabSelection
     
+    @State var showSearchView: Bool = false
+    
     @State var loadingState = LoadingState.loading
     @State var loadingMoreState = LoadingState.loaded
     
     @State var totalCount = 0
+    @State var channels: [Components.Schemas.ChannelItem] = []
     @State var recorded: [Components.Schemas.RecordedItem] = []
     
     var body: some View {
@@ -31,27 +34,32 @@ struct RecordingsView: View {
                         .frame(height: 10)
                     #endif
                     
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
-                        ForEach(recorded) { item in
-                            NavigationLink {
-                                RecordingDetailView(item: item)
-                            } label: {
-                                RecordingCell(item: item)
-                            }
-                            #if os(macOS)
-                            .buttonStyle(.borderless)
-                            #endif
-                            .tint(.primary)
-                            .id(item.id)
-                        }
-                        if case .loaded = loadingMoreState, recorded.count < totalCount {
-                            Spacer()
-                                .onAppear {
-                                    loadMore()
+                    if recorded.isEmpty {
+                        ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+                    } else {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
+                            ForEach(recorded) { item in
+                                NavigationLink {
+                                    RecordingDetailView(item: item)
+                                } label: {
+                                    RecordingCell(item: item)
                                 }
+                                #if os(macOS)
+                                .buttonStyle(.borderless)
+                                #endif
+                                .tint(.primary)
+                                .id(item.id)
+                            }
+                            if case .loaded = loadingMoreState, recorded.count < totalCount {
+                                Spacer()
+                                    .onAppear {
+                                        loadMore()
+                                    }
+                            }
                         }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
+                    
                     if recorded.count < totalCount {
                         if case .loading = loadingMoreState {
                             ProgressView()
@@ -83,6 +91,23 @@ struct RecordingsView: View {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSearchView.toggle()
+                    } label: {
+                        Label("Search", systemImage: "magnifyingglass")
+                    }
+                }
+            })
+            #else
+            .toolbar(content: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSearchView.toggle()
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                }
             })
             #endif
             .navigationTitle("Recordings")
@@ -95,6 +120,14 @@ struct RecordingsView: View {
                 refresh()
             }
         }
+        .sheet(isPresented: $showSearchView) {
+            SearchView(searchQuery: $appState.searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
+        }
+        .onChange(of: appState.searchQuery, initial: true) { oldValue, newValue in
+            if oldValue != newValue {
+                refresh()
+            }
+        }
     }
     
     func refresh(waitTime: Duration = .zero) {
@@ -104,20 +137,18 @@ struct RecordingsView: View {
         recorded = []
         loadingState = .loading
         Task {
-            let records: [Components.Schemas.RecordedItem]
+            let records: [Components.Schemas.RecordedItem]?
             do {
                 try await Task.sleep(for: waitTime)
-                let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true))
+                let resp = try await appState.client.api.getRecorded(query: appState.searchQuery?.apiQuery() ?? Operations.GetRecorded.Input.Query(isHalfWidth: true))
                 let json = try resp.ok.body.json
-                records = json.records
                 totalCount = json.total
-                self.recorded = records
-                loadingState = .loaded
+                records = json.records
                 Logger.info("Loaded \(recorded.count) recordings (\(totalCount) total)")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error.localizedDescription)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))
-                records = []
+                records = nil
             }
             Components.Schemas.RecordedItem.endpoint = appState.client.endpoint
             
@@ -127,8 +158,13 @@ struct RecordingsView: View {
                 Components.Schemas.RecordedItem.channelMap = channels.reduce(into: [Int: Components.Schemas.ChannelItem]()) { map, item in
                     map[item.id] = item
                 }
+                self.channels = channels
             } catch let error {
-                Logger.error("Failed to load channels: \(error)")
+                Logger.error("Failed to load channels: \(error.localizedDescription)")
+            }
+            if let records {
+                self.recorded = records
+                loadingState = .loaded
             }
         }
     }
@@ -147,7 +183,7 @@ struct RecordingsView: View {
             }
             do {
                 Logger.info("Loading more with offset \(recorded.count)")
-                let resp = try await appState.client.api.getRecorded(query: Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
+                let resp = try await appState.client.api.getRecorded(query: appState.searchQuery?.apiQuery(offset: recorded.count) ?? Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
                 let json = try resp.ok.body.json
                 recorded += json.records
                 totalCount = json.total

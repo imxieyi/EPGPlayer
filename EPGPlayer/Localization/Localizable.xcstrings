@@ -55,6 +55,16 @@
         }
       }
     },
+    "All" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "全部"
+          }
+        }
+      }
+    },
     "Are you sure?" : {
       "localizations" : {
         "ja" : {
@@ -182,6 +192,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
+          }
+        }
+      }
+    },
+    "Channel" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "频道"
           }
         }
       }
@@ -637,6 +657,16 @@
         }
       }
     },
+    "Keyword" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关键词"
+          }
+        }
+      }
+    },
     "Licenses" : {
       "localizations" : {
         "ja" : {
@@ -761,6 +791,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未选择媒体"
+          }
+        }
+      }
+    },
+    "No recordings found" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到录像"
           }
         }
       }
@@ -893,6 +933,16 @@
         }
       }
     },
+    "Query" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "查询条件"
+          }
+        }
+      }
+    },
     "Recordings" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -970,6 +1020,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重置"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
           }
         }
       }
