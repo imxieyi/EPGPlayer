@@ -86,6 +86,20 @@ struct DownloadsView: View {
                                             Label("Errors", systemImage: "exclamationmark.circle")
                                         }
                                     }
+                                    let downloadingItems = item._videoItems.filter({ item in
+                                        appState.activeDownloads.contains(where: { $0.videoItem == item })
+                                    })
+                                    if !downloadingItems.isEmpty {
+                                        GroupBox {
+                                            VStack {
+                                                ForEach(downloadingItems) { downloadingItem in
+                                                    Text(verbatim: downloadingItem.name)
+                                                }
+                                            }
+                                        } label: {
+                                            Label("Downloading", systemImage: "arrow.down")
+                                        }
+                                    }
                                 }
                             }
                         }
