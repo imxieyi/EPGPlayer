@@ -46,8 +46,10 @@ public struct SearchView: View {
                     } label: {
                         Text("Reset")
                     }
+                    #if !os(macOS)
                     .buttonStyle(.plain)
                     .foregroundStyle(.red)
+                    #endif
                     
                     Spacer()
                     
@@ -57,8 +59,10 @@ public struct SearchView: View {
                     } label: {
                         Text("Search")
                     }
+                    #if !os(macOS)
                     .buttonStyle(.plain)
                     .foregroundStyle(.tint)
+                    #endif
                 }
             }
             .formStyle(.grouped)
