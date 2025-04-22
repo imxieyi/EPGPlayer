@@ -136,7 +136,7 @@ struct RecordingsView: View {
                 let json = try resp.ok.body.json
                 totalCount = json.total
                 records = json.records
-                Logger.info("Loaded \(recorded.count) recordings (\(totalCount) total)")
+                Logger.info("Loaded \(records?.count ?? 0) recordings (\(totalCount) total)")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error.localizedDescription)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))

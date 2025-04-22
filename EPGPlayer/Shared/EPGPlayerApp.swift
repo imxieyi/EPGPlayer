@@ -28,8 +28,10 @@ struct EPGPlayerApp: App {
     let modelSetupError: Error?
     
     init() {
-        DispatchQueue.main.async {
-            if Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist") != nil {
+        let hasFirebase = Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist") != nil
+        Logger.initialize(crashlytics: hasFirebase)
+        if hasFirebase {
+            DispatchQueue.main.async {
                 #if os(macOS)
                 UserDefaults.standard.register(defaults: ["NSApplicationCrashOnExceptions": true])
                 #endif
@@ -41,9 +43,6 @@ struct EPGPlayerApp: App {
                 Analytics.setAnalyticsCollectionEnabled(true)
                 Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
                 #endif
-                Logger.initialize(crashlytics: true)
-            } else {
-                Logger.initialize(crashlytics: false)
             }
         }
         do {
@@ -229,7 +228,9 @@ struct EPGPlayerApp: App {
             #if os(macOS)
             userSettings.forceLandscape = false
             #endif
-            refreshClient(userSettings.serverUrl)
+            DispatchQueue.main.async {
+                refreshClient(userSettings.serverUrl)
+            }
         }
     }
     
