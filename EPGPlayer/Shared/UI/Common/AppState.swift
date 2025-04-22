@@ -22,8 +22,6 @@ final class AppState {
     var authType: AuthType = .redirect
     var clientError: Text? = nil
     
-    var searchQuery: SearchQuery? = nil
-    
     var playingItem: PlayerItem? = nil
     
     var downloadsSetupError: Error? = nil

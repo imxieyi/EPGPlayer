@@ -15,6 +15,7 @@ struct RecordingsView: View {
     @Binding var activeTab: TabSelection
     
     @State var showSearchView: Bool = false
+    @State var searchQuery: SearchQuery? = nil
     
     @State var loadingState = LoadingState.loading
     @State var loadingMoreState = LoadingState.loaded
@@ -82,8 +83,8 @@ struct RecordingsView: View {
                     refresh()
                 }
             })
-            #if os(macOS)
             .toolbar(content: {
+                #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         refresh()
@@ -91,25 +92,15 @@ struct RecordingsView: View {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
+                #endif
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showSearchView.toggle()
                     } label: {
-                        Label("Search", systemImage: "magnifyingglass")
+                        Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
                     }
                 }
             })
-            #else
-            .toolbar(content: {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSearchView.toggle()
-                    } label: {
-                        Image(systemName: "magnifyingglass")
-                    }
-                }
-            })
-            #endif
             .navigationTitle("Recordings")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
@@ -121,9 +112,9 @@ struct RecordingsView: View {
             }
         }
         .sheet(isPresented: $showSearchView) {
-            SearchView(searchQuery: $appState.searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
+            SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
         }
-        .onChange(of: appState.searchQuery, initial: true) { oldValue, newValue in
+        .onChange(of: searchQuery, initial: true) { oldValue, newValue in
             if oldValue != newValue {
                 refresh()
             }
@@ -140,7 +131,7 @@ struct RecordingsView: View {
             let records: [Components.Schemas.RecordedItem]?
             do {
                 try await Task.sleep(for: waitTime)
-                let resp = try await appState.client.api.getRecorded(query: appState.searchQuery?.apiQuery() ?? Operations.GetRecorded.Input.Query(isHalfWidth: true))
+                let resp = try await appState.client.api.getRecorded(query: searchQuery?.apiQuery() ?? Operations.GetRecorded.Input.Query(isHalfWidth: true))
                 let json = try resp.ok.body.json
                 totalCount = json.total
                 records = json.records
@@ -183,7 +174,7 @@ struct RecordingsView: View {
             }
             do {
                 Logger.info("Loading more with offset \(recorded.count)")
-                let resp = try await appState.client.api.getRecorded(query: appState.searchQuery?.apiQuery(offset: recorded.count) ?? Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
+                let resp = try await appState.client.api.getRecorded(query: searchQuery?.apiQuery(offset: recorded.count) ?? Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: recorded.count))
                 let json = try resp.ok.body.json
                 recorded += json.records
                 totalCount = json.total

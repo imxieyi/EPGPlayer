@@ -224,9 +224,9 @@ struct EPGPlayerApp: App {
             } catch let error {
                 appState.downloadsSetupError = error
             }
-            if appState.isOnMac {
-                userSettings.forceLandscape = false
-            }
+            #if os(macOS)
+            userSettings.forceLandscape = false
+            #endif
             refreshClient(userSettings.serverUrl)
         }
     }

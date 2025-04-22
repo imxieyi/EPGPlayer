@@ -129,11 +129,11 @@ struct SettingsView: View {
                 Text("Enable subtitles")
             }
             
-            if !appState.isOnMac {
-                Toggle(isOn: userSettings.$forceLandscape) {
-                    Text("Force landscape")
-                }
+            #if !os(macOS)
+            Toggle(isOn: userSettings.$forceLandscape) {
+                Text("Force landscape")
             }
+            #endif
             
             Picker(selection: userSettings.$inactiveTimer) {
                 ForEach([3, 5, 10, 15, .max], id: \.self) { time in

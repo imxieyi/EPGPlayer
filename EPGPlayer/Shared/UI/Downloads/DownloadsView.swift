@@ -18,6 +18,8 @@ struct DownloadsView: View {
     @Query var localFiles: [LocalFile]
     
     @State var showActiveDownloads = false
+    @State var showSearchView = false
+    @State var searchQuery: SearchQuery? = nil
     
     @State var showErrorAlert = false
     @State var errorAlertRecordItem: LocalRecordedItem? = nil
@@ -32,7 +34,17 @@ struct DownloadsView: View {
                     ContentUnavailableView("No downloaded video", systemImage: "folder.badge.questionmark")
                 } else {
                     ScrollView {
+                        #if os(macOS)
+                        Spacer()
+                            .frame(height: 10)
+                        #endif
+                        
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15, alignment: .top)], spacing: 15) {
+                            let recorded = (
+                                searchQuery == nil
+                                ? recorded
+                                : recorded.filter { $0.name.contains(searchQuery!.keyword == "" ? $0.name : searchQuery!.keyword) && $0.channelName == (searchQuery?.channel?.name ?? $0.channelName) }
+                            )
                             ForEach(recorded) { item in
                                 VStack(alignment: .center) {
                                     NavigationLink {
@@ -80,10 +92,10 @@ struct DownloadsView: View {
                         .padding(.horizontal)
                         .animation(.default, value: recorded)
                         
-                        if appState.isOnMac {
-                            Spacer()
-                                .frame(height: 10)
-                        }
+                        #if os(macOS)
+                        Spacer()
+                            .frame(height: 10)
+                        #endif
                     }
                 }
             }
@@ -104,6 +116,13 @@ struct DownloadsView: View {
                         } else {
                             Image(systemName: "arrow.down.circle")
                         }
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSearchView.toggle()
+                    } label: {
+                        Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
                     }
                 }
             }
@@ -131,6 +150,9 @@ struct DownloadsView: View {
         .sheet(isPresented: $showActiveDownloads, content: {
             ActiveDownloadsView()
         })
+        .sheet(isPresented: $showSearchView) {
+            SearchView(searchQuery: $searchQuery, channels: Array(Set(recorded.compactMap { $0.channelName }).map({ SearchChannel(name: $0, channelId: nil) })))
+        }
         .onChange(of: localFiles, initial: false) { oldValue, newValue in
             let newSet = Set(newValue)
             let deletedFiles = oldValue.filter { !newSet.contains($0) }
