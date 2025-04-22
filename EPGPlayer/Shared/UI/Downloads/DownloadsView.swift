@@ -91,10 +91,13 @@ struct DownloadsView: View {
                                     })
                                     if !downloadingItems.isEmpty {
                                         GroupBox {
-                                            VStack {
-                                                ForEach(downloadingItems) { downloadingItem in
-                                                    Text(verbatim: downloadingItem.name)
+                                            HStack {
+                                                VStack(alignment: .leading) {
+                                                    ForEach(downloadingItems) { downloadingItem in
+                                                        Text(verbatim: downloadingItem.name)
+                                                    }
                                                 }
+                                                Spacer()
                                             }
                                         } label: {
                                             Label("Downloading", systemImage: "arrow.down")
