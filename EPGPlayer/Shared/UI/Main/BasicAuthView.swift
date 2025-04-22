@@ -26,12 +26,8 @@ struct BasicAuthView: View {
                     #if !os(macOS)
                     .textInputAutocapitalization(.never)
                     #endif
-                TextField("Password", text: $password)
+                SecureField("Password", text: $password)
                     .textContentType(.password)
-                    .autocorrectionDisabled()
-                    #if !os(macOS)
-                    .textInputAutocapitalization(.never)
-                    #endif
             } header: {
                 Label("Login info", systemImage: "key")
             }
