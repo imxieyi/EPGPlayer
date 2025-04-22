@@ -154,3 +154,4 @@ Temporary Items
 
 EPGPlayer/Dependency/VLCKit.xcframework
 GoogleService-Info.plist
+Assets/*.md
