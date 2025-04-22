@@ -67,7 +67,7 @@ struct SettingsView: View {
                     Button("Login") {
                         appState.isAuthenticating = true
                     }
-                } else {
+                } else if appState.clientState == .error {
                     (appState.clientError ?? Text("Unknown error"))
                         .foregroundStyle(.red)
                     Button {
@@ -82,6 +82,8 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.borderless)
                     .tint(.primary)
+                } else if appState.clientState == .notInitialized {
+                    ProgressView()
                 }
             } else {
                 Text("Please set EPGStation URL")

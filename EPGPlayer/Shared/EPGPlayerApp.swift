@@ -293,6 +293,7 @@ struct EPGPlayerApp: App {
                 }
                 appState.clientError = Text("Failed to get server version: \(error.localizedDescription)")
                 appState.clientState = .error
+                appState.authType = .redirect
             }
         }
     }
