@@ -316,6 +316,9 @@ struct SettingsView: View {
     #if DEBUG
     var debugSection: some View {
         Section {
+            Toggle(isOn: $userSettings.demoMode) {
+                Text(verbatim: "Demo mode")
+            }
             Button {
                 LocalFileManager.shared.deleteOrphans()
             } label: {

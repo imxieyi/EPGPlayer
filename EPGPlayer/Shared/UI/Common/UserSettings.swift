@@ -20,6 +20,11 @@ class UserSettings: ObservableObject {
     @AppStorage("show_player_stats") var showPlayerStats = false
     @AppStorage("inactive_timer") var inactiveTimer = 5
     
+    // Debug Settings
+    #if DEBUG
+    @Published var demoMode = false
+    #endif
+    
     func reset() {
         serverUrl = ""
         enableSubtitles = true

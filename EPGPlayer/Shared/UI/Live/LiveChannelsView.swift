@@ -12,6 +12,7 @@ import OpenAPIRuntime
 
 struct LiveChannelsView: View {
     @Environment(AppState.self) private var appState
+    @EnvironmentObject private var userSettings: UserSettings
     @Binding var activeTab: TabSelection
     
     @State var loadingState = LoadingState.loading
@@ -44,9 +45,19 @@ struct LiveChannelsView: View {
                             HStack {
                                 AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), headers: appState.client.headers) { phase in
                                     if let image = phase.image {
+                                        #if DEBUG
+                                        if userSettings.demoMode {
+                                            Image(systemName: "inset.filled.tv")
+                                        } else {
+                                            image
+                                                .resizable()
+                                                .scaledToFit()
+                                        }
+                                        #else
                                         image
                                             .resizable()
                                             .scaledToFit()
+                                        #endif
                                     } else if phase.error != nil {
                                         Image(systemName: "photo.badge.exclamationmark")
                                             .foregroundStyle(.placeholder)

@@ -11,6 +11,7 @@ import OpenAPIRuntime
 import OpenAPIURLSession
 
 struct RecordingsView: View {
+    @EnvironmentObject private var userSettings: UserSettings
     @Bindable var appState: AppState
     @Binding var activeTab: TabSelection
     
@@ -157,6 +158,15 @@ struct RecordingsView: View {
                 self.recorded = records
                 loadingState = .loaded
             }
+            #if DEBUG
+            if userSettings.demoMode {
+                Components.Schemas.RecordedItem.channelMap = self.recorded.reduce(into: [Int: Components.Schemas.ChannelItem](), { map, item in
+                    if let channelId = item.channelId {
+                        map[channelId] = Components.Schemas.ChannelItem(id: channelId, serviceId: 0, networkId: 0, name: "Blender Foundation", halfWidthName: "", hasLogoData: false, channelType: .gr, channel: "")
+                    }
+                })
+            }
+            #endif
         }
     }
     
