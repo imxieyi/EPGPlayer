@@ -24,7 +24,10 @@ jobs:
           mv VLCKit.xcframework EPGPlayer/Dependency/
       - name: Build iOS
         run: |
-          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -destination "generic/platform=iOS" | xcpretty && exit ${PIPESTATUS[0]}
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=iOS" | xcpretty && exit ${PIPESTATUS[0]}
+      - name: Build tvOS
+        run: |
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=tvOS" | xcpretty && exit ${PIPESTATUS[0]}
       - name: Build macOS
         run: |
-          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}

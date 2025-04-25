@@ -1,5 +1,5 @@
 {
-  "originHash" : "d557e7ab3c112f3081e0aa29e613c08a1c69602233f5a5091fc2dbdbc650deee",
+  "originHash" : "07ecbb3e9cbdd202c37dfb4a3007cad73164f66f1468686faf563865d6e50338",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -88,7 +88,7 @@
       "location" : "https://github.com/imxieyi/keychain-swift.git",
       "state" : {
         "branch" : "master",
-        "revision" : "dda53f9662c8a414d78a8ba2975655eb9c8855ea"
+        "revision" : "cdb464a288acc50bec4135d662a002a3e5032b3b"
       }
     },
     {

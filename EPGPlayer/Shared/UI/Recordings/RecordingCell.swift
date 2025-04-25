@@ -54,7 +54,9 @@ struct RecordingCell: View {
                             ZStack(alignment: .center) {
                                 Color.clear
                                 ProgressView()
+                                    #if !os(tvOS)
                                     .controlSize(.large)
+                                    #endif
                             }
                             .frame(maxWidth: .infinity)
                             .aspectRatio(16/9, contentMode: .fit)

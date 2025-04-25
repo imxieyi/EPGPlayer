@@ -11,7 +11,9 @@ import OpenAPIRuntime
 
 struct LiveStreamSelectionMenu: View {
     @Environment(AppState.self) private var appState
+    #if os(macOS)
     @Environment(\.openWindow) private var openWindow // Add environment for opening windows
+    #endif
     
     let channel: Components.Schemas.ChannelItem
     let format: String

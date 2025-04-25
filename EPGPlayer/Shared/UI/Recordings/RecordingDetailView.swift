@@ -16,7 +16,9 @@ struct RecordingDetailView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
+    #if os(macOS)
     @Environment(\.openWindow) private var openWindow // Add environment for opening windows
+    #endif
     
     var item: RecordedItem
     
@@ -36,24 +38,32 @@ struct RecordingDetailView: View {
                                 .foregroundStyle(.placeholder)
                         } else {
                             ProgressView()
+                                #if !os(tvOS)
                                 .controlSize(.large)
+                                #endif
                         }
                     }
                 }
                 Text(verbatim: item.name)
                     .font(.headline)
+                    #if !os(tvOS)
                     .textSelection(.enabled)
+                    #endif
                 if let channelName = item.channelName {
                     Text(verbatim: channelName)
                         .font(.subheadline)
+                        #if !os(tvOS)
                         .textSelection(.enabled)
+                        #endif
                 }
                 Text(verbatim: item.startTime.formatted(RecordingCell.startDateFormatStyle)
                      + " ~ "
                      + item.endTime.formatted(RecordingCell.endDateFormatStyle)
                      + " (\(Int(item.endTime.timeIntervalSinceReferenceDate - item.startTime.timeIntervalSinceReferenceDate) / 60)分)")
                     .font(.subheadline)
+                    #if !os(tvOS)
                     .textSelection(.enabled)
+                    #endif
                 if !item.videoItems.isEmpty {
                     Divider()
                     HStack(alignment: .center, spacing: 20) {
@@ -97,25 +107,34 @@ struct RecordingDetailView: View {
                                 Text("Play")
                             }
                         }
+                        #if !os(tvOS)
                         .menuStyle(.button)
                         .buttonStyle(.borderless)
+                        #endif
+                        
+                        #if !os(tvOS)
                         RecordingDownloadMenu(item: item)
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
+                        #endif
                     }
                 }
                 
                 if let shortDesc = item.shortDesc {
                     Divider()
                     Text(LocalizedStringKey(shortDesc))
+                        #if !os(tvOS)
                         .textSelection(.enabled)
+                        #endif
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
                 if let extendedDesc = item.extendedDesc {
                     Divider()
                     Text(LocalizedStringKey(extendedDesc))
+                        #if !os(tvOS)
                         .textSelection(.enabled)
+                        #endif
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 Spacer()

@@ -54,11 +54,15 @@ struct ClientContentView<Content: View>: View {
             } else {
                 if appState.clientState == .notInitialized {
                     ProgressView()
+                        #if !os(tvOS)
                         .controlSize(.large)
+                        #endif
                         .padding()
                 } else if case .loading = loadingState {
                     ProgressView()
+                        #if !os(tvOS)
                         .controlSize(.large)
+                        #endif
                         .padding()
                 } else if case .loaded = loadingState {
                     content

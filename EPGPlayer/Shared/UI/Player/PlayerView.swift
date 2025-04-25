@@ -51,7 +51,7 @@ struct PlayerView: View {
     
     @State var savedPlaybackPosition: SavedPlaybackPosition? = nil
     
-    #if !os(macOS)
+    #if !os(macOS) && !os(tvOS)
     @State var originalOrientation: UIInterfaceOrientation?
     #endif
     
@@ -139,8 +139,10 @@ struct PlayerView: View {
                         }
                         
                         playerMenu
+                            #if !os(tvOS)
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
+                            #endif
                         
                         Spacer()
                             .frame(width: paddingSize)
@@ -202,7 +204,7 @@ struct PlayerView: View {
             } catch let error {
                 Logger.error("Unable to load Mac UI helper: \(error)")
             }
-            #else
+            #elseif !os(tvOS)
             UIApplication.shared.addUserActivityTracker()
             originalOrientation = appDelegate.windowScene?.interfaceOrientation
             if userSettings.forceLandscape {
@@ -222,7 +224,7 @@ struct PlayerView: View {
             #if os(macOS)
             macHelper?.stopMonitorMouseMovement()
             macHelper?.showMouseCursor()
-            #else
+            #elseif !os(tvOS)
             UIApplication.shared.removeUserActivityTracker()
             if userSettings.forceLandscape {
                 appDelegate.orientationLock = .allButUpsideDown

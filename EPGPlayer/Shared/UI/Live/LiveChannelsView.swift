@@ -72,8 +72,10 @@ struct LiveChannelsView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+                        #if !os(tvOS)
                         .menuStyle(.button)
                         .buttonStyle(.borderless)
+                        #endif
                         .tint(.primary)
                     }
                     .refreshable {
@@ -95,7 +97,7 @@ struct LiveChannelsView: View {
             })
             #endif
             .navigationTitle("Live")
-            #if !os(macOS)
+            #if !os(macOS) && !os(tvOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
         }

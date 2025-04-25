@@ -67,7 +67,7 @@ public struct SearchView: View {
             }
             .formStyle(.grouped)
             .navigationTitle("Search")
-            #if !os(macOS)
+            #if !os(macOS) && !os(tvOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {

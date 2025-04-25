@@ -31,11 +31,13 @@ struct LicenseView: View {
                         .frame(minWidth: geometry.size.width)
                     } else {
                         ProgressView()
+                            #if !os(tvOS)
                             .controlSize(.large)
+                            #endif
                     }
                 }
                 .navigationTitle(name)
-                #if !os(macOS)
+                #if !os(macOS) && !os(tvOS)
                 .navigationBarTitleDisplayMode(.inline)
                 #endif
                 .onAppear {

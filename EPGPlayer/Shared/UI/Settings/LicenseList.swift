@@ -35,7 +35,9 @@ public struct LicenseList: View {
                 }
             } else {
                 ProgressView()
+                    #if !os(tvOS)
                     .controlSize(.large)
+                    #endif
                     .onAppear {
                         Task {
                             let urls = Bundle.main.urls(forResourcesWithExtension: "license", subdirectory: nil)

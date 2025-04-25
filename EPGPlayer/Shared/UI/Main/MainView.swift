@@ -25,6 +25,7 @@ struct MainView: View {
             .sheet(isPresented: $appState.isAuthenticating) {
                 if case .redirect = appState.authType {
                     NavigationStack {
+                        #if !os(tvOS)
                         AuthWebView(url: appState.client.endpoint.appending(path: "version"), expectedContentType: "application/json", isAuthenticaing: $appState.isAuthenticating)
                             .navigationTitle("Login")
                             #if !os(macOS)
@@ -37,6 +38,9 @@ struct MainView: View {
                                     }
                                 }
                             }
+                        #else
+                        ContentUnavailableView("Unsupported on tvOS", systemImage: "tv.slash")
+                        #endif
                     }
                     #if os(macOS)
                     .presentationSizing(.page)
@@ -51,7 +55,7 @@ struct MainView: View {
                             }
                         }
                         .navigationTitle("Login")
-                        #if !os(macOS)
+                        #if !os(macOS) && !os(tvOS)
                         .navigationBarTitleDisplayMode(.inline)
                         #endif
                         .toolbar {
@@ -97,10 +101,12 @@ struct MainView: View {
                 LiveChannelsView(activeTab: $activeTab)
             }
             
+            #if !os(tvOS)
             Tab("Downloads", systemImage: "square.and.arrow.down", value: .downloads) {
                 DownloadsView()
             }
             .badge(appState.activeDownloads.count)
+            #endif
             
             Tab("Settings", systemImage: "gearshape", value: .settings) {
                 SettingsView()

@@ -153,6 +153,7 @@ struct EPGPlayerApp: App {
                 break
             }
         })
+        #if !os(tvOS)
         .onReceive(DownloadManager.shared.events.downloadSuccess, perform: { url in
             appState.activeDownloads.removeAll(where: { $0.url == url })
             if appState.activeDownloads.isEmpty {
@@ -210,6 +211,7 @@ struct EPGPlayerApp: App {
                 }
             }
         })
+        #endif
         .onAppear {
             setupKeychain()
             DownloadManager.shared.initialize()

@@ -39,14 +39,19 @@ struct RecordingsView: View {
                     if recorded.isEmpty {
                         ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
                     } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 15)], spacing: 15) {
+                        #if os(tvOS)
+                        let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
+                        #else
+                        let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                        #endif
+                        LazyVGrid(columns: [gridItem], spacing: 15) {
                             ForEach(recorded) { item in
                                 NavigationLink {
                                     RecordingDetailView(item: item)
                                 } label: {
                                     RecordingCell(item: item)
                                 }
-                                #if os(macOS)
+                                #if os(macOS) || os(tvOS)
                                 .buttonStyle(.borderless)
                                 #endif
                                 .tint(.primary)
@@ -59,13 +64,17 @@ struct RecordingsView: View {
                                     }
                             }
                         }
+                        #if !os(tvOS)
                         .padding(.horizontal)
+                        #endif
                     }
                     
                     if recorded.count < totalCount {
                         if case .loading = loadingMoreState {
                             ProgressView()
+                                #if !os(tvOS)
                                 .controlSize(.large)
+                                #endif
                         } else if case .error(let message) = loadingMoreState {
                             ContentUnavailableView {
                                 Label("Error loading content", systemImage: "xmark.circle")
@@ -103,7 +112,7 @@ struct RecordingsView: View {
                 }
             })
             .navigationTitle("Recordings")
-            #if !os(macOS)
+            #if !os(macOS) && !os(tvOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
         }

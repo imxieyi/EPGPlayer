@@ -33,6 +33,7 @@ struct PlayerProgressControl: View {
                 Spacer()
                     .frame(height: 5)
                 
+                #if !os(tvOS)
                 Slider(value: $playbackPosition, onEditingChanged: { editing in
                     isSeeking = editing
                     if editing && playerState.isPlaying {
@@ -46,6 +47,7 @@ struct PlayerProgressControl: View {
                     }
                 })
                 .disabled(playerState == .opening || !hadPlayingState)
+                #endif
             } else {
                 Spacer()
                     .frame(height: 10)
@@ -70,7 +72,9 @@ struct PlayerProgressControl: View {
                     Spacer()
                     if playerState == .opening || (!hadPlayingState && !hadErrorState) {
                         ProgressView()
+                            #if !os(tvOS)
                             .controlSize(.large)
+                            #endif
                     } else {
                         if item.videoItem.type != .livestream {
                             Button {

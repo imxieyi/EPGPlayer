@@ -134,6 +134,12 @@ class VLCPlayerViewController: UIViewController {
         
         videoView.autoresizingMask = [.width, .height]
         mediaPlayer.drawable = videoView
+        #elseif os(tvOS)
+        videoView = UIView(frame: view.bounds)
+        
+        videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        videoView.isUserInteractionEnabled = false
+        mediaPlayer.drawable = self
         #else
         videoView = UIView(frame: view.bounds)
         
@@ -250,7 +256,7 @@ class VLCPlayerViewController: UIViewController {
                 pipController.stopPictureInPicture()
             }
         })
-        #if !os(macOS)
+        #if !os(macOS) && !os(tvOS)
         externalDisplayObservation = ExternalDisplayHelper.instance.observe(\.delegate, options: [.old, .new], changeHandler: { [weak self] helper, change in
             Task { @MainActor in
                 let newMediaPlayer = VLCMediaPlayer()

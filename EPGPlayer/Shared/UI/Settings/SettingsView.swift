@@ -44,7 +44,7 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .navigationTitle("Settings")
-            #if !os(macOS)
+            #if !os(macOS) && !os(tvOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .navigationDestination(isPresented: $showLicenseList, destination: {

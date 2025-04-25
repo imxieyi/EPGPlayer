@@ -1282,6 +1282,9 @@
         }
       }
     },
+    "Unsupported on tvOS" : {
+
+    },
     "Username" : {
       "localizations" : {
         "ja" : {

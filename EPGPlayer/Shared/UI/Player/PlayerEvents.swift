@@ -35,7 +35,7 @@ final class PlayerEvents: ObservableObject, Sendable {
     
     let userInteracted = PassthroughSubject<Void, Never>()
     
-    #if !os(macOS)
+    #if !os(macOS) && !os(tvOS)
     init() {
         NotificationCenter.default.addObserver(self, selector: #selector(handleUserInteraction), name: .userActivityDetected, object: nil)
     }

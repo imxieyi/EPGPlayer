@@ -72,7 +72,7 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
     }
     #endif
 
-    #if !os(macOS)
+    #if !os(macOS) && !os(tvOS)
     nonisolated func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         Task { @MainActor in
             guard let appDelegate = UIApplication.shared.delegate as? AppDelegate,
