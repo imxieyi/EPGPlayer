@@ -151,7 +151,6 @@ struct RecordingsView: View {
                 loadingState = .error(Text(verbatim: error.localizedDescription))
                 records = nil
             }
-            Components.Schemas.RecordedItem.endpoint = appState.client.endpoint
             
             do {
                 let resp = try await appState.client.api.getChannels()

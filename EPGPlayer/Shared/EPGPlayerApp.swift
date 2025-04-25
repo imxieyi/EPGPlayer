@@ -273,6 +273,7 @@ struct EPGPlayerApp: App {
                 try await Task.sleep(for: waitTime)
                 appState.serverVersion = try await appState.client.api.getVersion().ok.body.json.version
                 appState.clientState = .initialized
+                Components.Schemas.RecordedItem.endpoint = appState.client.endpoint
             } catch let error {
                 Logger.error("Failed to get server version: \(error)")
                 if let error = error as? ClientError {
