@@ -122,7 +122,7 @@ struct LiveChannelsView: View {
                     return
                 }
                 self.liveStreamConfig = liveStreamConfig
-                channels = try await appState.client.api.getChannels().ok.body.json.filter { $0._type == 1 }
+                channels = try await appState.client.api.getChannels().ok.body.json
                 loadingState = .loaded
                 Logger.info("Loaded \(channels.count) channels")
             } catch let error {
