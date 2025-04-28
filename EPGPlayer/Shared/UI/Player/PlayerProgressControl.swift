@@ -84,7 +84,9 @@ struct PlayerProgressControl: View {
                                     .font(.system(size: 25))
                             }
                             .buttonStyle(.borderless)
+                            #if !os(tvOS)
                             .keyboardShortcut(.leftArrow, modifiers: [])
+                            #endif
                             .disabled(videoLength == nil)
                             
                             Spacer()
@@ -99,7 +101,9 @@ struct PlayerProgressControl: View {
                                     .scaledToFit()
                             }
                             .buttonStyle(.borderless)
+                            #if !os(tvOS)
                             .keyboardShortcut(.space, modifiers: [])
+                            #endif
                             
                             Spacer()
                                 .frame(width: 15)
@@ -111,7 +115,9 @@ struct PlayerProgressControl: View {
                                     .font(.system(size: 25))
                             }
                             .buttonStyle(.borderless)
+                            #if !os(tvOS)
                             .keyboardShortcut(.rightArrow, modifiers: [])
+                            #endif
                             .disabled(videoLength == nil)
                         } else {
                             Button {
@@ -123,7 +129,9 @@ struct PlayerProgressControl: View {
                                     .scaledToFit()
                             }
                             .buttonStyle(.borderless)
+                            #if !os(tvOS)
                             .keyboardShortcut(.space, modifiers: [])
+                            #endif
                         }
                     }
                     Spacer()
