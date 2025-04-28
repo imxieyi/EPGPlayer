@@ -19,6 +19,7 @@ struct SettingsView: View {
     @State private var showServerUrlInvalidAlert: Bool = false
     
     @State private var showLicenseList: Bool = false
+    @State private var showHTTPAlert: Bool = false
     @State private var showResetAlert: Bool = false
     @State private var resetAlertMessage: Text? = nil
     
@@ -117,6 +118,10 @@ struct SettingsView: View {
                         showServerUrlInvalidAlert.toggle()
                         return
                     }
+                    if url.scheme?.lowercased() == "http" {
+                        showHTTPAlert.toggle()
+                        return
+                    }
                     userSettings.serverUrl = url.absoluteString
                 }
                 Button("Cancel", role: .cancel) {
@@ -125,6 +130,15 @@ struct SettingsView: View {
             } message: {
                 Text("Don't add \"/api\" at the end of URL.")
             }
+            .alert("Warning", isPresented: $showHTTPAlert, actions: {
+                Button("No", role: .cancel) {
+                }
+                Button("Yes", role: .destructive) {
+                    userSettings.serverUrl = serverUrl
+                }
+            }, message: {
+                Text("Accessing HTTP server over public Internet is not secure. Only do this if your server is on the local network or behind a VPN. Do you wish to continue?")
+            })
             .alert("Invalid URL", isPresented: $showServerUrlInvalidAlert) {
                 Button("Close", role: .cancel) {
                 }
