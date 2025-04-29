@@ -40,12 +40,13 @@ An unofficial native iOS/iPadOS/macOS app for [EPGStation](https://github.com/l3
 
 - iOS/iPadOS 18+
 - macOS 15+
+- tvOS 18+ (tvOS version WIP)
 - Xcode 16+ (for building)
 
 ## Server Requirements
 
 - Version: Only tested with EPGStation v2.10.0. Other versions may or may not work.
-- Security: HTTPS is required.
+- Security: HTTPS is highly recommended. Use HTTP only if the server is on the local network, or you are accessing it over a VPN.
 
 ## Building
 
