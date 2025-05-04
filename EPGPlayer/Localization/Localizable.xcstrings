@@ -57,16 +57,16 @@
     },
     "Accessing HTTP server over public Internet is not secure. Only do this if your server is on the local network or behind a VPN. Do you wish to continue?" : {
       "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过公开网络访问HTTP服务器不安全，请仅在本地网络或者启用VPN的情况下使用。是否继续？"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "公開インターネット経由でのHTTPサーバーへのアクセスは安全ではありません。サーバーがローカルネットワーク上にあるか、VPNの背後にある場合にのみ実行してください。続行しますか？"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通过公开网络访问HTTP服务器不安全，请仅在本地网络或者启用VPN的情况下使用。是否继续？"
           }
         }
       }
@@ -637,6 +637,22 @@
         }
       }
     },
+    "Force stroke text" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "縁取り文字を強制"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "强制字幕描边"
+          }
+        }
+      }
+    },
     "Go to settings" : {
       "localizations" : {
         "ja" : {
@@ -783,16 +799,16 @@
     },
     "No" : {
       "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "否"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "いいえ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "否"
           }
         }
       }
@@ -1316,16 +1332,16 @@
     },
     "Unsupported on tvOS" : {
       "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tvOS不支持"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "tvOSではサポートされていません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tvOS不支持"
           }
         }
       }
@@ -1380,16 +1396,16 @@
     },
     "Yes" : {
       "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "是"
-          }
-        },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "はい"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是"
           }
         }
       }

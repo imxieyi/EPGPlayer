@@ -16,6 +16,8 @@ struct VLCPlayer: UIViewControllerRepresentable {
     let httpHeaders: [String: String]
     let playerEvents: PlayerEvents
     
+    @Binding var forceStrokeText: Bool
+    
     @Binding var playerState: VLCMediaPlayerState
     @Binding var hadErrorState: Bool
     @Binding var hadPlayingState: Bool
@@ -53,6 +55,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         }
         uiViewController.videoItem = videoItem
         uiViewController.httpHeaders = httpHeaders
+        uiViewController.forceStrokeText = forceStrokeText
         uiViewController.reload()
     }
     
@@ -121,6 +124,8 @@ class VLCPlayerViewController: UIViewController {
     var videoItem: VideoItem?
     var delegate: VLCPlayer.Coordinator?
     var playerEvents: PlayerEvents?
+    
+    var forceStrokeText: Bool = false
     
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
@@ -311,6 +316,9 @@ class VLCPlayerViewController: UIViewController {
             Logger.info("Media URL: \(pii: videoItem.url.absoluteString)")
             let media = VLCMedia(url: videoItem.url)
             media?.delegate = delegate
+            if forceStrokeText {
+                media?.addOption("aribcaption-force-stroke-text")
+            }
             if videoItem.type != .livestream {
                 media?.parse(options: [.parseForced], timeout: .max)
             }

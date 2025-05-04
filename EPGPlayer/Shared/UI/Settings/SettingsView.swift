@@ -157,6 +157,10 @@ struct SettingsView: View {
                 Text("Enable subtitles")
             }
             
+            Toggle(isOn: userSettings.$forceStrokeText) {
+                Text("Force stroke text")
+            }
+            
             #if !os(macOS)
             Toggle(isOn: userSettings.$forceLandscape) {
                 Text("Force landscape")
