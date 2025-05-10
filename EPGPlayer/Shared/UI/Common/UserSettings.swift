@@ -17,6 +17,7 @@ class UserSettings: ObservableObject {
     // Player Settings
     @AppStorage("enable_subtitles") var enableSubtitles = false
     @AppStorage("force_stroke_text") var forceStrokeText = false
+    @AppStorage("force_16_9") var force16To9 = false
     @AppStorage("force_landscape") var forceLandscape = false
     @AppStorage("show_player_stats") var showPlayerStats = false
     @AppStorage("inactive_timer") var inactiveTimer = 5

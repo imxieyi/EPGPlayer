@@ -161,6 +161,10 @@ struct SettingsView: View {
                 Text("Force stroke text")
             }
             
+            Toggle(isOn: userSettings.$force16To9) {
+                Text("Force 16:9")
+            }
+            
             #if !os(macOS)
             Toggle(isOn: userSettings.$forceLandscape) {
                 Text("Force landscape")

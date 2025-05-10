@@ -621,6 +621,22 @@
         }
       }
     },
+    "Force 16:9" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16:9を強制"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "强制16:9"
+          }
+        }
+      }
+    },
     "Force landscape" : {
       "localizations" : {
         "ja" : {
