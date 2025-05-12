@@ -116,6 +116,9 @@ struct MainView: View {
             PlayerView(item: item)
                 .environment(appState)
                 .environmentObject(userSettings)
+                #if os(tvOS)
+                .ignoresSafeArea()
+                #endif
         }
         #endif
     }

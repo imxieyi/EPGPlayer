@@ -96,9 +96,11 @@ struct LiveChannelsView: View {
                 }
             })
             #endif
+            #if !os(tvOS)
             .navigationTitle("Live")
-            #if !os(macOS) && !os(tvOS)
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             #endif
         }
         .onAppear {

@@ -111,9 +111,11 @@ struct RecordingsView: View {
                     }
                 }
             })
+            #if !os(tvOS)
             .navigationTitle("Recordings")
-            #if !os(macOS) && !os(tvOS)
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             #endif
         }
         .onAppear {

@@ -44,9 +44,11 @@ struct SettingsView: View {
                 #endif
             }
             .formStyle(.grouped)
+            #if !os(tvOS)
             .navigationTitle("Settings")
-            #if !os(macOS) && !os(tvOS)
+            #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             #endif
             .navigationDestination(isPresented: $showLicenseList, destination: {
                 LicenseList()
@@ -165,12 +167,13 @@ struct SettingsView: View {
                 Text("Force 16:9")
             }
             
-            #if !os(macOS)
+            #if !os(macOS) && !os(tvOS)
             Toggle(isOn: userSettings.$forceLandscape) {
                 Text("Force landscape")
             }
             #endif
             
+            #if !os(tvOS)
             Picker(selection: userSettings.$inactiveTimer) {
                 ForEach([3, 5, 10, 15, .max], id: \.self) { time in
                     if time == .max {
@@ -183,6 +186,7 @@ struct SettingsView: View {
                 Text("Auto hide UI")
             }
             .pickerStyle(.menu)
+            #endif
         } header: {
             Label("Player Settings", systemImage: "play.rectangle")
         }
@@ -190,6 +194,7 @@ struct SettingsView: View {
     
     var storageSection: some View {
         Section {
+            #if !os(tvOS)
             Group {
                 if let downloadSizeError {
                     Text("Download size error: \(downloadSizeError)")
@@ -209,6 +214,7 @@ struct SettingsView: View {
                 }
             }
             .foregroundStyle(.secondary)
+            #endif
             
             HStack {
                 Text("Cache size: \(ByteCountFormatter().string(fromByteCount: Int64(currentCacheSize)))")
