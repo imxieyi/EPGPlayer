@@ -75,16 +75,19 @@ struct MainView: View {
         NavigationSplitView(columnVisibility: $columnVisibility, sidebar: {
             List(selection: $activeTab) {
                 Label("Recordings", systemImage: "recordingtape").tag(TabSelection.recordings)
+                Label("EPG", systemImage: "clock").tag(TabSelection.epg)
                 Label("Live", systemImage: "dot.radiowaves.left.and.right").tag(TabSelection.live)
                 Label("Downloads", systemImage: "square.and.arrow.down").tag(TabSelection.downloads)
                 Label("Settings", systemImage: "gearshape").tag(TabSelection.settings)
             }
         }, detail: {
             switch activeTab {
-            case .live:
-                LiveChannelsView(activeTab: $activeTab)
             case .recordings:
                 RecordingsView(appState: appState, activeTab: $activeTab)
+            case .epg:
+                EPGView(activeTab: $activeTab)
+            case .live:
+                LiveChannelsView(activeTab: $activeTab)
             case .downloads:
                 DownloadsView()
             case .settings:
@@ -95,6 +98,10 @@ struct MainView: View {
         TabView(selection: $activeTab) {
             Tab("Recordings", systemImage: "recordingtape", value: .recordings) {
                 RecordingsView(appState: appState, activeTab: $activeTab)
+            }
+            
+            Tab("EPG", systemImage: "clock", value: .epg) {
+                EPGView(activeTab: $activeTab)
             }
             
             Tab("Live", systemImage: "dot.radiowaves.left.and.right", value: .live) {
@@ -125,8 +132,9 @@ struct MainView: View {
 }
 
 enum TabSelection: String, Hashable {
-    case live
     case recordings
+    case epg
+    case live
     case downloads
     case settings
 }

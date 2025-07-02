@@ -17,7 +17,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		8A7744BA2D92DB920080D3BA /* Embed Frameworks */ = {
+		8AB878292E1548810045304F /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
@@ -61,12 +61,12 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		8A5D3ED52DB433BD004DBEB2 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
+		8AB8782A2E1548810045304F /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
 				Dependency/VLCKit.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
 			};
-			buildPhase = 8A7744BA2D92DB920080D3BA /* Embed Frameworks */;
+			buildPhase = 8AB878292E1548810045304F /* Embed Frameworks */;
 			membershipExceptions = (
 				Dependency/VLCKit.xcframework,
 			);
@@ -78,7 +78,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				8A7668812D993761008E69F7 /* Exceptions for "EPGPlayer" folder in "EPGPlayer" target */,
-				8A5D3ED52DB433BD004DBEB2 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
+				8AB8782A2E1548810045304F /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
 			);
 			path = EPGPlayer;
 			sourceTree = "<group>";
@@ -148,15 +148,15 @@
 				8A4BA57A2DAD359200E9DF5D /* Headers */,
 				8A7744542D92C2F30080D3BA /* Sources */,
 				8A7744552D92C2F30080D3BA /* Frameworks */,
+				8AB878292E1548810045304F /* Embed Frameworks */,
 				8A7744562D92C2F30080D3BA /* Resources */,
-				8A7744BA2D92DB920080D3BA /* Embed Frameworks */,
 				8A850F3A2DB52BEB004E9328 /* Copy GoogleService-Info.plist if exists */,
 				8A46FF4A2DB5563A005DB469 /* Upload Crashlytics symbols */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				8A7667EB2D946A99008E69F7 /* PBXTargetDependency */,
+				8AB878102E153FB00045304F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				8A77445A2D92C2F30080D3BA /* EPGPlayer */,
@@ -280,9 +280,9 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		8A7667EB2D946A99008E69F7 /* PBXTargetDependency */ = {
+		8AB878102E153FB00045304F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 8A7667EA2D946A99008E69F7 /* OpenAPIGenerator */;
+			productRef = 8AB8780F2E153FB00045304F /* OpenAPIGenerator */;
 		};
 /* End PBXTargetDependency section */
 
@@ -594,11 +594,6 @@
 			package = 8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */;
 			productName = OpenAPIURLSession;
 		};
-		8A7667EA2D946A99008E69F7 /* OpenAPIGenerator */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
-			productName = "plugin:OpenAPIGenerator";
-		};
 		8A76696B2D9AB337008E69F7 /* CachedAsyncImage */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
@@ -618,6 +613,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */;
 			productName = KeychainSwift;
+		};
+		8AB8780F2E153FB00045304F /* OpenAPIGenerator */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
+			productName = "plugin:OpenAPIGenerator";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

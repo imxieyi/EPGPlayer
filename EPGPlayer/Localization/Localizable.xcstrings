@@ -522,6 +522,22 @@
         }
       }
     },
+    "EPG" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "番組表"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节目单"
+          }
+        }
+      }
+    },
     "EPGPlayer" : {
       "shouldTranslate" : false
     },
