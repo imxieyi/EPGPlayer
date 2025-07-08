@@ -61,7 +61,7 @@ struct EPGView: View {
                                     .frame(width: borderWidth, height: borderWidth)
                                     .offset(x: -scrollOffset.x, y: -scrollOffset.y)
                             }
-                            .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay)
+                            .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
                             .background(GeometryReader { (proxy: GeometryProxy) -> Color in
                                 viewSize = outerProxy.size
                                 safeAreaInsets = outerProxy.safeAreaInsets
@@ -183,10 +183,10 @@ struct EPGView: View {
                         }
                     }
                 }
-                .frame(width: channelWidth, height: heightOneDay)
+                .frame(width: channelWidth, height: heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
             } else {
                 Spacer()
-                    .frame(width: channelWidth, height: heightOneDay)
+                    .frame(width: channelWidth, height: heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
             }
         }
     }
