@@ -32,10 +32,13 @@ struct EPGView: View {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
                 refresh(waitTime: waitTime)
             } content: {
-                if let liveStreamConfig {
+                if !schedules.isEmpty {
                     ScrollView([.horizontal, .vertical]) {
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .bottom, spacing: 0) {
+                                Text(verbatim: "00")
+                                    .font(.system(.headline, design: .monospaced))
+                                    .foregroundStyle(.clear)
                                 ForEach(schedules) { schedule in
                                     Text(schedule.channel.name)
                                         .font(.headline)
@@ -64,28 +67,36 @@ struct EPGView: View {
                                             let programStartAt = max(startAt, CGFloat(program.startAt))
                                             let programEndAt = min(endAt, CGFloat(program.endAt))
                                             if programStartAt < programEndAt {
-                                                ZStack(alignment: .topLeading) {
-                                                    VStack(alignment: .leading) {
-                                                        Text(verbatim: program.name)
-                                                            .multilineTextAlignment(.leading)
-                                                            .layoutPriority(3)
-                                                        Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " - " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
-                                                            .font(.caption)
-                                                            .layoutPriority(2)
-                                                        if let description = program.description {
-                                                            Text(verbatim: description)
-                                                                .font(.caption2)
+                                                NavigationLink {
+                                                    EPGProgramView(channel: schedule.channel, program: program)
+                                                } label: {
+                                                    ZStack(alignment: .topLeading) {
+                                                        VStack(alignment: .leading) {
+                                                            Text(verbatim: program.name)
+                                                                .font(.headline)
                                                                 .multilineTextAlignment(.leading)
-                                                                .layoutPriority(1)
+                                                                .layoutPriority(3)
+                                                            Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                                .font(.caption)
+                                                                .layoutPriority(2)
+                                                            if let description = program.description {
+                                                                Text(verbatim: description)
+                                                                    .multilineTextAlignment(.leading)
+                                                                    .layoutPriority(1)
+                                                            }
                                                         }
+                                                        .frame(minWidth: channelWidth - 2, idealWidth: channelWidth - 2, maxWidth: channelWidth - 2, minHeight: 0, idealHeight: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt), maxHeight: .infinity, alignment: .topLeading)
                                                     }
-                                                    .frame(minWidth: channelWidth - 2, idealWidth: channelWidth - 2, maxWidth: channelWidth - 2, minHeight: 0, idealHeight: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt), maxHeight: .infinity, alignment: .topLeading)
+                                                    .background {
+                                                        Color("Genre \(program.genre1 ?? 16)")
+                                                            .padding(.all, 1)
+                                                            .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
+                                                    }
                                                 }
-                                                .background {
-                                                    Color("Genre \(program.genre1 ?? 16)")
-                                                        .padding(.all, 1)
-                                                        .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
-                                                }
+                                                #if os(macOS) || os(tvOS)
+                                                .buttonStyle(.borderless)
+                                                #endif
+                                                .tint(.primary)
                                                 .padding(.all, 1)
                                                 .fixedSize()
                                                 .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
@@ -101,7 +112,7 @@ struct EPGView: View {
                         }
                     }
                 } else {
-                    ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
+                    ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
                 }
             }
             #if os(macOS)
@@ -145,7 +156,7 @@ struct EPGView: View {
                 self.liveStreamConfig = liveStreamConfig
                 let startAt = Int(Date().timeIntervalSince1970) / 3600 * 3600 * 1000 // Round down to the nearest hour
                 let endAt = startAt + (24 * 3600 * 1000) // 24 hours later
-                let schedules = try await appState.client.api.getSchedules(query: Operations.GetSchedules.Input.Query(startAt: startAt, endAt: endAt, isHalfWidth: true, gr: true, bs: true, cs: true, sky: true)).ok.body.json
+                let schedules = try await appState.client.api.getSchedules(query: Operations.GetSchedules.Input.Query(startAt: startAt, endAt: endAt, isHalfWidth: true, gr: true, bs: false, cs: false, sky: false)).ok.body.json
                 self.schedules = schedules
                 self.startAt = CGFloat(startAt)
                 self.endAt = CGFloat(endAt)
