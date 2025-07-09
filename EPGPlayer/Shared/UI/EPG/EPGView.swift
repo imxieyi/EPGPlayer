@@ -32,6 +32,9 @@ struct EPGView: View {
     // Preload the cell before appearing
     @State var preloadBuffer: CGFloat = 50
     
+    let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
+    @State var nowPosition: CGFloat = 0
+    
     var body: some View {
         NavigationStack {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
@@ -50,16 +53,15 @@ struct EPGView: View {
                                         epgGrid
                                     }
                                 }
-                                channelHeader
-                                    .background(.regularMaterial)
-                                    .offset(y: -scrollOffset.y)
+                                Color.red
+                                    .frame(width: channelWidth * CGFloat(schedules.count), height: 2)
+                                    .position(x: borderWidth + channelWidth * CGFloat(schedules.count) / 2, y: borderWidth + nowPosition)
                                 hourRuler
                                     .background(.regularMaterial)
                                     .offset(x: -scrollOffset.x)
-                                Spacer()
+                                channelHeader
                                     .background(.regularMaterial)
-                                    .frame(width: borderWidth, height: borderWidth)
-                                    .offset(x: -scrollOffset.x, y: -scrollOffset.y)
+                                    .offset(y: -scrollOffset.y)
                             }
                             .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
                             .background(GeometryReader { (proxy: GeometryProxy) -> Color in
@@ -69,14 +71,20 @@ struct EPGView: View {
                                 return Color.clear
                             })
                         }
+                        .refreshable {
+                            refresh()
+                        }
+                        .onReceive(timer) { _ in
+                            updateNowPosition()
+                        }
                     }
                 } else {
                     ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
                 }
             }
             .coordinateSpace(name: "outer")
-            #if os(macOS)
             .toolbar(content: {
+                #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         refresh()
@@ -84,8 +92,8 @@ struct EPGView: View {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
+                #endif
             })
-            #endif
             #if !os(tvOS)
             .navigationTitle("EPG")
             #if !os(macOS)
@@ -175,7 +183,7 @@ struct EPGView: View {
                             .buttonStyle(.borderless)
                             #endif
                             .tint(.primary)
-                            .padding(.all, 1)
+                            .padding(.all, 0.5)
                             .fixedSize()
                             .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
                             .clipped()
@@ -189,6 +197,10 @@ struct EPGView: View {
                     .frame(width: channelWidth, height: heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
             }
         }
+    }
+    
+    func updateNowPosition() {
+        nowPosition = (CGFloat(Date.now.timeIntervalSince1970 * 1000) - startAt) / (24 * 3600 * 1000) * heightOneDay
     }
     
     func refresh(waitTime: Duration = .zero) {
@@ -216,6 +228,7 @@ struct EPGView: View {
                 }
                 timeFormatter.dateFormat = "HH:mm"
                 timeFormatter.timeZone = TimeZone(abbreviation: "JST")
+                updateNowPosition()
                 loadingState = .loaded
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
