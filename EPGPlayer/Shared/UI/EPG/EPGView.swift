@@ -35,6 +35,8 @@ struct EPGView: View {
     let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
     @State var nowPosition: CGFloat = 0
     
+    @State var selectedProgram: EPGProgram? = nil
+    
     var body: some View {
         NavigationStack {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
@@ -100,6 +102,12 @@ struct EPGView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             #endif
+            .sheet(item: $selectedProgram) { program in
+                EPGProgramView(channel: program.channel, program: program.program)
+                    #if os(macOS)
+                    .presentationSizing(.page)
+                    #endif
+            }
         }
         .onAppear {
             if schedules.isEmpty {
@@ -153,8 +161,8 @@ struct EPGView: View {
                             channelY - channelHeight / 2 > viewSize.height - scrollOffset.y + safeAreaInsets.bottom + preloadBuffer // Cell top > View bottom
                             || channelY + channelHeight / 2 < -scrollOffset.y - safeAreaInsets.top - preloadBuffer // Cell bottom < View top
                         ) {
-                            NavigationLink {
-                                EPGProgramView(channel: schedules[index].channel, program: program)
+                            Button {
+                                selectedProgram = EPGProgram(channel: schedules[index].channel, program: program)
                             } label: {
                                 ZStack(alignment: .topLeading) {
                                     VStack(alignment: .leading) {
