@@ -22,6 +22,13 @@ class UserSettings: ObservableObject {
     @AppStorage("show_player_stats") var showPlayerStats = false
     @AppStorage("inactive_timer") var inactiveTimer = 5
     
+    // EPG Settings
+    @AppStorage("epg_show_gr") var epgShowGR = true
+    @AppStorage("epg_show_bs") var epgShowBS = true
+    @AppStorage("epg_show_cs") var epgShowCS = true
+    @AppStorage("epg_show_sky") var epgShowSKY = true
+    @AppStorage("epg_genres") var epgGenres = Data()
+    
     // Debug Settings
     #if DEBUG
     @Published var demoMode = false

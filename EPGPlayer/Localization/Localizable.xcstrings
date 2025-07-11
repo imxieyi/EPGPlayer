@@ -170,6 +170,22 @@
         }
       }
     },
+    "Broadcast type" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放送波種別"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放送种类"
+          }
+        }
+      }
+    },
     "Cache size: %@" : {
       "localizations" : {
         "ja" : {
@@ -326,6 +342,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "数据库大小："
+          }
+        }
+      }
+    },
+    "Date" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日付"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "日期"
           }
         }
       }
@@ -685,6 +717,22 @@
         }
       }
     },
+    "Genres" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "表示ジャンル"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "类型"
+          }
+        }
+      }
+    },
     "Go to settings" : {
       "localizations" : {
         "ja" : {
@@ -910,7 +958,20 @@
       }
     },
     "No schedule available" : {
-
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "番組表はありません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无可用节目表"
+          }
+        }
+      }
     },
     "None" : {
       "localizations" : {
@@ -1282,6 +1343,22 @@
         }
       }
     },
+    "Start time" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始時間"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始时间"
+          }
+        }
+      }
+    },
     "Storage" : {
       "localizations" : {
         "ja" : {
@@ -1326,6 +1403,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不支持%@的认证方式，请尝试使用自定义HTTP头登录。"
+          }
+        }
+      }
+    },
+    "Time" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "時間"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "时间"
           }
         }
       }

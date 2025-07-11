@@ -37,10 +37,27 @@ struct EPGView: View {
     
     @State var selectedProgram: EPGProgram? = nil
     
+    @State var showSettings = false
+    @State var startDates: [Date] = []
+    @State var startDate = Date(timeIntervalSince1970: 0)
+    @State var startHour: Int = -1
+    @State var enableGenre: [Bool] = []
+    
+    static let startDateFormatStyle = Date.FormatStyle(
+        date: .abbreviated,
+        time: .omitted,
+        locale: Locale(identifier: "ja_JP"),
+        calendar: Calendar(identifier: .japanese),
+        timeZone: TimeZone(identifier: "Asia/Tokyo")!)
+        .year(.omitted)
+        .month(.twoDigits)
+        .day(.twoDigits)
+        .weekday(.abbreviated)
+    
     var body: some View {
         NavigationStack {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
-                refresh(waitTime: waitTime)
+                refresh(waitTime: waitTime, manual: false)
             } content: {
                 if !schedules.isEmpty {
                     GeometryReader { outerProxy in
@@ -74,7 +91,7 @@ struct EPGView: View {
                             })
                         }
                         .refreshable {
-                            refresh()
+                            refresh(manual: false)
                         }
                         .onReceive(timer) { _ in
                             updateNowPosition()
@@ -89,12 +106,19 @@ struct EPGView: View {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        refresh()
+                        refresh(manual: false)
                     } label: {
                         Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
                 #endif
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSettings.toggle()
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                }
             })
             #if !os(tvOS)
             .navigationTitle("EPG")
@@ -108,10 +132,13 @@ struct EPGView: View {
                     .presentationSizing(.page)
                     #endif
             }
+            .sheet(isPresented: $showSettings) {
+                settings
+            }
         }
         .onAppear {
             if schedules.isEmpty {
-                refresh()
+                refresh(manual: false)
             }
         }
     }
@@ -153,49 +180,51 @@ struct EPGView: View {
             ) {
                 ZStack {
                     ForEach(schedules[index].programs) { program in
-                        let programStartAt = max(startAt, CGFloat(program.startAt))
-                        let programEndAt = min(endAt, CGFloat(program.endAt))
-                        let channelHeight = heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt)
-                        let channelY = heightOneDay / (24 * 3600 * 1000) * ((programEndAt + programStartAt) / 2 - startAt)
-                        if programStartAt < programEndAt && !(
-                            channelY - channelHeight / 2 > viewSize.height - scrollOffset.y + safeAreaInsets.bottom + preloadBuffer // Cell top > View bottom
-                            || channelY + channelHeight / 2 < -scrollOffset.y - safeAreaInsets.top - preloadBuffer // Cell bottom < View top
-                        ) {
-                            Button {
-                                selectedProgram = EPGProgram(channel: schedules[index].channel, program: program)
-                            } label: {
-                                ZStack(alignment: .topLeading) {
-                                    VStack(alignment: .leading) {
-                                        Text(verbatim: program.name)
-                                            .font(.headline)
-                                            .multilineTextAlignment(.leading)
-                                            .layoutPriority(3)
-                                        Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
-                                            .font(.caption)
-                                            .layoutPriority(2)
-                                        if let description = program.description {
-                                            Text(verbatim: description)
+                        if enableGenre[program.genre1 ?? 0xf] {
+                            let programStartAt = max(startAt, CGFloat(program.startAt))
+                            let programEndAt = min(endAt, CGFloat(program.endAt))
+                            let channelHeight = heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt)
+                            let channelY = heightOneDay / (24 * 3600 * 1000) * ((programEndAt + programStartAt) / 2 - startAt)
+                            if programStartAt < programEndAt && !(
+                                channelY - channelHeight / 2 > viewSize.height - scrollOffset.y + safeAreaInsets.bottom + preloadBuffer // Cell top > View bottom
+                                || channelY + channelHeight / 2 < -scrollOffset.y - safeAreaInsets.top - preloadBuffer // Cell bottom < View top
+                            ) {
+                                Button {
+                                    selectedProgram = EPGProgram(channel: schedules[index].channel, program: program)
+                                } label: {
+                                    ZStack(alignment: .topLeading) {
+                                        VStack(alignment: .leading) {
+                                            Text(verbatim: program.name)
+                                                .font(.headline)
                                                 .multilineTextAlignment(.leading)
-                                                .layoutPriority(1)
+                                                .layoutPriority(3)
+                                            Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                .font(.caption)
+                                                .layoutPriority(2)
+                                            if let description = program.description {
+                                                Text(verbatim: description)
+                                                    .multilineTextAlignment(.leading)
+                                                    .layoutPriority(1)
+                                            }
                                         }
+                                        .frame(minWidth: channelWidth - 2, idealWidth: channelWidth - 2, maxWidth: channelWidth - 2, minHeight: 0, idealHeight: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt), maxHeight: .infinity, alignment: .topLeading)
                                     }
-                                    .frame(minWidth: channelWidth - 2, idealWidth: channelWidth - 2, maxWidth: channelWidth - 2, minHeight: 0, idealHeight: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt), maxHeight: .infinity, alignment: .topLeading)
+                                    .background {
+                                        Color("Genre \(program.genre1 ?? 16)")
+                                            .padding(.all, 1)
+                                            .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
+                                    }
                                 }
-                                .background {
-                                    Color("Genre \(program.genre1 ?? 16)")
-                                        .padding(.all, 1)
-                                        .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
-                                }
+                                #if os(macOS) || os(tvOS)
+                                .buttonStyle(.borderless)
+                                #endif
+                                .tint(.primary)
+                                .padding(.all, 0.5)
+                                .fixedSize()
+                                .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
+                                .clipped()
+                                .position(x: channelWidth / 2, y: channelY)
                             }
-                            #if os(macOS) || os(tvOS)
-                            .buttonStyle(.borderless)
-                            #endif
-                            .tint(.primary)
-                            .padding(.all, 0.5)
-                            .fixedSize()
-                            .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
-                            .clipped()
-                            .position(x: channelWidth / 2, y: channelY)
                         }
                     }
                 }
@@ -207,22 +236,164 @@ struct EPGView: View {
         }
     }
     
+    var settings: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Toggle(isOn: userSettings.$epgShowGR) {
+                        Text(verbatim: "GR")
+                    }
+                    Toggle(isOn: userSettings.$epgShowBS) {
+                        Text(verbatim: "BS")
+                    }
+                    Toggle(isOn: userSettings.$epgShowCS) {
+                        Text(verbatim: "CS")
+                    }
+                    Toggle(isOn: userSettings.$epgShowSKY) {
+                        Text(verbatim: "SKY")
+                    }
+                } header: {
+                    Label {
+                        Text("Broadcast type")
+                    } icon: {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                    }
+                }
+                Section {
+                    Picker(selection: $startDate) {
+                        ForEach(startDates) { startDate in
+                            Text(startDate.formatted(EPGView.startDateFormatStyle))
+                                .tag(startDate)
+                        }
+                    } label: {
+                        Text("Date")
+                    }
+                    .pickerStyle(.menu)
+                    Picker(selection: $startHour) {
+                        ForEach(0...23, id: \.self) { startHour in
+                            Text(String(format: "%02d:00", startHour))
+                                .tag(startHour)
+                        }
+                    } label: {
+                        Text("Time")
+                    }
+                    .pickerStyle(.menu)
+                } header: {
+                    Label {
+                        Text("Start time")
+                    } icon: {
+                        Image(systemName: "calendar.badge.clock")
+                    }
+                }
+                Section {
+                    ForEach(0..<enableGenre.count, id: \.self) { index in
+                        Toggle(isOn: $enableGenre[index]) {
+                            Text(EPGGenre[index]!)
+                        }
+                    }
+                } header: {
+                    Label {
+                        Text("Genres")
+                    } icon: {
+                        Image(systemName: "bookmark")
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            #if !os(tvOS)
+            .navigationTitle("Settings")
+            #if !os(macOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #endif
+            .toolbar {
+                ToolbarItem(placement: appState.isOnMac ? .cancellationAction : .topBarTrailing) {
+                    Button("Close") {
+                        showSettings = false
+                    }
+                }
+            }
+        }
+        .onChange(of: userSettings.epgShowGR) { _, _ in
+            refresh(manual: true)
+        }
+        .onChange(of: userSettings.epgShowBS) { _, _ in
+            refresh(manual: true)
+        }
+        .onChange(of: userSettings.epgShowCS) { _, _ in
+            refresh(manual: true)
+        }
+        .onChange(of: userSettings.epgShowSKY) { _, _ in
+            refresh(manual: true)
+        }
+        .onChange(of: startDate) { oldValue, newValue in
+            if oldValue != newValue {
+                refresh(manual: true)
+            }
+        }
+        .onChange(of: startHour) { oldValue, newValue in
+            if oldValue != newValue {
+                refresh(manual: true)
+            }
+        }
+        .onChange(of: enableGenre) { _, newValue in
+            do {
+                userSettings.epgGenres = try JSONEncoder().encode(enableGenre)
+            } catch let error {
+                Logger.error("Failed to encode enabled genres: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func updateNowPosition() {
         nowPosition = (CGFloat(Date.now.timeIntervalSince1970 * 1000) - startAt) / (24 * 3600 * 1000) * heightOneDay
     }
     
-    func refresh(waitTime: Duration = .zero) {
+    func refresh(waitTime: Duration = .zero, manual: Bool) {
         guard appState.clientState == .initialized else {
             return
         }
         schedules = []
         loadingState = .loading
+        let nowTime = Date(timeIntervalSince1970: TimeInterval(Int(Date.now.timeIntervalSince1970) / 3600 * 3600)) // Round down to the nearest hour
+        var calendar = Calendar(identifier: .japanese)
+        calendar.timeZone = TimeZone(abbreviation: "JST")!
+        startDates = []
+        for day in 0..<7 {
+            startDates.append(nowTime.addingTimeInterval(24 * 3600 * TimeInterval(day)))
+        }
+        if startDate.timeIntervalSince1970 == 0 || !manual {
+            startDate = nowTime
+        }
+        if startHour == -1 || !manual {
+            startHour = calendar.component(.hour, from: nowTime)
+        }
+        let startTime = calendar.date(from: DateComponents(
+            year: calendar.component(.year, from: startDate),
+            month: calendar.component(.month, from: startDate),
+            day: calendar.component(.day, from: startDate),
+            hour: startHour,
+            minute: 0,
+            second: 0
+        ))!
+        if enableGenre.isEmpty {
+            if userSettings.epgGenres.isEmpty {
+                enableGenre = [Bool](repeating: true, count: EPGGenre.count)
+            } else {
+                do {
+                    enableGenre = try JSONDecoder().decode([Bool].self, from: userSettings.epgGenres)
+                } catch let error {
+                    Logger.error("Failed to decode enabled genres: \(error.localizedDescription)")
+                    enableGenre = [Bool](repeating: true, count: EPGGenre.count)
+                }
+            }
+        }
         Task {
             do {
                 try await Task.sleep(for: waitTime)
-                let startAt = Int(Date().timeIntervalSince1970) / 3600 * 3600 * 1000 // Round down to the nearest hour
+                let startAt = Int(startTime.timeIntervalSince1970) * 1000
                 let endAt = startAt + (24 * 3600 * 1000) // 24 hours later
-                let schedules = try await appState.client.api.getSchedules(query: Operations.GetSchedules.Input.Query(startAt: startAt, endAt: endAt, isHalfWidth: true, gr: true, bs: true, cs: true, sky: false)).ok.body.json
+                let schedules = try await appState.client.api.getSchedules(query: Operations.GetSchedules.Input.Query(startAt: startAt, endAt: endAt, isHalfWidth: true, gr: userSettings.epgShowGR, bs: userSettings.epgShowBS, cs: userSettings.epgShowCS, sky: userSettings.epgShowSKY)).ok.body.json
                 self.schedules = schedules
                 self.startAt = CGFloat(startAt)
                 self.endAt = CGFloat(endAt)
@@ -244,6 +415,12 @@ struct EPGView: View {
                 loadingState = .error(Text(verbatim: error.localizedDescription))
             }
         }
+    }
+}
+
+extension Date: @retroactive Identifiable {
+    public var id: TimeInterval {
+        timeIntervalSince1970
     }
 }
 
