@@ -43,6 +43,10 @@ struct EPGView: View {
     @State var startHour: Int = -1
     @State var enableGenre: [Bool] = []
     
+    #if !os(tvOS)
+    @State var notifier = EPGNotifier()
+    #endif
+    
     static let startDateFormatStyle = Date.FormatStyle(
         date: .abbreviated,
         time: .omitted,
@@ -127,10 +131,14 @@ struct EPGView: View {
             #endif
             #endif
             .sheet(item: $selectedProgram) { program in
-                EPGProgramView(channel: program.channel, program: program.program)
+                #if !os(tvOS)
+                EPGProgramView(channel: program.channel, program: program.program, notifier: $notifier)
                     #if os(macOS)
                     .presentationSizing(.page)
                     #endif
+                #else
+                EPGProgramView(channel: program.channel, program: program.program)
+                #endif
             }
             .sheet(isPresented: $showSettings) {
                 settings
@@ -140,6 +148,11 @@ struct EPGView: View {
             if schedules.isEmpty {
                 refresh(manual: false)
             }
+            #if !os(tvOS)
+            Task {
+                await notifier.updateSetProgramIds()
+            }
+            #endif
         }
     }
     
@@ -211,6 +224,9 @@ struct EPGView: View {
                                     }
                                     .background {
                                         Color("Genre \(program.genre1 ?? 16)")
+                                            #if !os(tvOS)
+                                            .border(notifier.setProgramIds.contains(String(program.id)) ? Color.red : Color.clear, width: 3)
+                                            #endif
                                             .padding(.all, 1)
                                             .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
                                     }

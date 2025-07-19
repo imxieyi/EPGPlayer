@@ -11,9 +11,16 @@ import SwiftUI
 struct EPGProgramView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
+    @EnvironmentObject private var userSettings: UserSettings
     
     let channel: Components.Schemas.ScheduleChannleItem
     let program: Components.Schemas.ScheduleProgramItem
+    
+    #if !os(tvOS)
+    @Binding var notifier: EPGNotifier
+    #endif
+    
+    @State var showNotifyPermissionAlert = false
     
     var body: some View {
         NavigationStack {
@@ -44,9 +51,56 @@ struct EPGProgramView: View {
                         Text(genreStr + " / " + subGenreStr)
                             .font(.subheadline)
                     }
+                    #if !os(tvOS)
+                    Divider()
+                    HStack {
+                        Spacer()
+                        if notifier.setProgramIds.contains(String(program.id)) {
+                            Button {
+                                notifier.removeProgram(program: program)
+                            } label: {
+                                HStack(alignment: .center) {
+                                    Image(systemName: "calendar.badge.minus")
+                                        .font(.system(size: 25))
+                                    Text("Remove notification")
+                                }
+                            }
+                            .tint(.red)
+                            .buttonStyle(.borderless)
+                        } else {
+                            Picker("Notification time", selection: userSettings.$epgNotifyTimeDiff) {
+                                Text("Start time")
+                                    .tag(TimeInterval(0))
+                                ForEach([1, 5, 10, 15, 30, 60], id: \.self) { minutes in
+                                    Text("\(minutes) minute ago")
+                                        .tag(-60 * TimeInterval(minutes))
+                                }
+                            }
+                            .pickerStyle(.menu)
+                            .buttonStyle(.borderless)
+                            Button {
+                                Task {
+                                    if !(await notifier.requestPermission()) {
+                                        showNotifyPermissionAlert.toggle()
+                                        return
+                                    }
+                                    await notifier.addProgram(channel: channel, program: program, timeDiff: userSettings.epgNotifyTimeDiff)
+                                }
+                            } label: {
+                                HStack(alignment: .center) {
+                                    Image(systemName: "calendar.badge.plus")
+                                        .font(.system(size: 25))
+                                    Text("Add notification")
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        Spacer()
+                    }
+                    #endif
                     if let description = program.description {
                         Divider()
-                        Text(verbatim: description)
+                        Text(LocalizedStringKey(description))
                             .multilineTextAlignment(.leading)
                             #if !os(tvOS)
                             .textSelection(.enabled)
@@ -55,7 +109,7 @@ struct EPGProgramView: View {
                     }
                     if let extended = program.extended {
                         Divider()
-                        Text(verbatim: extended)
+                        Text(LocalizedStringKey(extended))
                             .multilineTextAlignment(.leading)
                             #if !os(tvOS)
                             .textSelection(.enabled)
@@ -116,6 +170,21 @@ struct EPGProgramView: View {
                         Text(channel.name)
                             .font(.headline)
                     }
+                }
+            }
+            .alert("Notification permission is disabled", isPresented: $showNotifyPermissionAlert) {
+                Button {
+                    #if os(macOS)
+                    NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.notifications")!)
+                    #else
+                    UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+                    #endif
+                } label: {
+                    Text("Open Settings")
+                }
+                Button(role: .cancel) {
+                } label: {
+                    Text("Close")
                 }
             }
         }

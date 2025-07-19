@@ -28,6 +28,7 @@ class UserSettings: ObservableObject {
     @AppStorage("epg_show_cs") var epgShowCS = true
     @AppStorage("epg_show_sky") var epgShowSKY = true
     @AppStorage("epg_genres") var epgGenres = Data()
+    @AppStorage("epg_notify_time_diff") var epgNotifyTimeDiff: TimeInterval = -600
     
     // Debug Settings
     #if DEBUG
