@@ -83,7 +83,7 @@ extension Components.Schemas.VideoFile: VideoItem {
 }
 
 struct EPGLiveStreamItem: VideoItem {
-    let channel: Components.Schemas.ChannelItem
+    let channel: Components.Schemas.ScheduleChannleItem
     let format: String
     let mode: Int
     

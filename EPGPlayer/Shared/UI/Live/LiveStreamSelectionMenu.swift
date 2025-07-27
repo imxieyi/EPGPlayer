@@ -15,7 +15,7 @@ struct LiveStreamSelectionMenu: View {
     @Environment(\.openWindow) private var openWindow // Add environment for opening windows
     #endif
     
-    let channel: Components.Schemas.ChannelItem
+    let channel: Components.Schemas.ScheduleChannleItem
     let format: String
     let formatName: String
     let selections: [String]

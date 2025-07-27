@@ -19,7 +19,9 @@ struct LiveChannelsView: View {
     @State var loadingMoreState = LoadingState.loaded
     
     @State var liveStreamConfig: Components.Schemas.Config.StreamConfigPayload.LivePayload.TsPayload? = nil
-    @State var channels: [Components.Schemas.ChannelItem] = []
+    @State var schedules: [Components.Schemas.Schedule] = []
+    
+    @State var timeFormatter = DateFormatter()
     
     var body: some View {
         NavigationStack {
@@ -27,56 +29,96 @@ struct LiveChannelsView: View {
                 refresh(waitTime: waitTime)
             } content: {
                 if let liveStreamConfig {
-                    List(channels) { channel in
-                        Menu {
-                            if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
-                                LiveStreamSelectionMenu(channel: channel, format: "m2ts", formatName: "M2TS", selections: m2ts)
-                            }
-                            if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
-                                LiveStreamSelectionMenu(channel: channel, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
-                            }
-                            if let webm = liveStreamConfig.webm, !webm.isEmpty {
-                                LiveStreamSelectionMenu(channel: channel, format: "webm", formatName: "WebM", selections: webm)
-                            }
-                            if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
-                                LiveStreamSelectionMenu(channel: channel, format: "mp4", formatName: "MP4", selections: mp4)
-                            }
-                        } label: {
-                            HStack {
-                                AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(channel.id)/logo"), headers: appState.client.headers) { phase in
-                                    if let image = phase.image {
-                                        #if DEBUG
-                                        if userSettings.demoMode {
-                                            Image(systemName: "inset.filled.tv")
-                                        } else {
-                                            image
-                                                .resizable()
-                                                .scaledToFit()
-                                        }
-                                        #else
-                                        image
-                                            .resizable()
-                                            .scaledToFit()
-                                        #endif
-                                    } else if phase.error != nil {
-                                        Image(systemName: "photo.badge.exclamationmark")
-                                            .foregroundStyle(.placeholder)
-                                    } else {
-                                        ProgressView()
+                    #if os(tvOS)
+                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
+                    #else
+                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                    #endif
+                    ScrollView {
+                        #if os(macOS)
+                        Spacer()
+                            .frame(height: 10)
+                        #endif
+                        LazyVGrid(columns: [gridItem], spacing: 15) {
+                            ForEach(schedules) { schedule in
+                                Menu {
+                                    if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
+                                        LiveStreamSelectionMenu(channel: schedule.channel, format: "m2ts", formatName: "M2TS", selections: m2ts)
                                     }
+                                    if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
+                                        LiveStreamSelectionMenu(channel: schedule.channel, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
+                                    }
+                                    if let webm = liveStreamConfig.webm, !webm.isEmpty {
+                                        LiveStreamSelectionMenu(channel: schedule.channel, format: "webm", formatName: "WebM", selections: webm)
+                                    }
+                                    if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
+                                        LiveStreamSelectionMenu(channel: schedule.channel, format: "mp4", formatName: "MP4", selections: mp4)
+                                    }
+                                } label: {
+                                    VStack(alignment: .leading) {
+                                        HStack {
+                                            AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(schedule.channel.id)/logo"), headers: appState.client.headers) { phase in
+                                                if let image = phase.image {
+                                                    #if DEBUG
+                                                    if userSettings.demoMode {
+                                                        Image(systemName: "inset.filled.tv")
+                                                    } else {
+                                                        image
+                                                            .resizable()
+                                                            .scaledToFit()
+                                                    }
+                                                    #else
+                                                    image
+                                                        .resizable()
+                                                        .scaledToFit()
+                                                    #endif
+                                                } else if phase.error != nil {
+                                                    Image(systemName: "photo.badge.exclamationmark")
+                                                        .foregroundStyle(.placeholder)
+                                                } else {
+                                                    ProgressView()
+                                                }
+                                            }
+                                            .frame(height: 20)
+                                            Text(schedule.channel.name)
+                                            Spacer()
+                                            Text(schedule.channel.channelType.rawValue.uppercased())
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        if let program = schedule.programs.first {
+                                            Text(verbatim: program.name)
+                                                .font(.headline)
+                                                .multilineTextAlignment(.leading)
+                                                .layoutPriority(3)
+                                            Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                .font(.caption)
+                                                .layoutPriority(2)
+                                            if let description = program.description {
+                                                Text(verbatim: description)
+                                                    .multilineTextAlignment(.leading)
+                                                    .layoutPriority(1)
+                                            }
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.all, 6)
+                                    .background(Color("Genre \(schedule.programs.first?.genre1 ?? 16)"))
+                                    .frame(maxWidth: .infinity)
+                                    .aspectRatio(2.5, contentMode: .fit)
+                                    .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
+                                    .shadow(radius: 3)
                                 }
-                                .frame(height: 20)
-                                Text(verbatim: channel.halfWidthName)
-                                Spacer()
-                                Text(verbatim: channel.channelType.rawValue)
-                                    .foregroundStyle(.secondary)
+                                .id(schedule.channel.id)
+                                #if !os(tvOS)
+                                .menuStyle(.button)
+                                .buttonStyle(.plain)
+                                #endif
+                                .tint(.primary)
                             }
                         }
                         #if !os(tvOS)
-                        .menuStyle(.button)
-                        .buttonStyle(.borderless)
+                        .padding(.horizontal)
                         #endif
-                        .tint(.primary)
                     }
                     .refreshable {
                         refresh()
@@ -104,7 +146,7 @@ struct LiveChannelsView: View {
             #endif
         }
         .onAppear {
-            if channels.isEmpty || liveStreamConfig == nil {
+            if schedules.isEmpty || liveStreamConfig == nil {
                 refresh()
             }
         }
@@ -114,8 +156,10 @@ struct LiveChannelsView: View {
         guard appState.clientState == .initialized else {
             return
         }
-        channels = []
+        schedules = []
         loadingState = .loading
+        timeFormatter.dateFormat = "HH:mm"
+        timeFormatter.timeZone = TimeZone(abbreviation: "JST")
         Task {
             do {
                 try await Task.sleep(for: waitTime)
@@ -124,9 +168,9 @@ struct LiveChannelsView: View {
                     return
                 }
                 self.liveStreamConfig = liveStreamConfig
-                channels = try await appState.client.api.getChannels().ok.body.json
+                schedules = try await appState.client.api.getSchedulesBroadcasting(query: Operations.GetSchedulesBroadcasting.Input.Query(isHalfWidth: true)).ok.body.json
                 loadingState = .loaded
-                Logger.info("Loaded \(channels.count) channels")
+                Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))
