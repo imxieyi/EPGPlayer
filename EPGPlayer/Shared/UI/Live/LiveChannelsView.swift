@@ -219,5 +219,8 @@ struct ProgramProgressView: View {
     var body: some View {
         ProgressView(value: progress)
             .progressViewStyle(.linear)
+            #if os(macOS)
+            .tint(.accentColor)
+            #endif
     }
 }
