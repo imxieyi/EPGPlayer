@@ -21,6 +21,9 @@ struct LiveChannelsView: View {
     @State var liveStreamConfig: Components.Schemas.Config.StreamConfigPayload.LivePayload.TsPayload? = nil
     @State var schedules: [Components.Schemas.Schedule] = []
     
+    let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+    @State var progressMap: [Components.Schemas.ProgramId : Double] = [:]
+    
     @State var timeFormatter = DateFormatter()
     
     var body: some View {
@@ -98,8 +101,11 @@ struct LiveChannelsView: View {
                                                     .multilineTextAlignment(.leading)
                                                     .layoutPriority(1)
                                             }
+                                            Spacer()
+                                            ProgramProgressView(progress: $progressMap[program.id])
+                                        } else {
+                                            Spacer()
                                         }
-                                        Spacer()
                                     }
                                     .padding(.all, 6)
                                     .background(Color("Genre \(schedule.programs.first?.genre1 ?? 16)"))
@@ -122,6 +128,9 @@ struct LiveChannelsView: View {
                     }
                     .refreshable {
                         refresh()
+                    }
+                    .onReceive(timer) { _ in
+                        updateProgress()
                     }
                 } else {
                     ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
@@ -152,28 +161,49 @@ struct LiveChannelsView: View {
         }
     }
     
-    func refresh(waitTime: Duration = .zero) {
+    func updateProgress() {
+        let currentTimestamp = Date.now.timeIntervalSince1970 * 1000
+        for schedule in schedules {
+            guard let program = schedule.programs.first else {
+                continue
+            }
+            let progress = (currentTimestamp - TimeInterval(program.startAt)) / (TimeInterval(program.endAt) - TimeInterval(program.startAt))
+            if progress > 1 {
+                refresh(timer: true)
+                return
+            }
+            progressMap[program.id] = progress
+        }
+    }
+    
+    func refresh(waitTime: Duration = .zero, timer: Bool = false) {
         guard appState.clientState == .initialized else {
             return
         }
-        schedules = []
-        loadingState = .loading
-        timeFormatter.dateFormat = "HH:mm"
-        timeFormatter.timeZone = TimeZone(abbreviation: "JST")
+        if !timer {
+            loadingState = .loading
+            timeFormatter.dateFormat = "HH:mm"
+            timeFormatter.timeZone = TimeZone(abbreviation: "JST")
+        }
         Task {
             do {
                 try await Task.sleep(for: waitTime)
-                guard let liveStreamConfig = try await appState.client.api.getConfig().ok.body.json.streamConfig.live?.ts else {
-                    loadingState = .error(Text("Failed to load live stream config"))
-                    return
+                if !timer {
+                    guard let liveStreamConfig = try await appState.client.api.getConfig().ok.body.json.streamConfig.live?.ts else {
+                        loadingState = .error(Text("Failed to load live stream config"))
+                        return
+                    }
+                    self.liveStreamConfig = liveStreamConfig
                 }
-                self.liveStreamConfig = liveStreamConfig
                 schedules = try await appState.client.api.getSchedulesBroadcasting(query: Operations.GetSchedulesBroadcasting.Input.Query(isHalfWidth: true)).ok.body.json
+                updateProgress()
                 loadingState = .loaded
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")
-                loadingState = .error(Text(verbatim: error.localizedDescription))
+                if !timer {
+                    loadingState = .error(Text(verbatim: error.localizedDescription))
+                }
             }
         }
     }
@@ -181,4 +211,13 @@ struct LiveChannelsView: View {
 
 extension Components.Schemas.ChannelItem: Identifiable {
     
+}
+
+struct ProgramProgressView: View {
+    @Binding var progress: TimeInterval?
+    
+    var body: some View {
+        ProgressView(value: progress)
+            .progressViewStyle(.linear)
+    }
 }
