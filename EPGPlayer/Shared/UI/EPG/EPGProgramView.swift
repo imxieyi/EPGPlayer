@@ -6,6 +6,9 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
+#if os(iOS)
+import EventKit
+#endif
 import SwiftUI
 
 struct EPGProgramView: View {
@@ -21,20 +24,27 @@ struct EPGProgramView: View {
     #endif
     
     @State var showNotifyPermissionAlert = false
+    @State var showEventEditView = false
+    #if os(iOS)
+    @State var event: EKEvent? = nil
+    @State var store = EKEventStore()
+    #endif
     
     var body: some View {
         NavigationStack {
             ScrollView(.vertical) {
                 VStack(alignment: .center) {
+                    let startAt = Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))
+                    let endAt = Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))
                     Text(verbatim: program.name)
                         .font(.headline)
                         .multilineTextAlignment(.leading)
                         #if !os(tvOS)
                         .textSelection(.enabled)
                         #endif
-                    Text(verbatim: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000)).formatted(RecordingCell.startDateFormatStyle)
+                    Text(verbatim: startAt.formatted(RecordingCell.startDateFormatStyle)
                          + " ~ "
-                         + Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000)).formatted(RecordingCell.endDateFormatStyle)
+                         + endAt.formatted(RecordingCell.endDateFormatStyle)
                          + " (\((program.endAt - program.startAt) / 60 / 1000)分)")
                     if let genre = program.genre1, let genreStr = EPGGenre[genre],
                        let subGenre = program.subGenre1, let subGenreStr = EPGSubGenre[genre]?[subGenre] {
@@ -60,7 +70,7 @@ struct EPGProgramView: View {
                                 notifier.removeProgram(program: program)
                             } label: {
                                 HStack(alignment: .center) {
-                                    Image(systemName: "calendar.badge.minus")
+                                    Image(systemName: "bell.badge.slash")
                                         .font(.system(size: 25))
                                     Text("Remove notification")
                                 }
@@ -88,15 +98,41 @@ struct EPGProgramView: View {
                                 }
                             } label: {
                                 HStack(alignment: .center) {
-                                    Image(systemName: "calendar.badge.plus")
+                                    Image(systemName: "bell.badge")
                                         .font(.system(size: 25))
                                     Text("Add notification")
                                 }
                             }
                             .buttonStyle(.borderless)
+                            .foregroundStyle(.tint)
                         }
                         Spacer()
                     }
+                    #if os(iOS)
+                    Divider()
+                    HStack {
+                        Spacer()
+                            Button {
+                                let event = EKEvent(eventStore: store)
+                                event.title = program.name
+                                event.location = channel.name
+                                event.notes = program.description
+                                event.startDate = startAt
+                                event.endDate = endAt
+                                event.timeZone = TimeZone(abbreviation: "JST")
+                                self.event = event
+                                showEventEditView.toggle()
+                            } label: {
+                                HStack(alignment: .center) {
+                                    Image(systemName: "calendar.badge.plus")
+                                        .font(.system(size: 25))
+                                    Text("Add to calendar")
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                        Spacer()
+                    }
+                    #endif
                     #endif
                     if let description = program.description {
                         Divider()
@@ -187,6 +223,11 @@ struct EPGProgramView: View {
                     Text("Close")
                 }
             }
+            #if os(iOS)
+            .sheet(isPresented: $showEventEditView) {
+               EventEditView(event: $event, eventStore: store)
+            }
+            #endif
         }
     }
 }

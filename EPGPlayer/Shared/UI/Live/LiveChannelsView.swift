@@ -118,7 +118,9 @@ struct LiveChannelsView: View {
                                             }
                                         }
                                         .padding(.all, 6)
+                                        #if !os(tvOS)
                                         .background(.fill)
+                                        #endif
                                         .frame(maxWidth: .infinity)
                                         .aspectRatio(2.5, contentMode: .fit)
                                         .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))

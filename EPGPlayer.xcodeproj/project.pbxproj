@@ -55,6 +55,7 @@
 				Shared/UI/Downloads/ActiveDownloadsView.swift = (ios, macos, );
 				Shared/UI/Downloads/DownloadsView.swift = (ios, macos, );
 				Shared/UI/EPG/EPGNotifier.swift = (ios, macos, );
+				Shared/UI/EPG/EventEditView.swift = (ios, );
 				Shared/UI/Main/AuthWebView.swift = (ios, macos, );
 			};
 			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
