@@ -120,7 +120,7 @@ struct EPGView: View {
                     Button {
                         showSettings.toggle()
                     } label: {
-                        Label("Settings", systemImage: "gearshape")
+                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
                     }
                 }
             })
@@ -317,7 +317,7 @@ struct EPGView: View {
             }
             .formStyle(.grouped)
             #if !os(tvOS)
-            .navigationTitle("Settings")
+            .navigationTitle("Filter")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

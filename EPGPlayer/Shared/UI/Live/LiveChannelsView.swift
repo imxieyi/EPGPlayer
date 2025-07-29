@@ -35,14 +35,14 @@ struct LiveChannelsView: View {
                     #if os(tvOS)
                     let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
                     #else
-                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 10)
                     #endif
                     ScrollView {
                         #if os(macOS)
                         Spacer()
                             .frame(height: 10)
                         #endif
-                        LazyVGrid(columns: [gridItem], spacing: 15) {
+                        LazyVGrid(columns: [gridItem], spacing: 10) {
                             ForEach(schedules) { schedule in
                                 Menu {
                                     if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
@@ -108,7 +108,7 @@ struct LiveChannelsView: View {
                                         }
                                     }
                                     .padding(.all, 6)
-                                    .background(Color("Genre \(schedule.programs.first?.genre1 ?? 16)"))
+                                    .background(.fill)
                                     .frame(maxWidth: .infinity)
                                     .aspectRatio(2.5, contentMode: .fit)
                                     .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
