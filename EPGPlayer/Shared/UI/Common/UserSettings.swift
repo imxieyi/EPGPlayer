@@ -30,6 +30,12 @@ class UserSettings: ObservableObject {
     @AppStorage("epg_genres") var epgGenres = Data()
     @AppStorage("epg_notify_time_diff") var epgNotifyTimeDiff: TimeInterval = -600
     
+    // Live Settings
+    @AppStorage("live_show_gr") var liveShowGR = true
+    @AppStorage("live_show_bs") var liveShowBS = true
+    @AppStorage("live_show_cs") var liveShowCS = true
+    @AppStorage("live_show_sky") var liveShowSKY = true
+    
     // Debug Settings
     #if DEBUG
     @Published var demoMode = false

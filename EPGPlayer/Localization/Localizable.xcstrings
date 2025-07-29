@@ -1245,6 +1245,22 @@
         }
       }
     },
+    "Program" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "番組"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "节目"
+          }
+        }
+      }
+    },
     "Query" : {
       "localizations" : {
         "ja" : {
