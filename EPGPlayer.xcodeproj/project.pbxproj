@@ -63,7 +63,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		8AB8782A2E1548810045304F /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
+		8A6332732E436A9F00B74DE6 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */ = {
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			attributesByRelativePath = {
 				Dependency/VLCKit.xcframework = (CodeSignOnCopy, RemoveHeadersOnCopy, );
@@ -80,7 +80,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				8A7668812D993761008E69F7 /* Exceptions for "EPGPlayer" folder in "EPGPlayer" target */,
-				8AB8782A2E1548810045304F /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
+				8A6332732E436A9F00B74DE6 /* Exceptions for "EPGPlayer" folder in "Embed Frameworks" phase from "EPGPlayer" target */,
 			);
 			path = EPGPlayer;
 			sourceTree = "<group>";

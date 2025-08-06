@@ -43,6 +43,8 @@ struct PlayerView: View {
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
     
+    @State var audioStereoMode: VLCMediaPlayer.AudioStereoMode = .unset
+    
     @State var idleTimer: Timer? = nil
     #if os(macOS)
     @State var macHelper: MacHelper? = nil
@@ -57,7 +59,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
+            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
@@ -328,6 +330,22 @@ struct PlayerView: View {
                     Label("Speed", systemImage: "gauge.with.dots.needle.67percent")
                 }
                 .pickerStyle(.menu)
+            }
+            
+            // Stereo mode is broken on libvlc.
+            if false {
+                Picker(selection: $audioStereoMode) {
+                    Text("Unset")
+                        .tag(VLCMediaPlayer.AudioStereoMode.unset)
+                    Text("Stereo")
+                        .tag(VLCMediaPlayer.AudioStereoMode.stereo)
+                    Text("Left")
+                        .tag(VLCMediaPlayer.AudioStereoMode.left)
+                    Text("Right")
+                        .tag(VLCMediaPlayer.AudioStereoMode.right)
+                } label: {
+                    Label("Stereo mode", systemImage: "hifispeaker.2")
+                }
                 
                 Divider()
             }

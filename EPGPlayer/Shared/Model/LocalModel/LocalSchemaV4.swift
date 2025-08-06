@@ -1,16 +1,21 @@
 //
-//  LocalSchemaV3.swift
+//  LocalSchemaV4.swift
 //  EPGPlayer
 //
-//  Created by Yi Xie on 2025/04/13.
+//  Created by Yi Xie on 2025/07/30.
 //
 //  SPDX-License-Identifier: MPL-2.0
 
 import Foundation
 import SwiftData
 
-enum LocalSchemaV3: VersionedSchema {
-    static var versionIdentifier: Schema.Version { Schema.Version(3, 0, 0) }
+typealias LocalRecordedItem = LocalSchemaV4.LocalRecordedItem
+typealias LocalVideoItem = LocalSchemaV4.LocalVideoItem
+typealias LocalFile = LocalSchemaV4.LocalFile
+typealias SavedPlaybackPosition = LocalSchemaV4.SavedPlaybackPosition
+
+enum LocalSchemaV4: VersionedSchema {
+    static var versionIdentifier: Schema.Version { Schema.Version(4, 0, 0) }
     static var models: [any PersistentModel.Type] {
         [LocalRecordedItem.self, LocalVideoItem.self, LocalFile.self, SavedPlaybackPosition.self]
     }
@@ -26,15 +31,15 @@ enum LocalSchemaV3: VersionedSchema {
         var endTime: Date
         var shortDesc: String?
         var extendedDesc: String?
+        var audioComponentType: Int?
         @Relationship(deleteRule: .cascade) var _thumbnail: LocalFile?
         @Relationship(deleteRule: .cascade) var _videoItems: [LocalVideoItem]
         
         @MainActor var channelName: String? { _channelName }
         @MainActor var thumbnail: URL? { _thumbnail?.url }
         var videoItems: [any VideoItem] { _videoItems }
-        var audioComponentType: Int? { nil }
         
-        init(serverId: String, epgId: Int, name: String, channelName: String?, startTime: Date, endTime: Date, shortDesc: String?, extendedDesc: String?, thumbnail: LocalFile?) {
+        init(serverId: String, epgId: Int, name: String, channelName: String?, startTime: Date, endTime: Date, shortDesc: String?, extendedDesc: String?, audioComponentType: Int?, thumbnail: LocalFile?) {
             self.serverId = serverId
             self.id = UUID()
             self.epgId = epgId
@@ -44,6 +49,7 @@ enum LocalSchemaV3: VersionedSchema {
             self.endTime = endTime
             self.shortDesc = shortDesc
             self.extendedDesc = extendedDesc
+            self.audioComponentType = audioComponentType
             self._thumbnail = thumbnail
             self._videoItems = []
         }

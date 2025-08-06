@@ -31,6 +31,7 @@ enum LocalSchemaV1: VersionedSchema {
         @MainActor var channelName: String? { _channelName }
         @MainActor var thumbnail: URL? { _thumbnail?.url }
         var videoItems: [any VideoItem] { _videoItems }
+        var audioComponentType: Int? { nil }
         
         init(epgId: Int, name: String, channelName: String?, startTime: Date, endTime: Date, shortDesc: String?, extendedDesc: String?, thumbnail: LocalFile?) {
             self.id = UUID()

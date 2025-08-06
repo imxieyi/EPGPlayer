@@ -56,16 +56,16 @@ struct LiveChannelsView: View {
                                     && (programKeyword == "" || (schedule.programs.first?.name ?? "").lowercased().contains(programKeyword.lowercased())) {
                                     Menu {
                                         if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, format: "m2ts", formatName: "M2TS", selections: m2ts)
+                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2ts", formatName: "M2TS", selections: m2ts)
                                         }
                                         if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
+                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
                                         }
                                         if let webm = liveStreamConfig.webm, !webm.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, format: "webm", formatName: "WebM", selections: webm)
+                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "webm", formatName: "WebM", selections: webm)
                                         }
                                         if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, format: "mp4", formatName: "MP4", selections: mp4)
+                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "mp4", formatName: "MP4", selections: mp4)
                                         }
                                     } label: {
                                         VStack(alignment: .leading) {

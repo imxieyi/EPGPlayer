@@ -18,6 +18,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
     
     @Binding var forceStrokeText: Bool
     @Binding var force16To9: Bool
+    @Binding var audioStereoMode: VLCMediaPlayer.AudioStereoMode
     
     @Binding var playerState: VLCMediaPlayerState
     @Binding var hadErrorState: Bool
@@ -49,10 +50,14 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.httpHeaders = httpHeaders
         playerVC.forceStrokeText = forceStrokeText
         playerVC.forceAspectRatio = force16To9 ? "16:9" : nil
+        playerVC.mediaPlayer.audioStereoMode = audioStereoMode
         return playerVC
     }
 
     func updateViewController(_ uiViewController: VLCPlayerViewController, context: Context) {
+//        if uiViewController.mediaPlayer.audioStereoMode != audioStereoMode {
+//            uiViewController.mediaPlayer.audioStereoMode = audioStereoMode
+//        }
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
@@ -282,6 +287,7 @@ class VLCPlayerViewController: UIViewController {
                     return
                 }
                 newMediaPlayer.media = self?.mediaPlayer.media
+                newMediaPlayer.audioStereoMode = self?.mediaPlayer.audioStereoMode
                 self?.mediaPlayer.stop()
                 self?.mediaPlayer = newMediaPlayer
                 self?.mediaPlayer.play()

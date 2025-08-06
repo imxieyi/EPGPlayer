@@ -17,6 +17,7 @@ protocol RecordedItem {
     var endTime: Date { get }
     var shortDesc: String? { get }
     var extendedDesc: String? { get }
+    var audioComponentType: Int? { get }
     @MainActor var thumbnail: URL? { get }
     var videoItems: [any VideoItem] { get }
 }
