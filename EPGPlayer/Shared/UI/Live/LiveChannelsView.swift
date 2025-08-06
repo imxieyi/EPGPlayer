@@ -102,16 +102,19 @@ struct LiveChannelsView: View {
                                                 Text(verbatim: program.name)
                                                     .font(.headline)
                                                     .multilineTextAlignment(.leading)
+                                                    .lineLimit(2)
                                                     .layoutPriority(3)
                                                 Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
                                                     .font(.caption)
                                                     .layoutPriority(2)
                                                 if let description = program.description {
                                                     Text(verbatim: description)
+                                                        .font(.footnote)
                                                         .multilineTextAlignment(.leading)
                                                         .layoutPriority(1)
                                                 }
                                                 Spacer()
+                                                    .frame(minHeight: 0)
                                                 ProgramProgressView(progress: $progressMap[program.id])
                                             } else {
                                                 Spacer()
@@ -121,8 +124,7 @@ struct LiveChannelsView: View {
                                         #if !os(tvOS)
                                         .background(.fill)
                                         #endif
-                                        .frame(maxWidth: .infinity)
-                                        .aspectRatio(2.5, contentMode: .fit)
+                                        .frame(maxWidth: .infinity, minHeight: 120, idealHeight: 120, maxHeight: 120)
                                         .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
                                         .shadow(radius: 3)
                                     }
