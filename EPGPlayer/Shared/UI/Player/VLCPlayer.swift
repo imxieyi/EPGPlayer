@@ -287,7 +287,7 @@ class VLCPlayerViewController: UIViewController {
                     return
                 }
                 newMediaPlayer.media = self?.mediaPlayer.media
-                newMediaPlayer.audioStereoMode = self?.mediaPlayer.audioStereoMode
+//                newMediaPlayer.audioStereoMode = self?.mediaPlayer.audioStereoMode
                 self?.mediaPlayer.stop()
                 self?.mediaPlayer = newMediaPlayer
                 self?.mediaPlayer.play()
