@@ -522,6 +522,38 @@
         }
       }
     },
+    "Delete error" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除エラー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除错误"
+          }
+        }
+      }
+    },
+    "Delete recording" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "録画を削除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除录像"
+          }
+        }
+      }
+    },
     "Don't add \"/api\" at the end of URL." : {
       "localizations" : {
         "ja" : {
@@ -1036,6 +1068,9 @@
           }
         }
       }
+    },
+    "More" : {
+
     },
     "Never" : {
       "localizations" : {

@@ -21,7 +21,12 @@ struct RecordingDetailView: View {
     #endif
     
     var item: RecordedItem
-    
+    var onDelete: (() -> Void)? = nil
+
+    @State private var showDeleteConfirmation = false
+    @State private var deleteInProgress = false
+    @State private var deleteError: String? = nil
+
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .center) {
@@ -142,6 +147,66 @@ struct RecordingDetailView: View {
             }
         }
         .navigationTitle(item.name)
+        .toolbar {
+            if onDelete != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    if deleteInProgress {
+                        ProgressView()
+                    } else {
+                        Menu {
+                            Button(role: .destructive) {
+                                showDeleteConfirmation = true
+                            } label: {
+                                Label("Delete recording", systemImage: "trash")
+                            }
+                        } label: {
+                            Label("More", systemImage: "ellipsis")
+                        }
+                    }
+                }
+            }
+        }
+        .alert("Delete recording", isPresented: $showDeleteConfirmation) {
+            Button("Delete", role: .destructive) {
+                deleteRecording()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(verbatim: item.name)
+        }
+        .alert("Delete error", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let deleteError {
+                Text(verbatim: deleteError)
+            }
+        }
+    }
+
+    func deleteRecording() {
+        deleteInProgress = true
+        deleteError = nil
+        Task {
+            do {
+                let response = try await appState.client.api.deleteRecordedRecordedId(
+                    path: .init(recordedId: item.epgId)
+                )
+                switch response {
+                case .ok(_):
+                    Logger.info("Deleted recording \(item.epgId)")
+                    onDelete?()
+                    dismiss()
+                case .default(let statusCode, let error):
+                    let message = try error.body.json.message
+                    deleteError = message
+                    Logger.error("Failed to delete recording \(item.epgId): \(statusCode) \(message)")
+                }
+            } catch {
+                deleteError = error.localizedDescription
+                Logger.error("Failed to delete recording \(item.epgId): \(error)")
+            }
+            deleteInProgress = false
+        }
     }
 }
 

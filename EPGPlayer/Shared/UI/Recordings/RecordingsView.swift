@@ -109,7 +109,10 @@ struct RecordingsView: View {
                     LazyVGrid(columns: [gridItem], spacing: 15) {
                         ForEach(recorded) { item in
                             NavigationLink {
-                                RecordingDetailView(item: item)
+                                RecordingDetailView(item: item, onDelete: {
+                                    recorded.removeAll { $0.id == item.id }
+                                    totalCount -= 1
+                                })
                             } label: {
                                 RecordingCell(item: item)
                             }
