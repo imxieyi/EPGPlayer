@@ -410,6 +410,22 @@
         }
       }
     },
+    "Conflict" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "競合"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "冲突"
+          }
+        }
+      }
+    },
     "Continue" : {
       "localizations" : {
         "ja" : {
@@ -1117,6 +1133,22 @@
         }
       }
     },
+    "No reserves found" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約が見つかりません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到预约"
+          }
+        }
+      }
+    },
     "No schedule available" : {
       "localizations" : {
         "ja" : {
@@ -1212,6 +1244,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开测试页面"
+          }
+        }
+      }
+    },
+    "Overlap" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重叠"
           }
         }
       }
@@ -1441,6 +1489,22 @@
         }
       }
     },
+    "Reserves" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预约"
+          }
+        }
+      }
+    },
     "Reset" : {
       "localizations" : {
         "ja" : {
@@ -1473,6 +1537,22 @@
         }
       }
     },
+    "Rule" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルール"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则"
+          }
+        }
+      }
+    },
     "Search" : {
       "localizations" : {
         "ja" : {
@@ -1488,6 +1568,9 @@
           }
         }
       }
+    },
+    "Segment" : {
+
     },
     "Server Settings" : {
       "extractionState" : "manual",
@@ -1598,6 +1681,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示统计信息"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スキップ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
           }
         }
       }
