@@ -151,6 +151,22 @@
         }
       }
     },
+    "Add reserve" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "録画予約"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加录制预约"
+          }
+        }
+      }
+    },
     "Add to calendar" : {
       "localizations" : {
         "ja" : {
@@ -326,6 +342,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "取消"
+          }
+        }
+      }
+    },
+    "Cancel reserve" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約取消"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消录制预约"
           }
         }
       }
@@ -1149,6 +1181,9 @@
         }
       }
     },
+    "OK" : {
+
+    },
     "Open Settings" : {
       "localizations" : {
         "ja" : {
@@ -1386,6 +1421,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "汇报问题"
+          }
+        }
+      }
+    },
+    "Reserve error" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約エラー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预约错误"
           }
         }
       }

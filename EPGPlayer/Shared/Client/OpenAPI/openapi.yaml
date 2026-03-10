@@ -2304,27 +2304,28 @@ components:
       type: object
       allOf:
         - $ref: '#/components/schemas/EditManualReserveOption'
-      properties:
-        programId:
-          $ref: '#/components/schemas/ProgramId'
-        timeSpecifiedOption:
-          type: object
-          description: 時刻指定オプション
-          required:
-            - name
-            - channelId
-            - startAt
-            - endAt
+        - type: object
           properties:
-            name:
-              description: 番組名
-              type: string
-            channelId:
-              $ref: '#/components/schemas/ChannelId'
-            startAt:
-              $ref: '#/components/schemas/UnixtimeMS'
-            endAt:
-              $ref: '#/components/schemas/UnixtimeMS'
+            programId:
+              $ref: '#/components/schemas/ProgramId'
+            timeSpecifiedOption:
+              type: object
+              description: 時刻指定オプション
+              required:
+                - name
+                - channelId
+                - startAt
+                - endAt
+              properties:
+                name:
+                  description: 番組名
+                  type: string
+                channelId:
+                  $ref: '#/components/schemas/ChannelId'
+                startAt:
+                  $ref: '#/components/schemas/UnixtimeMS'
+                endAt:
+                  $ref: '#/components/schemas/UnixtimeMS'
     AddedReserve:
       description: 予約成功応答データ
       type: object
