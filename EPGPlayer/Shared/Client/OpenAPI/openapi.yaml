@@ -2375,7 +2375,7 @@ components:
         recordedFormat:
           type: string
         encodeMode1:
-          type: integer
+          type: string
         encodeParentDirectoryName1:
           type: string
         encodeDirectory1:
