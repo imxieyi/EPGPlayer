@@ -43,6 +43,9 @@ struct EPGView: View {
     @State var startHour: Int = -1
     @State var enableGenre: [Bool] = []
     
+    /// programId -> reserveId mapping for the current schedule range
+    @State var reservedPrograms: [Int: Int] = [:]
+
     #if !os(tvOS)
     @State var notifier = EPGNotifier()
     #endif
@@ -132,12 +135,12 @@ struct EPGView: View {
             #endif
             .sheet(item: $selectedProgram) { program in
                 #if !os(tvOS)
-                EPGProgramView(channel: program.channel, program: program.program, notifier: $notifier)
+                EPGProgramView(channel: program.channel, program: program.program, reservedPrograms: $reservedPrograms, notifier: $notifier)
                     #if os(macOS)
                     .presentationSizing(.page)
                     #endif
                 #else
-                EPGProgramView(channel: program.channel, program: program.program)
+                EPGProgramView(channel: program.channel, program: program.program, reservedPrograms: $reservedPrograms)
                 #endif
             }
             .sheet(isPresented: $showSettings) {
@@ -147,6 +150,9 @@ struct EPGView: View {
         .onAppear {
             if schedules.isEmpty {
                 refresh(manual: false)
+            }
+            Task {
+                await fetchReserves()
             }
             #if !os(tvOS)
             Task {
@@ -223,12 +229,23 @@ struct EPGView: View {
                                         .frame(minWidth: channelWidth - 2, idealWidth: channelWidth - 2, maxWidth: channelWidth - 2, minHeight: 0, idealHeight: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt), maxHeight: .infinity, alignment: .topLeading)
                                     }
                                     .background {
+                                        let isReserved = reservedPrograms[program.id] != nil
                                         Color("Genre \(program.genre1 ?? 16)")
                                             #if !os(tvOS)
-                                            .border(notifier.setProgramIds.contains(String(program.id)) ? Color.red : Color.clear, width: 3)
+                                            .border(notifier.setProgramIds.contains(String(program.id)) ? Color.red : (isReserved ? Color.blue : Color.clear), width: 3)
+                                            #else
+                                            .border(isReserved ? Color.blue : Color.clear, width: 3)
                                             #endif
                                             .padding(.all, 1)
                                             .frame(width: channelWidth, height: heightOneDay / (24 * 3600 * 1000) * (programEndAt - programStartAt))
+                                    }
+                                    .overlay(alignment: .topTrailing) {
+                                        if reservedPrograms[program.id] != nil {
+                                            Image(systemName: "record.circle.fill")
+                                                .foregroundStyle(.red)
+                                                .font(.caption)
+                                                .padding(4)
+                                        }
                                     }
                                 }
                                 #if os(macOS) || os(tvOS)
@@ -430,6 +447,35 @@ struct EPGView: View {
                 Logger.error("Failed to load recordings: \(error)")
                 loadingState = .error(Text(verbatim: error.localizedDescription))
             }
+        }
+    }
+
+    func fetchReserves() async {
+        do {
+            var allReserves: [Components.Schemas.ReserveItem] = []
+            var offset = 0
+            let limit = 100
+            let maxPages = 50
+            for _ in 0..<maxPages {
+                let resp = try await appState.client.api.getReserves(
+                    query: .init(offset: offset, limit: limit, isHalfWidth: true)
+                ).ok.body.json
+                allReserves.append(contentsOf: resp.reserves)
+                if allReserves.count >= resp.total {
+                    break
+                }
+                offset += limit
+            }
+            var mapping: [Int: Int] = [:]
+            for reserve in allReserves {
+                if let programId = reserve.programId {
+                    mapping[programId] = reserve.id
+                }
+            }
+            reservedPrograms = mapping
+            Logger.info("Loaded \(mapping.count) reserved programs")
+        } catch {
+            Logger.error("Failed to load reserves: \(error)")
         }
     }
 }

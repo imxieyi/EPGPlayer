@@ -151,6 +151,22 @@
         }
       }
     },
+    "Add reserve" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "録画予約"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "添加录制预约"
+          }
+        }
+      }
+    },
     "Add to calendar" : {
       "localizations" : {
         "ja" : {
@@ -330,6 +346,22 @@
         }
       }
     },
+    "Cancel reserve" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約取消"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消录制预约"
+          }
+        }
+      }
+    },
     "Channel" : {
       "localizations" : {
         "ja" : {
@@ -374,6 +406,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Conflict" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "競合"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "冲突"
           }
         }
       }
@@ -470,6 +518,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "删除"
+          }
+        }
+      }
+    },
+    "Delete error" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "削除エラー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除错误"
+          }
+        }
+      }
+    },
+    "Delete recording" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "録画を削除"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除录像"
           }
         }
       }
@@ -989,6 +1069,9 @@
         }
       }
     },
+    "More" : {
+
+    },
     "Never" : {
       "localizations" : {
         "ja" : {
@@ -1085,6 +1168,22 @@
         }
       }
     },
+    "No reserves found" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約が見つかりません"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到预约"
+          }
+        }
+      }
+    },
     "No schedule available" : {
       "localizations" : {
         "ja" : {
@@ -1149,6 +1248,9 @@
         }
       }
     },
+    "OK" : {
+
+    },
     "Open Settings" : {
       "localizations" : {
         "ja" : {
@@ -1177,6 +1279,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开测试页面"
+          }
+        }
+      }
+    },
+    "Overlap" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重複"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重叠"
           }
         }
       }
@@ -1390,6 +1508,38 @@
         }
       }
     },
+    "Reserve error" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約エラー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预约错误"
+          }
+        }
+      }
+    },
+    "Reserves" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "予約"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预约"
+          }
+        }
+      }
+    },
     "Reset" : {
       "localizations" : {
         "ja" : {
@@ -1422,6 +1572,22 @@
         }
       }
     },
+    "Rule" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ルール"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "规则"
+          }
+        }
+      }
+    },
     "Search" : {
       "localizations" : {
         "ja" : {
@@ -1437,6 +1603,9 @@
           }
         }
       }
+    },
+    "Segment" : {
+
     },
     "Server Settings" : {
       "extractionState" : "manual",
@@ -1547,6 +1716,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "显示统计信息"
+          }
+        }
+      }
+    },
+    "Skip" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スキップ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "跳过"
           }
         }
       }
