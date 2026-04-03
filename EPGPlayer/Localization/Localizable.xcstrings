@@ -1604,9 +1604,6 @@
         }
       }
     },
-    "Segment" : {
-
-    },
     "Server Settings" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -15,12 +15,6 @@ struct RecordingsView: View {
     @Bindable var appState: AppState
     @Binding var activeTab: TabSelection
     
-    enum Segment: String, CaseIterable {
-        case recordings
-        case reserves
-    }
-
-    @State var selectedSegment: Segment = .recordings
     @State var showSearchView: Bool = false
     @State var searchQuery: SearchQuery? = nil
     
@@ -33,46 +27,27 @@ struct RecordingsView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                switch selectedSegment {
-                case .recordings:
-                    recordingsContent
-                case .reserves:
-                    ReservesListView(activeTab: $activeTab)
-                }
-            }
+            recordingsContent
             .toolbar(content: {
-                ToolbarItem(placement: .principal) {
-                    Picker("Segment", selection: $selectedSegment) {
-                        Text("Recordings").tag(Segment.recordings)
-                        Text("Reserves").tag(Segment.reserves)
-                    }
-                    .pickerStyle(.segmented)
-                    .fixedSize()
-                }
                 #if os(macOS)
-                if selectedSegment == .recordings {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            refresh()
-                        } label: {
-                            Label("Refresh", systemImage: "arrow.clockwise")
-                        }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
                     }
                 }
                 #endif
-                if selectedSegment == .recordings {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            showSearchView.toggle()
-                        } label: {
-                            Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
-                        }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSearchView.toggle()
+                    } label: {
+                        Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
                     }
                 }
             })
             #if !os(tvOS)
-            .navigationTitle(selectedSegment == .recordings ? "Recordings" : "Reserves")
+            .navigationTitle("Recordings")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif

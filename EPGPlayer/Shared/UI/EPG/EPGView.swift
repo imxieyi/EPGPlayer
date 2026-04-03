@@ -38,6 +38,7 @@ struct EPGView: View {
     @State var selectedProgram: EPGProgram? = nil
     
     @State var showSettings = false
+    @State var showReserves = false
     @State var startDates: [Date] = []
     @State var startDate = Date(timeIntervalSince1970: 0)
     @State var startHour: Int = -1
@@ -121,6 +122,13 @@ struct EPGView: View {
                 #endif
                 ToolbarItem(placement: .primaryAction) {
                     Button {
+                        showReserves.toggle()
+                    } label: {
+                        Label("Reserves", systemImage: "calendar.badge.clock")
+                    }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
                         showSettings.toggle()
                     } label: {
                         Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
@@ -145,6 +153,9 @@ struct EPGView: View {
             }
             .sheet(isPresented: $showSettings) {
                 settings
+            }
+            .sheet(isPresented: $showReserves) {
+                ReservesListView(activeTab: $activeTab)
             }
         }
         .onAppear {

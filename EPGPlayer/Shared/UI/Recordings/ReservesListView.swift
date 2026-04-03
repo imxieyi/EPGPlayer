@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ReservesListView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @Binding var activeTab: TabSelection
 
     @State var loadingState = LoadingState.loading
@@ -19,79 +20,95 @@ struct ReservesListView: View {
     @State var showDeleteConfirmation = false
 
     var body: some View {
-        ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
-            refresh(waitTime: waitTime)
-        }, content: {
-            Group {
-                if reserves.isEmpty {
-                    ContentUnavailableView("No reserves found", systemImage: "questionmark.circle")
-                } else {
-                    List {
-                        ForEach(reserves, id: \.id) { reserve in
-                            ReserveCell(reserve: reserve)
-                                #if os(macOS)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        reserveToDelete = reserve
-                                        showDeleteConfirmation = true
-                                    } label: {
-                                        Label("Cancel reserve", systemImage: "trash")
+        NavigationStack {
+            ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
+                refresh(waitTime: waitTime)
+            }, content: {
+                Group {
+                    if reserves.isEmpty {
+                        ContentUnavailableView("No reserves found", systemImage: "questionmark.circle")
+                    } else {
+                        List {
+                            ForEach(reserves, id: \.id) { reserve in
+                                ReserveCell(reserve: reserve)
+                                    #if os(macOS)
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            reserveToDelete = reserve
+                                            showDeleteConfirmation = true
+                                        } label: {
+                                            Label("Cancel reserve", systemImage: "trash")
+                                        }
                                     }
-                                }
-                                #endif
-                        }
-                        #if os(iOS)
-                        .onDelete { indexSet in
-                            if let first = indexSet.first {
-                                reserveToDelete = reserves[first]
-                                showDeleteConfirmation = true
+                                    #endif
                             }
+                            #if os(iOS)
+                            .onDelete { indexSet in
+                                if let first = indexSet.first {
+                                    reserveToDelete = reserves[first]
+                                    showDeleteConfirmation = true
+                                }
+                            }
+                            #endif
                         }
-                        #endif
+                        .listStyle(.plain)
                     }
-                    .listStyle(.plain)
                 }
-            }
-            .refreshable {
-                refresh()
-            }
-        })
-        #if os(macOS)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
+                .refreshable {
                     refresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
                 }
-                .help("Refresh")
+            })
+            #if !os(tvOS)
+            .navigationTitle("Reserves")
+            #if !os(macOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #endif
+            .toolbar {
+                ToolbarItem(placement: appState.isOnMac ? .cancellationAction : .topBarTrailing) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+                #if os(macOS)
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                    .help("Refresh")
+                }
+                #endif
             }
-        }
-        #endif
-        .alert("Reserve error", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            if let deleteError {
-                Text(verbatim: deleteError)
+            .alert("Reserve error", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let deleteError {
+                    Text(verbatim: deleteError)
+                }
             }
-        }
-        .alert("Cancel reserve", isPresented: $showDeleteConfirmation) {
-            Button("Cancel reserve", role: .destructive) {
+            .alert("Cancel reserve", isPresented: $showDeleteConfirmation) {
+                Button("Cancel reserve", role: .destructive) {
+                    if let reserve = reserveToDelete {
+                        deleteReserve(reserveId: reserve.id)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
                 if let reserve = reserveToDelete {
-                    deleteReserve(reserveId: reserve.id)
+                    Text(verbatim: reserve.name)
                 }
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            if let reserve = reserveToDelete {
-                Text(verbatim: reserve.name)
+            .onAppear {
+                if reserves.isEmpty {
+                    refresh()
+                }
             }
         }
-        .onAppear {
-            if reserves.isEmpty {
-                refresh()
-            }
-        }
+        #if os(macOS)
+        .presentationSizing(.page)
+        #endif
     }
 
     func refresh(waitTime: Duration = .zero) {
