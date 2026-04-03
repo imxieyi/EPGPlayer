@@ -27,72 +27,7 @@ struct RecordingsView: View {
     
     var body: some View {
         NavigationStack {
-            ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
-                refresh(waitTime: waitTime)
-            }, content: {
-                ScrollView {
-                    #if os(macOS)
-                    Spacer()
-                        .frame(height: 10)
-                    #endif
-                    
-                    if recorded.isEmpty {
-                        ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
-                    } else {
-                        #if os(tvOS)
-                        let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
-                        #else
-                        let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
-                        #endif
-                        LazyVGrid(columns: [gridItem], spacing: 15) {
-                            ForEach(recorded) { item in
-                                NavigationLink {
-                                    RecordingDetailView(item: item)
-                                } label: {
-                                    RecordingCell(item: item)
-                                }
-                                #if os(macOS) || os(tvOS)
-                                .buttonStyle(.borderless)
-                                #endif
-                                .tint(.primary)
-                                .id(item.id)
-                            }
-                            if case .loaded = loadingMoreState, recorded.count < totalCount {
-                                Spacer()
-                                    .onAppear {
-                                        loadMore()
-                                    }
-                            }
-                        }
-                        #if !os(tvOS)
-                        .padding(.horizontal)
-                        #endif
-                    }
-                    
-                    if recorded.count < totalCount {
-                        if case .loading = loadingMoreState {
-                            ProgressView()
-                                #if !os(tvOS)
-                                .controlSize(.large)
-                                #endif
-                        } else if case .error(let message) = loadingMoreState {
-                            ContentUnavailableView {
-                                Label("Error loading content", systemImage: "xmark.circle")
-                            } description: {
-                                message
-                            }
-                        }
-                    }
-                    
-                    #if os(macOS)
-                    Spacer()
-                        .frame(height: 10)
-                    #endif
-                }
-                .refreshable {
-                    refresh()
-                }
-            })
+            recordingsContent
             .toolbar(content: {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
@@ -118,16 +53,88 @@ struct RecordingsView: View {
             #endif
             #endif
         }
-        .onAppear {
-            if recorded.isEmpty {
-                refresh()
-            }
-        }
         .sheet(isPresented: $showSearchView) {
             SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
         }
         .onChange(of: searchQuery, initial: true) { oldValue, newValue in
             if oldValue != newValue {
+                refresh()
+            }
+        }
+    }
+
+    var recordingsContent: some View {
+        ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
+            refresh(waitTime: waitTime)
+        }, content: {
+            ScrollView {
+                #if os(macOS)
+                Spacer()
+                    .frame(height: 10)
+                #endif
+
+                if recorded.isEmpty {
+                    ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+                } else {
+                    #if os(tvOS)
+                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
+                    #else
+                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                    #endif
+                    LazyVGrid(columns: [gridItem], spacing: 15) {
+                        ForEach(recorded) { item in
+                            NavigationLink {
+                                RecordingDetailView(item: item, onDelete: {
+                                    recorded.removeAll { $0.id == item.id }
+                                    totalCount -= 1
+                                })
+                            } label: {
+                                RecordingCell(item: item)
+                            }
+                            #if os(macOS) || os(tvOS)
+                            .buttonStyle(.borderless)
+                            #endif
+                            .tint(.primary)
+                            .id(item.id)
+                        }
+                        if case .loaded = loadingMoreState, recorded.count < totalCount {
+                            Spacer()
+                                .onAppear {
+                                    loadMore()
+                                }
+                        }
+                    }
+                    #if !os(tvOS)
+                    .padding(.horizontal)
+                    #endif
+                }
+
+                if recorded.count < totalCount {
+                    if case .loading = loadingMoreState {
+                        ProgressView()
+                            #if !os(tvOS)
+                            .controlSize(.large)
+                            #endif
+                    } else if case .error(let message) = loadingMoreState {
+                        ContentUnavailableView {
+                            Label("Error loading content", systemImage: "xmark.circle")
+                        } description: {
+                            message
+                        }
+                    }
+                }
+
+                #if os(macOS)
+                Spacer()
+                    .frame(height: 10)
+                #endif
+            }
+            .refreshable {
+                refresh()
+            }
+        })
+        .onAppear {
+            if recorded.isEmpty {
                 refresh()
             }
         }

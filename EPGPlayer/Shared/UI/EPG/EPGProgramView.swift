@@ -15,16 +15,21 @@ struct EPGProgramView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
     @EnvironmentObject private var userSettings: UserSettings
-    
+
     let channel: Components.Schemas.ScheduleChannleItem
     let program: Components.Schemas.ScheduleProgramItem
-    
+
+    /// programId -> reserveId mapping, shared with EPGView
+    @Binding var reservedPrograms: [Int: Int]
+
     #if !os(tvOS)
     @Binding var notifier: EPGNotifier
     #endif
-    
+
     @State var showNotifyPermissionAlert = false
     @State var showEventEditView = false
+    @State var reserveInProgress = false
+    @State var reserveError: String? = nil
     #if os(iOS)
     @State var event: EKEvent? = nil
     @State var store = EKEventStore()
@@ -61,6 +66,8 @@ struct EPGProgramView: View {
                         Text(genreStr + " / " + subGenreStr)
                             .font(.subheadline)
                     }
+                    Divider()
+                    reserveSection
                     #if !os(tvOS)
                     Divider()
                     HStack {
@@ -218,6 +225,13 @@ struct EPGProgramView: View {
                     }
                 }
             }
+            .alert("Reserve error", isPresented: Binding(get: { reserveError != nil }, set: { if !$0 { reserveError = nil } })) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let reserveError {
+                    Text(verbatim: reserveError)
+                }
+            }
             .alert("Notification permission is disabled", isPresented: $showNotifyPermissionAlert) {
                 Button {
                     #if os(macOS)
@@ -238,6 +252,128 @@ struct EPGProgramView: View {
                EventEditView(event: $event, eventStore: store)
             }
             #endif
+        }
+    }
+}
+
+extension EPGProgramView {
+    var reserveSection: some View {
+        HStack {
+            Spacer()
+            if reserveInProgress {
+                ProgressView()
+            } else if let reserveId = reservedPrograms[program.id] {
+                Button(role: .destructive) {
+                    deleteReserve(reserveId: reserveId)
+                } label: {
+                    HStack(alignment: .center) {
+                        Image(systemName: "record.circle.fill")
+                            .font(.system(size: 25))
+                        Text("Cancel reserve")
+                    }
+                }
+                .tint(.red)
+                .buttonStyle(.borderless)
+            } else {
+                Button {
+                    addReserve()
+                } label: {
+                    HStack(alignment: .center) {
+                        Image(systemName: "record.circle")
+                            .font(.system(size: 25))
+                        Text("Add reserve")
+                    }
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.tint)
+            }
+            Spacer()
+        }
+    }
+
+    func addReserve() {
+        reserveInProgress = true
+        reserveError = nil
+        Task {
+            do {
+                let response = try await appState.client.api.postReserves(
+                    body: .json(.init(
+                        value1: .init(allowEndLack: true),
+                        value2: .init(programId: program.id)
+                    ))
+                )
+                switch response {
+                case .created(let created):
+                    let reserveId = try created.body.json.reserveId
+                    reservedPrograms[program.id] = reserveId
+                    Logger.info("Reserved program \(program.id) with reserveId \(reserveId)")
+                case .default(let statusCode, let error):
+                    let message = try error.body.json.message
+                    Logger.error("Failed to reserve program \(program.id): \(statusCode) \(message)")
+                    // Refresh reserves - the program may already be reserved by a rule
+                    await refreshReservedPrograms()
+                    if reservedPrograms[program.id] == nil {
+                        reserveError = message
+                    }
+                }
+            } catch {
+                reserveError = error.localizedDescription
+                Logger.error("Failed to reserve program \(program.id): \(error)")
+            }
+            reserveInProgress = false
+        }
+    }
+
+    func refreshReservedPrograms() async {
+        do {
+            var allReserves: [Components.Schemas.ReserveItem] = []
+            var offset = 0
+            let limit = 100
+            let maxPages = 50
+            for _ in 0..<maxPages {
+                let resp = try await appState.client.api.getReserves(
+                    query: .init(offset: offset, limit: limit, isHalfWidth: true)
+                ).ok.body.json
+                allReserves.append(contentsOf: resp.reserves)
+                if allReserves.count >= resp.total {
+                    break
+                }
+                offset += limit
+            }
+            var mapping: [Int: Int] = [:]
+            for reserve in allReserves {
+                if let programId = reserve.programId {
+                    mapping[programId] = reserve.id
+                }
+            }
+            reservedPrograms = mapping
+        } catch {
+            Logger.error("Failed to refresh reserves: \(error)")
+        }
+    }
+
+    func deleteReserve(reserveId: Int) {
+        reserveInProgress = true
+        reserveError = nil
+        Task {
+            do {
+                let response = try await appState.client.api.deleteReservesReserveId(
+                    path: .init(reserveId: reserveId)
+                )
+                switch response {
+                case .ok(_):
+                    reservedPrograms.removeValue(forKey: program.id)
+                    Logger.info("Deleted reserve \(reserveId) for program \(program.id)")
+                case .default(let statusCode, let error):
+                    let message = try error.body.json.message
+                    reserveError = message
+                    Logger.error("Failed to delete reserve \(reserveId): \(statusCode) \(message)")
+                }
+            } catch {
+                reserveError = error.localizedDescription
+                Logger.error("Failed to delete reserve \(reserveId): \(error)")
+            }
+            reserveInProgress = false
         }
     }
 }
