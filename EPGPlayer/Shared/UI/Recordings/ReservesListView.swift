@@ -15,46 +15,76 @@ struct ReservesListView: View {
     @State var loadingState = LoadingState.loading
     @State var reserves: [Components.Schemas.ReserveItem] = []
     @State var deleteError: String? = nil
+    @State var reserveToDelete: Components.Schemas.ReserveItem? = nil
+    @State var showDeleteConfirmation = false
 
     var body: some View {
         ClientContentView(activeTab: $activeTab, loadingState: $loadingState, refresh: { waitTime in
             refresh(waitTime: waitTime)
         }, content: {
-            ScrollView {
-                #if os(macOS)
-                Spacer()
-                    .frame(height: 10)
-                #endif
-
+            Group {
                 if reserves.isEmpty {
                     ContentUnavailableView("No reserves found", systemImage: "questionmark.circle")
                 } else {
-                    LazyVStack(spacing: 12) {
+                    List {
                         ForEach(reserves, id: \.id) { reserve in
-                            ReserveCell(reserve: reserve, onDelete: {
-                                deleteReserve(reserveId: reserve.id)
-                            })
+                            ReserveCell(reserve: reserve)
+                                #if os(macOS)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        reserveToDelete = reserve
+                                        showDeleteConfirmation = true
+                                    } label: {
+                                        Label("Cancel reserve", systemImage: "trash")
+                                    }
+                                }
+                                #endif
                         }
+                        #if os(iOS)
+                        .onDelete { indexSet in
+                            if let first = indexSet.first {
+                                reserveToDelete = reserves[first]
+                                showDeleteConfirmation = true
+                            }
+                        }
+                        #endif
                     }
-                    #if !os(tvOS)
-                    .padding(.horizontal)
-                    #endif
+                    .listStyle(.plain)
                 }
-
-                #if os(macOS)
-                Spacer()
-                    .frame(height: 10)
-                #endif
             }
             .refreshable {
                 refresh()
             }
         })
+        #if os(macOS)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    refresh()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .help("Refresh")
+            }
+        }
+        #endif
         .alert("Reserve error", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             if let deleteError {
                 Text(verbatim: deleteError)
+            }
+        }
+        .alert("Cancel reserve", isPresented: $showDeleteConfirmation) {
+            Button("Cancel reserve", role: .destructive) {
+                if let reserve = reserveToDelete {
+                    deleteReserve(reserveId: reserve.id)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if let reserve = reserveToDelete {
+                Text(verbatim: reserve.name)
             }
         }
         .onAppear {
@@ -128,79 +158,55 @@ struct ReservesListView: View {
 
 struct ReserveCell: View {
     let reserve: Components.Schemas.ReserveItem
-    let onDelete: () -> Void
-
-    @State private var showDeleteConfirmation = false
 
     var body: some View {
         let startAt = Date(timeIntervalSince1970: TimeInterval(reserve.startAt / 1000))
         let endAt = Date(timeIntervalSince1970: TimeInterval(reserve.endAt / 1000))
         let durationMinutes = (reserve.endAt - reserve.startAt) / 60 / 1000
 
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: reserve.name)
-                    .font(.headline)
-                    .lineLimit(2)
-                Text(verbatim: channelName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(verbatim: startAt.formatted(RecordingCell.startDateFormatStyle)
-                     + " ~ "
-                     + endAt.formatted(RecordingCell.endDateFormatStyle)
-                     + " (\(durationMinutes)分)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let description = reserve.description {
-                    Text(verbatim: description)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                HStack(spacing: 8) {
-                    if reserve.isConflict {
-                        Label("Conflict", systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.red)
-                    }
-                    if reserve.isOverlap {
-                        Label("Overlap", systemImage: "exclamationmark.triangle")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
-                    }
-                    if reserve.isSkip {
-                        Label("Skip", systemImage: "forward.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    if reserve.ruleId != nil {
-                        Label("Rule", systemImage: "gearshape")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Button(role: .destructive) {
-                showDeleteConfirmation = true
-            } label: {
-                Image(systemName: "trash")
-                    .font(.title3)
-            }
-            .buttonStyle(.borderless)
-        }
-        .padding()
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.background)
-                .shadow(radius: 2)
-        }
-        .alert("Cancel reserve", isPresented: $showDeleteConfirmation) {
-            Button("Cancel reserve", role: .destructive, action: onDelete)
-            Button("Cancel", role: .cancel) {}
-        } message: {
+        VStack(alignment: .leading, spacing: 4) {
             Text(verbatim: reserve.name)
+                .font(.headline)
+                .lineLimit(2)
+            Text(verbatim: channelName)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(verbatim: startAt.formatted(RecordingCell.startDateFormatStyle)
+                 + " ~ "
+                 + endAt.formatted(RecordingCell.endDateFormatStyle)
+                 + " (\(durationMinutes)分)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            if let description = reserve.description {
+                Text(verbatim: description)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            HStack(spacing: 8) {
+                if reserve.isConflict {
+                    Label("Conflict", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                }
+                if reserve.isOverlap {
+                    Label("Overlap", systemImage: "exclamationmark.triangle")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                }
+                if reserve.isSkip {
+                    Label("Skip", systemImage: "forward.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                if reserve.ruleId != nil {
+                    Label("Rule", systemImage: "gearshape")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
+        .padding(.vertical, 4)
     }
 
     var channelName: String {
