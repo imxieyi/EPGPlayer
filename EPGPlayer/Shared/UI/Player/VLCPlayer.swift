@@ -45,6 +45,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
     func makeViewController(context: Context) -> VLCPlayerViewController {
         let playerVC = VLCPlayerViewController()
         playerVC.delegate = context.coordinator
+        context.coordinator.viewController = playerVC
         playerVC.playerEvents = playerEvents
         playerVC.videoItem = videoItem
         playerVC.httpHeaders = httpHeaders
@@ -75,12 +76,37 @@ struct VLCPlayer: UIViewControllerRepresentable {
     class Coordinator: NSObject, VLCMediaPlayerDelegate, VLCMediaDelegate {
         let parent: VLCPlayer
         weak var playerEvents: PlayerEvents?
+        weak var viewController: VLCPlayerViewController?
         
         init(parent: VLCPlayer, playerEvents: PlayerEvents) {
             self.parent = parent
             self.playerEvents = playerEvents
         }
         
+        func mediaPlayerTrackSelected(_ trackType: VLCMedia.TrackType, selectedId: String, unselectedId: String) {
+            guard trackType == .text else {
+                return
+            }
+            Task { @MainActor [weak viewController] in
+                guard let viewController else {
+                    return
+                }
+                let player = viewController.mediaPlayer
+                let desiredTrackId = viewController.desiredTextTrackId
+                guard selectedId != desiredTrackId else {
+                    return
+                }
+                // The container's own "default" track flag can make VLC auto-select a subtitle
+                // track regardless of our previous command; force it back to what the user wants.
+                Logger.info("VLC auto-selected text track \(selectedId), reverting to \(desiredTrackId)")
+                if desiredTrackId == "none" {
+                    player.textTracks.forEach({ $0.isSelected = false })
+                } else {
+                    player.textTracks.first(where: { $0.trackId == desiredTrackId })?.isSelectedExclusively = true
+                }
+            }
+        }
+
         func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
             Logger.debug("Player state changed: \(newState.rawValue)")
             Task { @MainActor [parent] in
@@ -136,6 +162,7 @@ class VLCPlayerViewController: UIViewController {
     
     var forceStrokeText: Bool = false
     var forceAspectRatio: String? = nil
+    var desiredTextTrackId: String = "none"
     
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
@@ -221,9 +248,10 @@ class VLCPlayerViewController: UIViewController {
             }
         })
         enableTrackListener = playerEvents.enableTrack.sink(receiveValue: { [weak self] track in
-            guard let player = self?.mediaPlayer else {
+            guard let self else {
                 return
             }
+            let player = self.mediaPlayer
             guard track.id != "none" else {
                 Logger.info("Disabling track type \(track.name)")
                 switch track.name {
@@ -233,6 +261,7 @@ class VLCPlayerViewController: UIViewController {
                     player.audioTracks.forEach({ $0.isSelected = false })
                 case "text":
                     player.textTracks.forEach({ $0.isSelected = false })
+                    self.desiredTextTrackId = "none"
                 default:
                     Logger.error("Unknown track type \(track.name)")
                 }
@@ -241,7 +270,10 @@ class VLCPlayerViewController: UIViewController {
             Logger.info("Enabling track \(track.id) \(track.name)")
             player.videoTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
             player.audioTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
-            player.textTracks.filter({ $0.trackId == track.id }).first?.isSelectedExclusively = true
+            if let textTrack = player.textTracks.first(where: { $0.trackId == track.id }) {
+                textTrack.isSelectedExclusively = true
+                self.desiredTextTrackId = track.id
+            }
         })
         setPlaybackRateListener = playerEvents.setPlaybackRate.sink(receiveValue: { [weak self] rate in
             guard let player = self?.mediaPlayer else {
