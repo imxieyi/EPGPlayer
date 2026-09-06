@@ -114,7 +114,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
                 // track regardless of our previous command; force it back to what the user wants.
                 Logger.info("VLC auto-selected text track \(selectedId), reverting to \(desiredTrackId)")
                 if desiredTrackId == "none" {
-                    player.textTracks.forEach({ $0.isSelected = false })
+                    player.deselectAllTextTracks()
                 } else {
                     player.textTracks.first(where: { $0.trackId == desiredTrackId })?.isSelectedExclusively = true
                 }
@@ -282,7 +282,9 @@ class VLCPlayerViewController: UIViewController {
                 case "audio":
                     player.audioTracks.forEach({ $0.isSelected = false })
                 case "text":
-                    player.textTracks.forEach({ $0.isSelected = false })
+                    // Deselecting each track individually can cause VLC to fall back to another
+                    // one internally; the dedicated API avoids that.
+                    player.deselectAllTextTracks()
                     self.desiredTextTrackId = "none"
                 default:
                     Logger.error("Unknown track type \(track.name)")
