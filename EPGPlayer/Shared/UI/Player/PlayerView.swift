@@ -13,9 +13,9 @@ import VLCKit
 struct PlayerView: View {
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.modelContext) private var context
-    @Environment(AppState.self) private var appState
+    @Environment(AppState.self) var appState
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var userSettings: UserSettings
+    @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject private var appDelegate: AppDelegate
     
     let item: PlayerItem
@@ -35,12 +35,23 @@ struct PlayerView: View {
     @State var isExternalPlay = false
     @State var isProgramInfoPresented = false
     #if os(tvOS)
-    @FocusState private var focusedPlaybackSetting: PlaybackSetting?
+    @FocusState var focusedPlaybackSetting: PlaybackSetting?
     // The whole player surface (minus Settings) has exactly one focusable target;
     // Select cycles through Idle -> Transport -> Scrubbing -> commit via isScrubbing,
     // instead of moving tvOS focus onto the slider itself.
     @FocusState private var isWakeSurfaceFocused: Bool
-    @State private var isScrubbing = false
+    @State var isScrubbing = false
+    @State var isChannelSwitcherPresented = false
+    @State var isChannelCategoryStageActive = false
+    @State var channelSwitcherAllSchedules: [Components.Schemas.Schedule] = []
+    @State var channelSwitcherCategory: Components.Schemas.ChannelType = .gr
+    
+    static let channelSwitcherTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        return formatter
+    }()
     #endif
     
     @State var playerUIOpacity: Double = 1
@@ -88,9 +99,10 @@ struct PlayerView: View {
             #if os(tvOS)
             // Always mounted (never inserted/removed) so requesting focus never races
             // against the view appearing. This is the only focusable element in the
-            // player (besides Settings); Select's meaning depends on playerUIOpacity/
-            // isScrubbing rather than on tvOS focus ever moving onto the slider.
-            if !isProgramInfoPresented {
+            // player (besides Settings/the channel switcher); Select's meaning depends
+            // on playerUIOpacity/isScrubbing rather than on tvOS focus ever moving
+            // onto the slider.
+            if !isProgramInfoPresented && !isChannelSwitcherPresented {
                 Color.clear
                     .contentShape(Rectangle())
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -227,6 +239,18 @@ struct PlayerView: View {
                     programInfoPanel
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            
+            if isChannelSwitcherPresented {
+                HStack(spacing: 0) {
+                    if isChannelCategoryStageActive {
+                        channelCategorySwitcherPanel
+                    } else {
+                        channelSwitcherPanel
+                    }
+                    Spacer()
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
             }
             #endif
             
@@ -400,6 +424,15 @@ struct PlayerView: View {
             guard !isProgramInfoPresented else {
                 return
             }
+            if isChannelSwitcherPresented {
+                // Up/down navigate the list/category rows via native tvOS focus;
+                // only left (one more step "outward") needs explicit handling here.
+                if direction == .left && !isChannelCategoryStageActive {
+                    openCategorySwitcher()
+                    resetIdleTimer()
+                }
+                return
+            }
             switch direction {
             case .left:
                 if isScrubbing {
@@ -412,6 +445,8 @@ struct PlayerView: View {
                     playbackPosition = min(1, playbackPosition + 0.01)
                 } else if item.videoItem.type != .livestream {
                     playerEvents.seekBy.send(30)
+                } else {
+                    openChannelSwitcher()
                 }
             case .up:
                 if !isScrubbing {
@@ -423,7 +458,15 @@ struct PlayerView: View {
             resetIdleTimer()
         }
         .onExitCommand {
-            if isProgramInfoPresented {
+            if isChannelSwitcherPresented {
+                if isChannelCategoryStageActive {
+                    // Back out of category picking, not all the way out of the switcher.
+                    isChannelCategoryStageActive = false
+                } else {
+                    isChannelSwitcherPresented = false
+                }
+                resetIdleTimer()
+            } else if isProgramInfoPresented {
                 closeProgramInfo()
             } else if isScrubbing {
                 // Cancel without seeking; resume whatever state playback was in.
@@ -445,185 +488,6 @@ struct PlayerView: View {
         #endif
     }
 
-    #if os(tvOS)
-    var programInfoPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(verbatim: item.title)
-                .font(.title2.bold())
-                .lineLimit(2)
-            if let subtitle = item.subtitle, !subtitle.isEmpty {
-                Text(verbatim: subtitle)
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-            }
-            if let programDescription = item.programDescription, !programDescription.isEmpty {
-                Text(verbatim: programDescription)
-                    .font(.body)
-                    .lineLimit(4)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("No program information")
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 56)
-        .padding(.vertical, 22)
-        .background(.black.opacity(0.68))
-    }
-
-    var tvOSPlaybackSettings: some View {
-        HStack(spacing: 12) {
-            Menu {
-                ForEach(VideoAspectRatio.allCases) { aspectRatio in
-                    Button {
-                        userSettings.videoAspectRatio = aspectRatio
-                    } label: {
-                        if userSettings.videoAspectRatio == aspectRatio {
-                            Label(aspectRatio.label, systemImage: "checkmark")
-                        } else {
-                            Text(verbatim: aspectRatio.label)
-                        }
-                    }
-                }
-            } label: {
-                playbackSettingLabel("Aspect", value: userSettings.videoAspectRatio.label, systemImage: "aspectratio", setting: .aspect)
-            }
-            .focused($focusedPlaybackSetting, equals: .aspect)
-            .buttonStyle(.plain)
-            .focusEffectDisabled()
-
-            if item.videoItem.type != .livestream {
-                Menu {
-                    ForEach(PlaybackSpeed.all) { speed in
-                        Button {
-                            playbackSpeed = speed
-                        } label: {
-                            if playbackSpeed == speed {
-                                Label(speed.text, systemImage: "checkmark")
-                            } else {
-                                Text(verbatim: speed.text)
-                            }
-                        }
-                    }
-                } label: {
-                    // "gauge.with.dots.needle.67percent" has baked-in shading that ignores symbolRenderingMode; use a flat glyph instead.
-                    playbackSettingLabel("Speed", value: playbackSpeed.text, systemImage: "gauge", setting: .speed)
-                }
-                .focused($focusedPlaybackSetting, equals: .speed)
-                .buttonStyle(.plain)
-                .focusEffectDisabled()
-            }
-
-            Menu {
-                ForEach(videoTracks) { track in
-                    Button {
-                        activeVideoTrack = track
-                    } label: {
-                        if activeVideoTrack == track {
-                            Label(track.name, systemImage: "checkmark")
-                        } else {
-                            Text(verbatim: track.name)
-                        }
-                    }
-                }
-            } label: {
-                playbackSettingLabel("Video", value: activeVideoTrack.id == "none" ? String(localized: "None") : activeVideoTrack.name, systemImage: "film", setting: .video)
-            }
-            .disabled(videoTracks.isEmpty)
-            .focused($focusedPlaybackSetting, equals: .video)
-            .buttonStyle(.plain)
-            .focusEffectDisabled()
-
-            Menu {
-                ForEach(audioTracks) { track in
-                    Button {
-                        activeAudioTrack = track
-                    } label: {
-                        if activeAudioTrack == track {
-                            Label(track.name, systemImage: "checkmark")
-                        } else {
-                            Text(verbatim: track.name)
-                        }
-                    }
-                }
-            } label: {
-                playbackSettingLabel("Audio", value: activeAudioTrack.id == "none" ? String(localized: "None") : activeAudioTrack.name, systemImage: "waveform", setting: .audio)
-            }
-            .disabled(audioTracks.isEmpty)
-            .focused($focusedPlaybackSetting, equals: .audio)
-            .buttonStyle(.plain)
-            .focusEffectDisabled()
-
-            Menu {
-                Button {
-                    activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
-                } label: {
-                    if activeTextTrack.id == "none" {
-                        Label("None", systemImage: "checkmark")
-                    } else {
-                        Text("None")
-                    }
-                }
-                ForEach(textTracks) { track in
-                    Button {
-                        activeTextTrack = track
-                    } label: {
-                        if activeTextTrack == track {
-                            Label(track.name, systemImage: "checkmark")
-                        } else {
-                            Text(verbatim: track.name)
-                        }
-                    }
-                }
-            } label: {
-                playbackSettingLabel("Subtitle", value: activeTextTrack.id == "none" ? String(localized: "None") : activeTextTrack.name, systemImage: "captions.bubble", setting: .subtitle)
-            }
-            .disabled(textTracks.isEmpty)
-            .focused($focusedPlaybackSetting, equals: .subtitle)
-            .buttonStyle(.plain)
-            .focusEffectDisabled()
-        }
-        .padding(10)
-        .background(.black.opacity(0.48), in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    func playbackSettingLabel(_ title: LocalizedStringKey, value: String, systemImage: String, setting: PlaybackSetting) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.callout)
-                .frame(width: 24)
-                // SF Symbols default to hierarchical rendering, which draws part of
-                // the glyph at a different opacity than the surrounding text.
-                .symbolRenderingMode(.monochrome)
-                .foregroundStyle(.primary)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                Text(verbatim: value)
-                    .font(.footnote)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 10)
-        .frame(maxWidth: .infinity, minHeight: 32, maxHeight: 32)
-        .background(
-            focusedPlaybackSetting == setting ? Color.white.opacity(0.28) : Color.white.opacity(0.1),
-            in: RoundedRectangle(cornerRadius: 6)
-        )
-    }
-
-    func closeProgramInfo() {
-        withAnimation(.easeOut(duration: 0.2)) {
-            isProgramInfoPresented = false
-        }
-        // The wake surface remounts and reclaims focus via its own onAppear.
-        resetIdleTimer()
-    }
-    #endif
-    
     var playerMenu: some View {
         Menu {
             if item.videoItem.type != .livestream {
@@ -756,38 +620,14 @@ struct PlayerView: View {
         #endif
     }
     
-    #if os(tvOS)
-    /// Select cycles Idle -> Transport -> Scrubbing -> commit; see body's wake surface.
-    func handleSelect() {
-        if playerUIOpacity == 0 {
-            showPlayerUI()
-            resetIdleTimer()
-            return
-        }
-        guard item.videoItem.type != .livestream else {
-            return
-        }
-        if !isScrubbing {
-            isScrubbing = true
-            if playerState.isPlaying {
-                playerEvents.togglePlay.send()
-            }
-        } else {
-            playerEvents.setPlaybackPosition.send(playbackPosition)
-            if !playerState.isPlaying {
-                playerEvents.togglePlay.send()
-            }
-            isScrubbing = false
-        }
-        resetIdleTimer()
-    }
-    #endif
-    
     func hidePlayerUI() {
         guard !isProgramInfoPresented else {
             return
         }
         #if os(tvOS)
+        guard !isChannelSwitcherPresented else {
+            return
+        }
         if isScrubbing {
             // Idle timeout mid-scrub: don't leave playback stuck paused.
             isScrubbing = false
@@ -885,16 +725,6 @@ struct PlayerView: View {
         }
     }
 }
-
-#if os(tvOS)
-enum PlaybackSetting: Hashable {
-    case aspect
-    case speed
-    case video
-    case audio
-    case subtitle
-}
-#endif
 
 enum PlaybackSpeed: Float, Hashable, Identifiable {
     case x0_5 = 0.5
