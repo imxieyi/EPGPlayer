@@ -225,14 +225,28 @@ struct EPGView: View {
                                     ZStack(alignment: .topLeading) {
                                         VStack(alignment: .leading) {
                                             Text(verbatim: program.name)
+                                                #if os(tvOS)
+                                                .font(.system(size: 22, weight: .bold))
+                                                .lineLimit(2)
+                                                #else
                                                 .font(.headline)
+                                                #endif
                                                 .multilineTextAlignment(.leading)
                                                 .layoutPriority(3)
                                             Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                #if os(tvOS)
+                                                .font(.system(size: 16))
+                                                .lineLimit(1)
+                                                #else
                                                 .font(.caption)
+                                                #endif
                                                 .layoutPriority(2)
                                             if let description = program.description {
                                                 Text(verbatim: description)
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 14))
+                                                    .lineLimit(2)
+                                                    #endif
                                                     .multilineTextAlignment(.leading)
                                                     .layoutPriority(1)
                                             }

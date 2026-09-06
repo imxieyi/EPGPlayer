@@ -479,7 +479,8 @@ struct PlayerView: View {
                         }
                     }
                 } label: {
-                    playbackSettingLabel("Speed", value: playbackSpeed.text, systemImage: "gauge.with.dots.needle.67percent", setting: .speed)
+                    // "gauge.with.dots.needle.67percent" has baked-in shading that ignores symbolRenderingMode; use a flat glyph instead.
+                    playbackSettingLabel("Speed", value: playbackSpeed.text, systemImage: "gauge", setting: .speed)
                 }
                 .focused($focusedPlaybackSetting, equals: .speed)
                 .buttonStyle(.plain)
@@ -560,22 +561,26 @@ struct PlayerView: View {
     }
 
     func playbackSettingLabel(_ title: LocalizedStringKey, value: String, systemImage: String, setting: PlaybackSetting) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Image(systemName: systemImage)
-                .font(.body)
-                .frame(width: 22)
-            VStack(alignment: .leading, spacing: 2) {
+                .font(.callout)
+                .frame(width: 24)
+                // SF Symbols default to hierarchical rendering, which draws part of
+                // the glyph at a different opacity than the surrounding text.
+                .symbolRenderingMode(.monochrome)
+                .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Text(verbatim: value)
-                    .font(.callout)
+                    .font(.footnote)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity, minHeight: 48, maxHeight: 48)
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, minHeight: 32, maxHeight: 32)
         .background(
             focusedPlaybackSetting == setting ? Color.white.opacity(0.28) : Color.white.opacity(0.1),
             in: RoundedRectangle(cornerRadius: 6)

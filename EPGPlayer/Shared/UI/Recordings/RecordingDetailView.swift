@@ -26,6 +26,9 @@ struct RecordingDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var deleteInProgress = false
     @State private var deleteError: String? = nil
+    #if os(tvOS)
+    @State private var showActionMenu = false
+    #endif
 
     var body: some View {
         ScrollView(.vertical) {
@@ -153,6 +156,14 @@ struct RecordingDetailView: View {
                     if deleteInProgress {
                         ProgressView()
                     } else {
+                        #if os(tvOS)
+                        // Menu inside a toolbar item doesn't open reliably on tvOS, so use a confirmationDialog instead.
+                        Button {
+                            showActionMenu = true
+                        } label: {
+                            Label("More", systemImage: "ellipsis")
+                        }
+                        #else
                         Menu {
                             Button(role: .destructive) {
                                 showDeleteConfirmation = true
@@ -162,10 +173,19 @@ struct RecordingDetailView: View {
                         } label: {
                             Label("More", systemImage: "ellipsis")
                         }
+                        #endif
                     }
                 }
             }
         }
+        #if os(tvOS)
+        .confirmationDialog("More", isPresented: $showActionMenu, titleVisibility: .hidden) {
+            Button("Delete recording", role: .destructive) {
+                showDeleteConfirmation = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        #endif
         .alert("Delete recording", isPresented: $showDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 deleteRecording()
