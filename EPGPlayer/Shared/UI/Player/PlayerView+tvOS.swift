@@ -293,12 +293,12 @@ extension PlayerView {
     /// Commits the currently highlighted row: reassigns appState.playingItem, which
     /// VLCPlayer detects via the changed epgId and reloads without leaving PlayerView.
     func switchChannel(to schedule: Components.Schemas.Schedule) {
-        guard let currentLive = item.videoItem as? EPGLiveStreamItem else {
+        guard item.videoItem is EPGLiveStreamItem else {
             return
         }
         let program = schedule.programs.first
         appState.playingItem = PlayerItem(
-            videoItem: EPGLiveStreamItem(channel: schedule.channel, format: currentLive.format, mode: currentLive.mode, audioComponentType: program?.audioComponentType),
+            videoItem: EPGLiveStreamItem(channel: schedule.channel, format: userSettings.tvLiveDefaultFormat, mode: userSettings.tvLiveDefaultMode, audioComponentType: program?.audioComponentType),
             title: program?.name ?? schedule.channel.name,
             subtitle: schedule.channel.name,
             programDescription: [program?.description, program?.extended].compactMap { $0 }.joined(separator: "\n\n")

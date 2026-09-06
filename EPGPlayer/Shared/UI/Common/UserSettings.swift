@@ -49,6 +49,13 @@ class UserSettings: ObservableObject {
     @AppStorage("live_show_cs") var liveShowCS = true
     @AppStorage("live_show_sky") var liveShowSKY = true
     
+    #if os(tvOS)
+    // tvOS skips the per-tap format/quality menu; channel selection and the
+    // in-player channel switcher both use this fixed default instead.
+    @AppStorage("tv_live_default_format") var tvLiveDefaultFormat: String = "m2ts"
+    @AppStorage("tv_live_default_mode") var tvLiveDefaultMode: Int = 0
+    #endif
+    
     // Debug Settings
     #if DEBUG
     @Published var demoMode = false

@@ -29,6 +29,10 @@ struct SettingsView: View {
     @State private var databaseSizeError: String? = nil
     @State private var currentCacheSize: Int = 0
     
+    #if os(tvOS)
+    @State private var liveQualityOptions: [LiveQualityOption] = []
+    #endif
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -164,6 +168,12 @@ struct SettingsView: View {
             }
             
             #if os(tvOS)
+            // tvOS has no menu bar to host the gear-icon "Show stats" toggle that
+            // iOS/macOS show in the player itself, so it needs a home here instead.
+            Toggle(isOn: userSettings.$showPlayerStats) {
+                Text("Show stats")
+            }
+            
             Picker(selection: userSettings.$videoAspectRatio) {
                 ForEach(VideoAspectRatio.allCases) { aspectRatio in
                     Text(verbatim: aspectRatio.label)
@@ -173,6 +183,20 @@ struct SettingsView: View {
                 Text("Aspect ratio")
             }
             .pickerStyle(.menu)
+            
+            Picker(selection: liveQualityBinding) {
+                ForEach(liveQualityOptions) { option in
+                    Text(verbatim: option.label)
+                        .tag(option.id)
+                }
+            } label: {
+                Text("Live quality")
+            }
+            .pickerStyle(.menu)
+            .disabled(liveQualityOptions.isEmpty)
+            .task {
+                await loadLiveQualityOptions()
+            }
             #else
             Toggle(isOn: userSettings.$force16To9) {
                 Text("Force 16:9")
@@ -203,6 +227,48 @@ struct SettingsView: View {
             Label("Player Settings", systemImage: "play.rectangle")
         }
     }
+    
+    #if os(tvOS)
+    var liveQualityBinding: Binding<String> {
+        Binding(
+            get: { "\(userSettings.tvLiveDefaultFormat)-\(userSettings.tvLiveDefaultMode)" },
+            set: { newValue in
+                guard let option = liveQualityOptions.first(where: { $0.id == newValue }) else {
+                    return
+                }
+                userSettings.tvLiveDefaultFormat = option.format
+                userSettings.tvLiveDefaultMode = option.mode
+            }
+        )
+    }
+    
+    func loadLiveQualityOptions() async {
+        guard liveQualityOptions.isEmpty, appState.clientState == .initialized else {
+            return
+        }
+        do {
+            guard let liveStreamConfig = try await appState.client.api.getConfig().ok.body.json.streamConfig.live?.ts else {
+                return
+            }
+            var options: [LiveQualityOption] = []
+            if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }) {
+                options += m2ts.enumerated().map { LiveQualityOption(format: "m2ts", formatName: "M2TS", mode: $0.offset, quality: $0.element) }
+            }
+            if let m2tsll = liveStreamConfig.m2tsll {
+                options += m2tsll.enumerated().map { LiveQualityOption(format: "m2tsll", formatName: "M2TS-LL", mode: $0.offset, quality: $0.element) }
+            }
+            if let webm = liveStreamConfig.webm {
+                options += webm.enumerated().map { LiveQualityOption(format: "webm", formatName: "WebM", mode: $0.offset, quality: $0.element) }
+            }
+            if let mp4 = liveStreamConfig.mp4 {
+                options += mp4.enumerated().map { LiveQualityOption(format: "mp4", formatName: "MP4", mode: $0.offset, quality: $0.element) }
+            }
+            liveQualityOptions = options
+        } catch let error {
+            Logger.error("Failed to load live stream config: \(error)")
+        }
+    }
+    #endif
     
     var storageSection: some View {
         Section {
@@ -401,3 +467,15 @@ struct SettingsView: View {
     }
     #endif
 }
+
+#if os(tvOS)
+struct LiveQualityOption: Identifiable, Hashable {
+    let format: String
+    let formatName: String
+    let mode: Int
+    let quality: String
+    
+    var id: String { "\(format)-\(mode)" }
+    var label: String { "\(formatName) - \(quality)" }
+}
+#endif

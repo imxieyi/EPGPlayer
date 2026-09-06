@@ -91,6 +91,9 @@ struct VLCPlayer: UIViewControllerRepresentable {
         let parent: VLCPlayer
         weak var playerEvents: PlayerEvents?
         weak var viewController: VLCPlayerViewController?
+        #if os(tvOS)
+        private var lastTimeUpdate: Date = .distantPast
+        #endif
         
         init(parent: VLCPlayer, playerEvents: PlayerEvents) {
             self.parent = parent
@@ -123,7 +126,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
 
         func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
             Logger.debug("Player state changed: \(newState.rawValue)")
-            Task { @MainActor [parent, weak playerEvents] in
+            Task { @MainActor [parent, weak playerEvents, weak viewController] in
                 parent.playerState = newState
                 if newState == .error {
                     parent.hadErrorState = true
@@ -131,6 +134,10 @@ struct VLCPlayer: UIViewControllerRepresentable {
                     parent.hadErrorState = false
                 } else if newState == .playing {
                     parent.hadPlayingState = true
+                    // Passing ":deinterlace"/":deinterlace-mode" as VLCMedia/VLCMediaPlayer
+                    // startup options had no effect (confirmed via Instruments); the vout only
+                    // exists once playback actually starts, so disable it via the runtime API instead.
+                    viewController?.mediaPlayer.setDeinterlaceFilter(nil)
                     #if os(tvOS)
                     playerEvents?.videoOutputReady.send()
                     #endif
@@ -154,6 +161,16 @@ struct VLCPlayer: UIViewControllerRepresentable {
                 Logger.error("mediaPlayerTimeChanged: wrong notification object type")
                 return
             }
+            #if os(tvOS)
+            // VLC posts this notification far more often than the UI can usefully consume;
+            // throttling keeps the resulting MainActor/Combine/SwiftUI work off the hot path
+            // so it can't compete with the player's own decode/render threads for CPU time.
+            let now = Date()
+            guard now.timeIntervalSince(lastTimeUpdate) >= 0.25 else {
+                return
+            }
+            lastTimeUpdate = now
+            #endif
             if let stats = player.media?.statistics {
                 Task { @MainActor [weak playerEvents] in
                     playerEvents?.updateStats.send(stats)
@@ -217,6 +234,13 @@ class VLCPlayerViewController: UIViewController {
         mediaPlayer.delegate = delegate
         
         view.addSubview(videoView)
+
+        #if os(tvOS)
+        // Temporary diagnostic for the tvOS stutter investigation: surface libVLC's own
+        // decoder/vout warnings (e.g. hardware decode fallback, late/dropped pictures) in
+        // the app's log so they show up in Console.app without attaching Xcode.
+        VLCLibrary.shared().loggers = [VLCDiagnosticLogger()]
+        #endif
 
         reload()
     }
@@ -399,9 +423,11 @@ class VLCPlayerViewController: UIViewController {
             if forceStrokeText {
                 media?.addOption("aribcaption-force-stroke-text")
             }
-            if videoItem.type != .livestream {
-                media?.parse(options: [.parseForced], timeout: .max)
-            }
+            // Nothing reads the parse result (duration comes from a separate API call,
+            // tracks are discovered via mediaPlayerTrackAdded during playback), and forcing
+            // a full parse right as playback starts competes with the decoder for CPU/IO,
+            // which shows up as stutter in the first seconds - especially on formats without
+            // hardware decode (e.g. AV1 falling back to software dav1d).
             mediaPlayer.media = media
             applyVideoAspectRatio()
             if let media {
@@ -517,3 +543,30 @@ extension VLCMediaPlayer.Track {
         return String(bytes: withUnsafeBytes(of: codec.littleEndian, Array.init), encoding: .ascii) ?? "\(codec)"
     }
 }
+
+#if os(tvOS)
+// Temporary diagnostic for the tvOS stutter investigation, see viewDidLoad.
+private final class VLCDiagnosticLogger: NSObject, VLCLogging {
+    var level: VLCLogLevel = .debug
+
+    private static let keywords = [
+        "hardware", "videotoolbox", "decoder", "decode", "late", "drop", "corrupt", "fallback",
+        "vout", "chroma", "convert", "swscale", "opengl", "caopengllayer", "cvpx", "filter",
+    ]
+
+    private let startTime = Date()
+
+    func handleMessage(_ message: String, logLevel level: VLCLogLevel, context: VLCLogContext?) {
+        // Module selection (decoder, vout, chroma converter, ...) is only logged once at
+        // startup and its exact wording isn't predictable, so log everything unfiltered for
+        // the first few seconds, then fall back to keyword filtering to avoid a firehose.
+        guard Date().timeIntervalSince(startTime) < 5 || Self.keywords.contains(where: { message.lowercased().contains($0) }) else {
+            return
+        }
+        // Logger.debug is filtered out entirely in Release builds, so use .warning here
+        // to guarantee this shows up when testing on a real device.
+        Logger.warning("[VLC][\(context?.module ?? "?")] \(message)")
+    }
+}
+#endif
+
