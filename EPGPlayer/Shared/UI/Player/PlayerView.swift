@@ -269,6 +269,11 @@ struct PlayerView: View {
                 if let savedPlaybackPosition {
                     playerEvents.setPlaybackPosition.send(savedPlaybackPosition.position)
                 }
+                if activeTextTrack.id == "none" {
+                    // VLC can finalize its own default subtitle track selection once playback
+                    // actually starts, after all per-track "disable" commands already ran.
+                    playerEvents.enableTrack.send(activeTextTrack)
+                }
             }
         })
         .onReceive(playerEvents.addVideoTrack) { track in
