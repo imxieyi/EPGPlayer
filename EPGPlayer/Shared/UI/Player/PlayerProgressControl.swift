@@ -26,6 +26,9 @@ struct PlayerProgressControl: View {
     @State var playbackTime: Double = 0
     
     @State var isSeeking = false
+    #if os(tvOS)
+    @Binding var isScrubbing: Bool
+    #endif
     
     var body: some View {
         VStack {
@@ -48,9 +51,7 @@ struct PlayerProgressControl: View {
                 })
                 .disabled(playerState == .opening || !hadPlayingState)
                 #else
-                ProgressView(value: playbackPosition)
-                    .progressViewStyle(.linear)
-                    .tint(.white)
+                TVOSScrubber(position: playbackPosition, isActive: isScrubbing)
                 #endif
             } else {
                 Spacer()
@@ -72,13 +73,12 @@ struct PlayerProgressControl: View {
                     }
                 }
                 
+                #if !os(tvOS)
                 HStack {
                     Spacer()
                     if playerState == .opening || (!hadPlayingState && !hadErrorState) {
                         ProgressView()
-                            #if !os(tvOS)
                             .controlSize(.large)
-                            #endif
                     } else {
                         if item.videoItem.type != .livestream {
                             Button {
@@ -88,9 +88,7 @@ struct PlayerProgressControl: View {
                                     .font(.system(size: 25))
                             }
                             .buttonStyle(.borderless)
-                            #if !os(tvOS)
                             .keyboardShortcut(.leftArrow, modifiers: [])
-                            #endif
                             .disabled(videoLength == nil)
                             
                             Spacer()
@@ -105,9 +103,7 @@ struct PlayerProgressControl: View {
                                     .scaledToFit()
                             }
                             .buttonStyle(.borderless)
-                            #if !os(tvOS)
                             .keyboardShortcut(.space, modifiers: [])
-                            #endif
                             
                             Spacer()
                                 .frame(width: 15)
@@ -119,9 +115,7 @@ struct PlayerProgressControl: View {
                                     .font(.system(size: 25))
                             }
                             .buttonStyle(.borderless)
-                            #if !os(tvOS)
                             .keyboardShortcut(.rightArrow, modifiers: [])
-                            #endif
                             .disabled(videoLength == nil)
                         } else {
                             Button {
@@ -133,14 +127,21 @@ struct PlayerProgressControl: View {
                                     .scaledToFit()
                             }
                             .buttonStyle(.borderless)
-                            #if !os(tvOS)
                             .keyboardShortcut(.space, modifiers: [])
-                            #endif
                         }
                     }
                     Spacer()
                 }
                 .disabled(isSeeking)
+                #else
+                if playerState == .opening || (!hadPlayingState && !hadErrorState) {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                }
+                #endif
             }
         }
         .onAppear {
@@ -160,6 +161,9 @@ struct PlayerProgressControl: View {
             playbackTime = Double(position.time) / 1000
         }
         #if os(tvOS)
+        .onChange(of: isScrubbing) { _, scrubbing in
+            isSeeking = scrubbing
+        }
         .onReceive(playerEvents.seekBy) { seconds in
             seekBy(seconds: seconds)
         }
@@ -169,7 +173,7 @@ struct PlayerProgressControl: View {
             playbackTime = 0
         }
     }
-    
+
     func reload() {
         if let item = item.videoItem as? Components.Schemas.VideoFile {
             Task {
@@ -200,3 +204,34 @@ struct PlayerProgressControl: View {
         playerEvents.setPlaybackPosition.send(newPosition)
     }
 }
+
+#if os(tvOS)
+/// SwiftUI's `Slider` is unavailable on tvOS. This is a pure display component;
+/// Select/swipe are handled by PlayerView (see `handleSelect`/`onMoveCommand`),
+/// which owns `playbackPosition` and `isScrubbing` directly, instead of tvOS
+/// focus ever moving onto this view.
+private struct TVOSScrubber: View {
+    let position: Double
+    let isActive: Bool
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(height: 8)
+                Capsule()
+                    .fill(Color.white)
+                    .frame(width: proxy.size.width * position, height: 8)
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: isActive ? 22 : 14, height: isActive ? 22 : 14)
+                    .offset(x: proxy.size.width * position - (isActive ? 11 : 7))
+                    .animation(.easeOut(duration: 0.15), value: isActive)
+            }
+            .frame(maxHeight: .infinity, alignment: .center)
+        }
+        .frame(height: 44)
+    }
+}
+#endif

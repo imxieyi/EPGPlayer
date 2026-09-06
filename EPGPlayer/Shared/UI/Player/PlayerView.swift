@@ -35,8 +35,12 @@ struct PlayerView: View {
     @State var isExternalPlay = false
     @State var isProgramInfoPresented = false
     #if os(tvOS)
-    @FocusState private var isRemoteSurfaceFocused: Bool
     @FocusState private var focusedPlaybackSetting: PlaybackSetting?
+    // The whole player surface (minus Settings) has exactly one focusable target;
+    // Select cycles through Idle -> Transport -> Scrubbing -> commit via isScrubbing,
+    // instead of moving tvOS focus onto the slider itself.
+    @FocusState private var isWakeSurfaceFocused: Bool
+    @State private var isScrubbing = false
     #endif
     
     @State var playerUIOpacity: Double = 1
@@ -66,6 +70,7 @@ struct PlayerView: View {
         ZStack(alignment: .topLeading) {
             VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, videoAspectRatio: userSettings.$videoAspectRatio, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
+                #if !os(tvOS)
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
                         hidePlayerUI()
@@ -73,11 +78,32 @@ struct PlayerView: View {
                         showPlayerUI()
                     }
                 })
+                #endif
                 #if os(macOS)
                 .simultaneousGesture(TapGesture(count: 2).onEnded{
                     macHelper?.toggleFullscreen()
                 })
                 #endif
+
+            #if os(tvOS)
+            // Always mounted (never inserted/removed) so requesting focus never races
+            // against the view appearing. This is the only focusable element in the
+            // player (besides Settings); Select's meaning depends on playerUIOpacity/
+            // isScrubbing rather than on tvOS focus ever moving onto the slider.
+            if !isProgramInfoPresented {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .focusable()
+                    .focused($isWakeSurfaceFocused)
+                    .onAppear {
+                        isWakeSurfaceFocused = true
+                    }
+                    .onTapGesture {
+                        handleSelect()
+                    }
+            }
+            #endif
 
             if isExternalPlay {
                 HStack {
@@ -116,7 +142,7 @@ struct PlayerView: View {
             }
             
             VStack(spacing: 0) {
-                #if !os(macOS)
+                #if !os(macOS) && !os(tvOS)
                 VStack {
                     Spacer()
                         .frame(height: paddingSize)
@@ -145,11 +171,9 @@ struct PlayerView: View {
                             }
                         }
                         
-                        #if !os(tvOS)
                         playerMenu
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
-                        #endif
                         
                         Spacer()
                             .frame(width: paddingSize)
@@ -158,12 +182,7 @@ struct PlayerView: View {
                         .frame(height: paddingSize)
                 }
                 .background(.black.opacity(0.7))
-                #if os(tvOS)
-                .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
-                .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
-                #else
                 .opacity(playerUIOpacity)
-                #endif
                 #endif
                 
                 Spacer()
@@ -172,7 +191,11 @@ struct PlayerView: View {
                     Spacer()
                         .frame(width: paddingSize)
                     
+                    #if os(tvOS)
+                    PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, loadedPlaybackPosition: $loadedPlaybackPosition, playbackPosition: $playbackPosition, playerEvents: playerEvents, isScrubbing: $isScrubbing)
+                    #else
                     PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, loadedPlaybackPosition: $loadedPlaybackPosition, playbackPosition: $playbackPosition, playerEvents: playerEvents)
+                    #endif
                     
                     Spacer()
                         .frame(width: paddingSize)
@@ -180,7 +203,9 @@ struct PlayerView: View {
                 .background(.black.opacity(0.7))
                 #if os(tvOS)
                 .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
-                .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
+                // Hit-testing must stay enabled even while invisible: Select can reveal
+                // the HUD and immediately start scrubbing from the very same tap.
+                .allowsHitTesting(!isProgramInfoPresented)
                 #else
                 .opacity(playerUIOpacity)
                 #endif
@@ -191,9 +216,6 @@ struct PlayerView: View {
                     .opacity(playerUIOpacity * 0.7)
                 #endif
             }
-            #if os(tvOS)
-            .allowsHitTesting(playerUIOpacity > 0)
-            #endif
 
             #if os(tvOS)
             if isProgramInfoPresented {
@@ -226,10 +248,6 @@ struct PlayerView: View {
             }
             #endif
         }
-        #if os(tvOS)
-        .focusable(!isProgramInfoPresented)
-        .focused($isRemoteSurfaceFocused)
-        #endif
         .preferredColorScheme(.dark)
         .tint(.primary)
         .background(.black)
@@ -291,6 +309,16 @@ struct PlayerView: View {
             playerEvents.setPlaybackRate.send(newValue.rawValue)
         })
         #if os(tvOS)
+        .onChange(of: isProgramInfoPresented) { _, newValue in
+            if newValue {
+                Task { @MainActor in
+                    await Task.yield()
+                    focusedPlaybackSetting = .aspect
+                }
+            } else {
+                focusedPlaybackSetting = nil
+            }
+        }
         .onChange(of: userSettings.videoAspectRatio, { _, newValue in
             playerEvents.setVideoAspectRatio.send(newValue)
         })
@@ -366,56 +394,47 @@ struct PlayerView: View {
             fetchSavedPlaybackPosition()
         }
         #if os(tvOS)
+        // Swipe either quick-seeks (Idle/Transport) or moves the scrub preview
+        // (Scrubbing, entered/exited via Select in handleSelect()).
         .onMoveCommand { direction in
-            if isProgramInfoPresented {
-                switch direction {
-                case .left:
-                    movePlaybackSetting(by: -1)
-                case .right:
-                    movePlaybackSetting(by: 1)
-                case .up:
-                    closeProgramInfo()
-                default:
-                    break
-                }
-                resetIdleTimer()
+            guard !isProgramInfoPresented else {
                 return
             }
-
             switch direction {
-            case .down:
-                withAnimation(.easeOut(duration: 0.2)) {
-                    isProgramInfoPresented = true
-                }
-                showPlayerUI()
-                resetIdleTimer()
-                Task { @MainActor in
-                    await Task.yield()
-                    focusedPlaybackSetting = .aspect
-                }
-            case .up:
-                showPlayerUI()
-                resetIdleTimer()
             case .left:
-                if item.videoItem.type != .livestream {
+                if isScrubbing {
+                    playbackPosition = max(0, playbackPosition - 0.01)
+                } else if item.videoItem.type != .livestream {
                     playerEvents.seekBy.send(-10)
                 }
-                showPlayerUI()
-                resetIdleTimer()
             case .right:
-                if item.videoItem.type != .livestream {
-                    playerEvents.seekBy.send(10)
+                if isScrubbing {
+                    playbackPosition = min(1, playbackPosition + 0.01)
+                } else if item.videoItem.type != .livestream {
+                    playerEvents.seekBy.send(30)
                 }
-                showPlayerUI()
-                resetIdleTimer()
+            case .up:
+                if !isScrubbing {
+                    isProgramInfoPresented = true
+                }
             default:
-                showPlayerUI()
-                resetIdleTimer()
+                break
             }
+            resetIdleTimer()
         }
         .onExitCommand {
             if isProgramInfoPresented {
                 closeProgramInfo()
+            } else if isScrubbing {
+                // Cancel without seeking; resume whatever state playback was in.
+                isScrubbing = false
+                if !playerState.isPlaying {
+                    playerEvents.togglePlay.send()
+                }
+                resetIdleTimer()
+            } else if playerUIOpacity == 1 {
+                // Transport HUD only: dismiss it, don't leave the player.
+                hidePlayerUI()
             } else {
                 dismiss()
             }
@@ -596,43 +615,12 @@ struct PlayerView: View {
         )
     }
 
-    var availablePlaybackSettings: [PlaybackSetting] {
-        var settings: [PlaybackSetting] = [.aspect]
-        if item.videoItem.type != .livestream {
-            settings.append(.speed)
-        }
-        if !videoTracks.isEmpty {
-            settings.append(.video)
-        }
-        if !audioTracks.isEmpty {
-            settings.append(.audio)
-        }
-        if !textTracks.isEmpty {
-            settings.append(.subtitle)
-        }
-        return settings
-    }
-
-    func movePlaybackSetting(by offset: Int) {
-        let settings = availablePlaybackSettings
-        guard !settings.isEmpty else {
-            return
-        }
-        let currentIndex = focusedPlaybackSetting.flatMap { settings.firstIndex(of: $0) } ?? 0
-        focusedPlaybackSetting = settings[(currentIndex + offset + settings.count) % settings.count]
-    }
-
     func closeProgramInfo() {
         withAnimation(.easeOut(duration: 0.2)) {
             isProgramInfoPresented = false
         }
-        focusedPlaybackSetting = nil
-        showPlayerUI()
+        // The wake surface remounts and reclaims focus via its own onAppear.
         resetIdleTimer()
-        Task { @MainActor in
-            await Task.yield()
-            isRemoteSurfaceFocused = true
-        }
     }
     #endif
     
@@ -763,29 +751,55 @@ struct PlayerView: View {
                 playerUIOpacity = 1
             }
         }
-        #if os(tvOS)
-        isRemoteSurfaceFocused = false
-        #endif
         #if os(macOS)
         macHelper?.setWindowTitleBar(visible: true)
         #endif
     }
     
+    #if os(tvOS)
+    /// Select cycles Idle -> Transport -> Scrubbing -> commit; see body's wake surface.
+    func handleSelect() {
+        if playerUIOpacity == 0 {
+            showPlayerUI()
+            resetIdleTimer()
+            return
+        }
+        guard item.videoItem.type != .livestream else {
+            return
+        }
+        if !isScrubbing {
+            isScrubbing = true
+            if playerState.isPlaying {
+                playerEvents.togglePlay.send()
+            }
+        } else {
+            playerEvents.setPlaybackPosition.send(playbackPosition)
+            if !playerState.isPlaying {
+                playerEvents.togglePlay.send()
+            }
+            isScrubbing = false
+        }
+        resetIdleTimer()
+    }
+    #endif
+    
     func hidePlayerUI() {
         guard !isProgramInfoPresented else {
             return
         }
+        #if os(tvOS)
+        if isScrubbing {
+            // Idle timeout mid-scrub: don't leave playback stuck paused.
+            isScrubbing = false
+            if !playerState.isPlaying {
+                playerEvents.togglePlay.send()
+            }
+        }
+        #endif
         if playerUIOpacity == 1 {
             withAnimation(.default.speed(2)) {
                 playerUIOpacity = 0
-                isProgramInfoPresented = false
             }
-            #if os(tvOS)
-            Task { @MainActor in
-                await Task.yield()
-                isRemoteSurfaceFocused = true
-            }
-            #endif
         }
         #if os(macOS)
         if let macHelper, !macHelper.isFullScreen {
@@ -844,14 +858,20 @@ struct PlayerView: View {
         Logger.info("Saved playback position: \(savedPlaybackPosition.position)")
     }
     
-    func resetIdleTimer() {
+    func resetIdleTimer(after seconds: Int? = nil) {
         if let idleTimer {
             idleTimer.invalidate()
         }
+        #if os(tvOS)
+        // tvOS doesn't expose the "Auto hide UI" setting; always use a fixed, short delay.
+        let delay = seconds ?? 3
+        #else
         guard userSettings.inactiveTimer != .max else {
             return
         }
-        idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(userSettings.inactiveTimer), repeats: false) { _ in
+        let delay = seconds ?? userSettings.inactiveTimer
+        #endif
+        idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(delay), repeats: false) { _ in
             Task {
                 await MainActor.run {
                     #if os(macOS)
