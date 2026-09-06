@@ -77,7 +77,7 @@ struct RecordingDetailView: View {
                                 Section("TS") {
                                     ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, subtitle: item.channelName, programDescription: [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n\n"))
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif
@@ -93,7 +93,7 @@ struct RecordingDetailView: View {
                                 Section("Encoded") {
                                     ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, subtitle: item.channelName, programDescription: [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n\n"))
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif

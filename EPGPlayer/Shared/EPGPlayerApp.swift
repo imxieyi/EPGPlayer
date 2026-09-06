@@ -239,7 +239,9 @@ struct EPGPlayerApp: App {
     func setupKeychain() {
         appState.keychain = KeychainSwift()
         if let teamId = Bundle.main.infoDictionary?["AppIdentifierPrefix"] as? String {
-            appState.keychain.accessGroup = "\(teamId)com.imxieyi.EPGPlayer"
+            if let bundleIdentifier = Bundle.main.bundleIdentifier {
+                appState.keychain.accessGroup = "\(teamId)\(bundleIdentifier)"
+            }
         }
     }
     

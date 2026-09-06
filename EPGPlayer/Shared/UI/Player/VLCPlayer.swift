@@ -17,7 +17,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
     let playerEvents: PlayerEvents
     
     @Binding var forceStrokeText: Bool
-    @Binding var force16To9: Bool
+    @Binding var videoAspectRatio: VideoAspectRatio
     @Binding var audioStereoMode: VLCMediaPlayer.AudioStereoMode
     
     @Binding var playerState: VLCMediaPlayerState
@@ -49,7 +49,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.videoItem = videoItem
         playerVC.httpHeaders = httpHeaders
         playerVC.forceStrokeText = forceStrokeText
-        playerVC.forceAspectRatio = force16To9 ? "16:9" : nil
+        playerVC.videoAspectRatio = videoAspectRatio
         playerVC.mediaPlayer.audioStereoMode = audioStereoMode
         return playerVC
     }
@@ -58,13 +58,17 @@ struct VLCPlayer: UIViewControllerRepresentable {
 //        if uiViewController.mediaPlayer.audioStereoMode != audioStereoMode {
 //            uiViewController.mediaPlayer.audioStereoMode = audioStereoMode
 //        }
+        if uiViewController.videoAspectRatio != videoAspectRatio {
+            uiViewController.videoAspectRatio = videoAspectRatio
+            uiViewController.applyVideoAspectRatio()
+        }
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
         uiViewController.videoItem = videoItem
         uiViewController.httpHeaders = httpHeaders
         uiViewController.forceStrokeText = forceStrokeText
-        uiViewController.forceAspectRatio = force16To9 ? "16:9" : nil
+        uiViewController.videoAspectRatio = videoAspectRatio
         uiViewController.reload()
     }
     
@@ -135,7 +139,7 @@ class VLCPlayerViewController: UIViewController {
     var playerEvents: PlayerEvents?
     
     var forceStrokeText: Bool = false
-    var forceAspectRatio: String? = nil
+    var videoAspectRatio: VideoAspectRatio = .automatic
     
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
@@ -334,7 +338,7 @@ class VLCPlayerViewController: UIViewController {
                 media?.parse(options: [.parseForced], timeout: .max)
             }
             mediaPlayer.media = media
-            mediaPlayer.videoAspectRatio = forceAspectRatio
+            applyVideoAspectRatio()
             if let media {
                 if let cookies = HTTPCookieStorage.shared.cookies(for: videoItem.url) {
                     cookies.forEach { cookie in
@@ -351,6 +355,16 @@ class VLCPlayerViewController: UIViewController {
             }
             mediaPlayer.play()
         }
+    }
+
+    func applyVideoAspectRatio() {
+        mediaPlayer.videoAspectRatio = videoAspectRatio.vlcValue
+        if videoAspectRatio == .fillScreen {
+            mediaPlayer.setCropRatioWithNumerator(16, denominator: 9)
+        } else {
+            mediaPlayer.setCropRatioWithNumerator(0, denominator: 0)
+        }
+        mediaPlayer.scaleFactor = 0
     }
 }
 

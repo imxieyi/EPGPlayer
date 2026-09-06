@@ -33,6 +33,7 @@ struct PlayerView: View {
     @State var isPIPSupported = false
     @State var isPIPEnabled = false
     @State var isExternalPlay = false
+    @State var isProgramInfoPresented = false
     
     @State var playerUIOpacity: Double = 1
     
@@ -59,7 +60,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
+            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, videoAspectRatio: userSettings.$videoAspectRatio, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
@@ -73,7 +74,7 @@ struct PlayerView: View {
                     macHelper?.toggleFullscreen()
                 })
                 #endif
-            
+
             if isExternalPlay {
                 HStack {
                     Spacer()
@@ -176,6 +177,17 @@ struct PlayerView: View {
                     .opacity(playerUIOpacity * 0.7)
                 #endif
             }
+            .allowsHitTesting(playerUIOpacity > 0)
+
+            #if os(tvOS)
+            if isProgramInfoPresented {
+                VStack {
+                    Spacer()
+                    programInfoPanel
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            #endif
             
             #if os(macOS)
             VStack {
@@ -316,10 +328,89 @@ struct PlayerView: View {
             resetIdleTimer()
             fetchSavedPlaybackPosition()
         }
+        #if os(tvOS)
+        .onMoveCommand { direction in
+            switch direction {
+            case .down:
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isProgramInfoPresented = true
+                }
+                showPlayerUI()
+                resetIdleTimer()
+            case .up:
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isProgramInfoPresented = false
+                }
+                showPlayerUI()
+                resetIdleTimer()
+            default:
+                showPlayerUI()
+                resetIdleTimer()
+            }
+        }
+        .onExitCommand {
+            if isProgramInfoPresented {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    isProgramInfoPresented = false
+                }
+            } else {
+                dismiss()
+            }
+        }
+        .onPlayPauseCommand {
+            playerEvents.togglePlay.send()
+        }
+        #endif
+    }
+
+    var programInfoPanel: some View {
+        HStack(alignment: .top, spacing: 32) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(verbatim: item.title)
+                    .font(.title2.bold())
+                    .lineLimit(2)
+                if let subtitle = item.subtitle, !subtitle.isEmpty {
+                    Text(verbatim: subtitle)
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                }
+                if let programDescription = item.programDescription, !programDescription.isEmpty {
+                    Text(verbatim: programDescription)
+                        .font(.body)
+                        .lineLimit(5)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("No program information")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 8) {
+                Text("Playback settings")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                playerMenu
+                    .font(.title2)
+            }
+        }
+        .padding(.horizontal, 56)
+        .padding(.vertical, 28)
+        .background(.black.opacity(0.88))
     }
     
     var playerMenu: some View {
         Menu {
+            Picker(selection: userSettings.$videoAspectRatio) {
+                ForEach(VideoAspectRatio.allCases) { aspectRatio in
+                    Text(verbatim: aspectRatio.label)
+                        .tag(aspectRatio)
+                }
+            } label: {
+                Label("Aspect ratio", systemImage: "aspectratio")
+            }
+            .pickerStyle(.menu)
+
             if item.videoItem.type != .livestream {
                 Picker(selection: $playbackSpeed) {
                     ForEach(PlaybackSpeed.all) { speed in
@@ -454,6 +545,7 @@ struct PlayerView: View {
         if playerUIOpacity == 1 {
             withAnimation(.default.speed(2)) {
                 playerUIOpacity = 0
+                isProgramInfoPresented = false
             }
         }
         #if os(macOS)

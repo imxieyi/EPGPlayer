@@ -78,10 +78,14 @@ class PlayerItem: Identifiable {
 
     let videoItem: any VideoItem
     let title: String
+    let subtitle: String?
+    let programDescription: String?
     
-    init(videoItem: any VideoItem, title: String) {
+    init(videoItem: any VideoItem, title: String, subtitle: String? = nil, programDescription: String? = nil) {
         self.videoItem = videoItem
         self.title = title
+        self.subtitle = subtitle
+        self.programDescription = programDescription
     }
 }
 
