@@ -12,10 +12,11 @@ import SwiftUI
 private struct TVFocusCardModifier: ViewModifier {
     @Environment(\.isFocused) private var isFocused
     var cornerRadius: CGFloat
+    var scale: CGFloat
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isFocused ? 1.06 : 1.0)
+            .scaleEffect(isFocused ? scale : 1.0)
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(isFocused ? Color.white : .clear, lineWidth: 4)
@@ -26,8 +27,8 @@ private struct TVFocusCardModifier: ViewModifier {
 }
 
 extension View {
-    func tvOSFocusCard(cornerRadius: CGFloat = 10) -> some View {
-        modifier(TVFocusCardModifier(cornerRadius: cornerRadius))
+    func tvOSFocusCard(cornerRadius: CGFloat = 10, scale: CGFloat = 1.06) -> some View {
+        modifier(TVFocusCardModifier(cornerRadius: cornerRadius, scale: scale))
     }
 }
 #endif
