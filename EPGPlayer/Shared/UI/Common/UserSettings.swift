@@ -9,30 +9,14 @@
 import SwiftUI
 
 enum VideoAspectRatio: String, CaseIterable, Identifiable {
-    case automatic
-    case fillScreen = "fill_screen"
+    case fourThree = "4:3"
     case sixteenNine = "16:9"
-    case sixteenTen = "16:10"
-    case square = "1:1"
+    case zoom
 
     var id: Self { self }
-    var vlcValue: String? {
-        switch self {
-        case .automatic, .fillScreen:
-            nil
-        default:
-            rawValue
-        }
-    }
+    var vlcValue: String? { self == .zoom ? nil : rawValue }
     var label: String {
-        switch self {
-        case .automatic:
-            String(localized: "Automatic")
-        case .fillScreen:
-            String(localized: "Fill Screen")
-        default:
-            rawValue
-        }
+        self == .zoom ? String(localized: "Zoom") : rawValue
     }
 }
 
@@ -45,7 +29,8 @@ class UserSettings: ObservableObject {
     // Player Settings
     @AppStorage("enable_subtitles") var enableSubtitles = false
     @AppStorage("force_stroke_text") var forceStrokeText = false
-    @AppStorage("video_aspect_ratio") var videoAspectRatio: VideoAspectRatio = .automatic
+    @AppStorage("video_aspect_ratio") var videoAspectRatio: VideoAspectRatio = .sixteenNine
+    @AppStorage("force_16_9") var force16To9 = false
     @AppStorage("force_landscape") var forceLandscape = false
     @AppStorage("show_player_stats") var showPlayerStats = false
     @AppStorage("inactive_timer") var inactiveTimer = 5
@@ -71,7 +56,13 @@ class UserSettings: ObservableObject {
     
     init() {
         let defaults = UserDefaults.standard
-        if defaults.object(forKey: "video_aspect_ratio") == nil && defaults.bool(forKey: "force_16_9") {
+        if let storedAspectRatio = defaults.string(forKey: "video_aspect_ratio") {
+            if storedAspectRatio == "fill_screen" {
+                defaults.set(VideoAspectRatio.zoom.rawValue, forKey: "video_aspect_ratio")
+            } else if VideoAspectRatio(rawValue: storedAspectRatio) == nil {
+                defaults.set(VideoAspectRatio.sixteenNine.rawValue, forKey: "video_aspect_ratio")
+            }
+        } else {
             videoAspectRatio = .sixteenNine
         }
     }
@@ -79,7 +70,7 @@ class UserSettings: ObservableObject {
     func reset() {
         serverUrl = ""
         enableSubtitles = true
-        videoAspectRatio = .automatic
+        videoAspectRatio = .sixteenNine
         forceLandscape = false
         showPlayerStats = false
         inactiveTimer = 5

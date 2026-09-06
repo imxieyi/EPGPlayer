@@ -17,6 +17,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
     let playerEvents: PlayerEvents
     
     @Binding var forceStrokeText: Bool
+    @Binding var force16To9: Bool
     @Binding var videoAspectRatio: VideoAspectRatio
     @Binding var audioStereoMode: VLCMediaPlayer.AudioStereoMode
     
@@ -49,6 +50,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.videoItem = videoItem
         playerVC.httpHeaders = httpHeaders
         playerVC.forceStrokeText = forceStrokeText
+        playerVC.force16To9 = force16To9
         playerVC.videoAspectRatio = videoAspectRatio
         playerVC.mediaPlayer.audioStereoMode = audioStereoMode
         return playerVC
@@ -58,16 +60,24 @@ struct VLCPlayer: UIViewControllerRepresentable {
 //        if uiViewController.mediaPlayer.audioStereoMode != audioStereoMode {
 //            uiViewController.mediaPlayer.audioStereoMode = audioStereoMode
 //        }
+        #if os(tvOS)
         if uiViewController.videoAspectRatio != videoAspectRatio {
             uiViewController.videoAspectRatio = videoAspectRatio
             uiViewController.applyVideoAspectRatio()
         }
+        #else
+        if uiViewController.force16To9 != force16To9 {
+            uiViewController.force16To9 = force16To9
+            uiViewController.applyVideoAspectRatio()
+        }
+        #endif
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
         uiViewController.videoItem = videoItem
         uiViewController.httpHeaders = httpHeaders
         uiViewController.forceStrokeText = forceStrokeText
+        uiViewController.force16To9 = force16To9
         uiViewController.videoAspectRatio = videoAspectRatio
         uiViewController.reload()
     }
@@ -95,7 +105,9 @@ struct VLCPlayer: UIViewControllerRepresentable {
                     parent.hadErrorState = false
                 } else if newState == .playing {
                     parent.hadPlayingState = true
+                    #if os(tvOS)
                     playerEvents?.videoOutputReady.send()
+                    #endif
                 }
             }
         }
@@ -140,7 +152,8 @@ class VLCPlayerViewController: UIViewController {
     var playerEvents: PlayerEvents?
     
     var forceStrokeText: Bool = false
-    var videoAspectRatio: VideoAspectRatio = .automatic
+    var force16To9: Bool = false
+    var videoAspectRatio: VideoAspectRatio = .sixteenNine
     
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
@@ -187,8 +200,10 @@ class VLCPlayerViewController: UIViewController {
     var setPlaybackRateListener: AnyCancellable?
     var setPlaybackPositionListener: AnyCancellable?
     var setPlaybackTimeListener: AnyCancellable?
+    #if os(tvOS)
     var setVideoAspectRatioListener: AnyCancellable?
     var videoOutputReadyListener: AnyCancellable?
+    #endif
     var togglePIPModeListener: AnyCancellable?
     var externalDisplayObservation: NSKeyValueObservation?
     
@@ -268,6 +283,7 @@ class VLCPlayerViewController: UIViewController {
             }
             player.time = VLCTime(int: Int32(time * 1000))
         })
+        #if os(tvOS)
         setVideoAspectRatioListener = playerEvents.setVideoAspectRatio.sink(receiveValue: { [weak self] aspectRatio in
             self?.videoAspectRatio = aspectRatio
             self?.applyVideoAspectRatio()
@@ -275,6 +291,7 @@ class VLCPlayerViewController: UIViewController {
         videoOutputReadyListener = playerEvents.videoOutputReady.sink(receiveValue: { [weak self] _ in
             self?.applyVideoAspectRatio()
         })
+        #endif
         togglePIPModeListener = playerEvents.togglePIPMode.sink(receiveValue: { [weak self] enable in
             guard let pipController = self?.pipController else {
                 return
@@ -330,8 +347,10 @@ class VLCPlayerViewController: UIViewController {
         setPlaybackRateListener?.cancel()
         setPlaybackPositionListener?.cancel()
         setPlaybackTimeListener?.cancel()
+        #if os(tvOS)
         setVideoAspectRatioListener?.cancel()
         videoOutputReadyListener?.cancel()
+        #endif
         togglePIPModeListener?.cancel()
         externalDisplayObservation?.invalidate()
     }
@@ -370,15 +389,19 @@ class VLCPlayerViewController: UIViewController {
     }
 
     func applyVideoAspectRatio() {
+        #if os(tvOS)
         mediaPlayer.videoAspectRatio = nil
         mediaPlayer.setCropRatioWithNumerator(0, denominator: 0)
         mediaPlayer.scaleFactor = 0
-        if videoAspectRatio == .fillScreen {
+        if videoAspectRatio == .zoom {
             mediaPlayer.setCropRatioWithNumerator(16, denominator: 9)
         } else if let aspectRatio = videoAspectRatio.vlcValue {
             mediaPlayer.videoAspectRatio = aspectRatio
         }
         Logger.info("Applied video aspect ratio: \(videoAspectRatio.rawValue)")
+        #else
+        mediaPlayer.videoAspectRatio = force16To9 ? "16:9" : nil
+        #endif
     }
 }
 

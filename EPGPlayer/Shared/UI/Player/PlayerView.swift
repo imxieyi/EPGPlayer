@@ -64,7 +64,7 @@ struct PlayerView: View {
     
     var body: some View {
         ZStack(alignment: .topLeading) {
-            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, videoAspectRatio: userSettings.$videoAspectRatio, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
+            VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, videoAspectRatio: userSettings.$videoAspectRatio, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
                 .ignoresSafeArea(edges: .vertical)
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
@@ -158,8 +158,12 @@ struct PlayerView: View {
                         .frame(height: paddingSize)
                 }
                 .background(.black.opacity(0.7))
+                #if os(tvOS)
                 .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
                 .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
+                #else
+                .opacity(playerUIOpacity)
+                #endif
                 #endif
                 
                 Spacer()
@@ -174,8 +178,12 @@ struct PlayerView: View {
                         .frame(width: paddingSize)
                 }
                 .background(.black.opacity(0.7))
+                #if os(tvOS)
                 .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
                 .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
+                #else
+                .opacity(playerUIOpacity)
+                #endif
                 
                 #if os(macOS)
                 Color.black
@@ -183,7 +191,9 @@ struct PlayerView: View {
                     .opacity(playerUIOpacity * 0.7)
                 #endif
             }
+            #if os(tvOS)
             .allowsHitTesting(playerUIOpacity > 0)
+            #endif
 
             #if os(tvOS)
             if isProgramInfoPresented {
@@ -280,9 +290,11 @@ struct PlayerView: View {
         .onChange(of: playbackSpeed, { _, newValue in
             playerEvents.setPlaybackRate.send(newValue.rawValue)
         })
+        #if os(tvOS)
         .onChange(of: userSettings.videoAspectRatio, { _, newValue in
             playerEvents.setVideoAspectRatio.send(newValue)
         })
+        #endif
         .onChange(of: playerState, { _, newValue in
             if !newValue.isPlaying {
                 savePlaybackPosition()
@@ -405,6 +417,7 @@ struct PlayerView: View {
         #endif
     }
 
+    #if os(tvOS)
     var programInfoPanel: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(verbatim: item.title)
@@ -569,7 +582,6 @@ struct PlayerView: View {
         )
     }
 
-    #if os(tvOS)
     var availablePlaybackSettings: [PlaybackSetting] {
         var settings: [PlaybackSetting] = [.aspect]
         if item.videoItem.type != .livestream {
@@ -612,16 +624,6 @@ struct PlayerView: View {
     
     var playerMenu: some View {
         Menu {
-            Picker(selection: userSettings.$videoAspectRatio) {
-                ForEach(VideoAspectRatio.allCases) { aspectRatio in
-                    Text(verbatim: aspectRatio.label)
-                        .tag(aspectRatio)
-                }
-            } label: {
-                Label("Aspect ratio", systemImage: "aspectratio")
-            }
-            .pickerStyle(.menu)
-
             if item.videoItem.type != .livestream {
                 Picker(selection: $playbackSpeed) {
                     ForEach(PlaybackSpeed.all) { speed in
@@ -850,6 +852,7 @@ struct PlayerView: View {
     }
 }
 
+#if os(tvOS)
 enum PlaybackSetting: Hashable {
     case aspect
     case speed
@@ -857,6 +860,7 @@ enum PlaybackSetting: Hashable {
     case audio
     case subtitle
 }
+#endif
 
 enum PlaybackSpeed: Float, Hashable, Identifiable {
     case x0_5 = 0.5

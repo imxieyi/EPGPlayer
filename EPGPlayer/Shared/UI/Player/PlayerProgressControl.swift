@@ -159,9 +159,11 @@ struct PlayerProgressControl: View {
             playbackPosition = position.position
             playbackTime = Double(position.time) / 1000
         }
+        #if os(tvOS)
         .onReceive(playerEvents.seekBy) { seconds in
             seekBy(seconds: seconds)
         }
+        #endif
         .onReceive(playerEvents.resetPlayer) {
             videoLength = nil
             playbackTime = 0
@@ -188,7 +190,13 @@ struct PlayerProgressControl: View {
         guard let videoLength, videoLength > 0 else {
             return
         }
+        #if os(tvOS)
         let newPosition = min(max(playbackPosition + seconds / videoLength, 0), 1)
+        #else
+        let fakeLength = playbackTime / playbackPosition
+        let diff = seconds / videoLength / videoLength * fakeLength
+        let newPosition = min(max(diff + playbackPosition, 0), 1)
+        #endif
         playerEvents.setPlaybackPosition.send(newPosition)
     }
 }

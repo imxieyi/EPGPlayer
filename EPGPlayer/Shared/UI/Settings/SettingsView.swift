@@ -163,6 +163,7 @@ struct SettingsView: View {
                 Text("Force stroke text")
             }
             
+            #if os(tvOS)
             Picker(selection: userSettings.$videoAspectRatio) {
                 ForEach(VideoAspectRatio.allCases) { aspectRatio in
                     Text(verbatim: aspectRatio.label)
@@ -172,6 +173,11 @@ struct SettingsView: View {
                 Text("Aspect ratio")
             }
             .pickerStyle(.menu)
+            #else
+            Toggle(isOn: userSettings.$force16To9) {
+                Text("Force 16:9")
+            }
+            #endif
             
             #if !os(macOS) && !os(tvOS)
             Toggle(isOn: userSettings.$forceLandscape) {
