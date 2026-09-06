@@ -287,6 +287,10 @@ struct PlayerView: View {
             textTracks.append(track)
             if userSettings.enableSubtitles && textTracks.count == 1 {
                 activeTextTrack = track
+            } else if activeTextTrack.id == "none" {
+                // VLC can auto-select a newly discovered track (e.g. ARIB captions) on its own;
+                // re-assert "None" so it doesn't silently override the user's choice.
+                playerEvents.enableTrack.send(activeTextTrack)
             }
         }
         .onReceive(playerEvents.setPIPSupported, perform: { supported in
