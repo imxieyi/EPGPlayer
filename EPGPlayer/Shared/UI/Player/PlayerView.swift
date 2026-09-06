@@ -34,6 +34,10 @@ struct PlayerView: View {
     @State var isPIPEnabled = false
     @State var isExternalPlay = false
     @State var isProgramInfoPresented = false
+    #if os(tvOS)
+    @FocusState private var isRemoteSurfaceFocused: Bool
+    @FocusState private var focusedPlaybackSetting: PlaybackSetting?
+    #endif
     
     @State var playerUIOpacity: Double = 1
     
@@ -141,11 +145,11 @@ struct PlayerView: View {
                             }
                         }
                         
+                        #if !os(tvOS)
                         playerMenu
-                            #if !os(tvOS)
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
-                            #endif
+                        #endif
                         
                         Spacer()
                             .frame(width: paddingSize)
@@ -154,7 +158,8 @@ struct PlayerView: View {
                         .frame(height: paddingSize)
                 }
                 .background(.black.opacity(0.7))
-                .opacity(playerUIOpacity)
+                .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
+                .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
                 #endif
                 
                 Spacer()
@@ -169,7 +174,8 @@ struct PlayerView: View {
                         .frame(width: paddingSize)
                 }
                 .background(.black.opacity(0.7))
-                .opacity(playerUIOpacity)
+                .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
+                .allowsHitTesting(!isProgramInfoPresented && playerUIOpacity > 0)
                 
                 #if os(macOS)
                 Color.black
@@ -181,7 +187,10 @@ struct PlayerView: View {
 
             #if os(tvOS)
             if isProgramInfoPresented {
-                VStack {
+                VStack(spacing: 0) {
+                    tvOSPlaybackSettings
+                        .padding(.horizontal, 48)
+                        .padding(.top, 26)
                     Spacer()
                     programInfoPanel
                 }
@@ -207,6 +216,10 @@ struct PlayerView: View {
             }
             #endif
         }
+        #if os(tvOS)
+        .focusable(!isProgramInfoPresented)
+        .focused($isRemoteSurfaceFocused)
+        #endif
         .preferredColorScheme(.dark)
         .tint(.primary)
         .background(.black)
@@ -266,6 +279,9 @@ struct PlayerView: View {
         })
         .onChange(of: playbackSpeed, { _, newValue in
             playerEvents.setPlaybackRate.send(newValue.rawValue)
+        })
+        .onChange(of: userSettings.videoAspectRatio, { _, newValue in
+            playerEvents.setVideoAspectRatio.send(newValue)
         })
         .onChange(of: playerState, { _, newValue in
             if !newValue.isPlaying {
@@ -330,6 +346,21 @@ struct PlayerView: View {
         }
         #if os(tvOS)
         .onMoveCommand { direction in
+            if isProgramInfoPresented {
+                switch direction {
+                case .left:
+                    movePlaybackSetting(by: -1)
+                case .right:
+                    movePlaybackSetting(by: 1)
+                case .up:
+                    closeProgramInfo()
+                default:
+                    break
+                }
+                resetIdleTimer()
+                return
+            }
+
             switch direction {
             case .down:
                 withAnimation(.easeOut(duration: 0.2)) {
@@ -337,9 +368,22 @@ struct PlayerView: View {
                 }
                 showPlayerUI()
                 resetIdleTimer()
+                Task { @MainActor in
+                    await Task.yield()
+                    focusedPlaybackSetting = .aspect
+                }
             case .up:
-                withAnimation(.easeOut(duration: 0.2)) {
-                    isProgramInfoPresented = false
+                showPlayerUI()
+                resetIdleTimer()
+            case .left:
+                if item.videoItem.type != .livestream {
+                    playerEvents.seekBy.send(-10)
+                }
+                showPlayerUI()
+                resetIdleTimer()
+            case .right:
+                if item.videoItem.type != .livestream {
+                    playerEvents.seekBy.send(10)
                 }
                 showPlayerUI()
                 resetIdleTimer()
@@ -350,9 +394,7 @@ struct PlayerView: View {
         }
         .onExitCommand {
             if isProgramInfoPresented {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    isProgramInfoPresented = false
-                }
+                closeProgramInfo()
             } else {
                 dismiss()
             }
@@ -364,40 +406,209 @@ struct PlayerView: View {
     }
 
     var programInfoPanel: some View {
-        HStack(alignment: .top, spacing: 32) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(verbatim: item.title)
-                    .font(.title2.bold())
-                    .lineLimit(2)
-                if let subtitle = item.subtitle, !subtitle.isEmpty {
-                    Text(verbatim: subtitle)
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
-                }
-                if let programDescription = item.programDescription, !programDescription.isEmpty {
-                    Text(verbatim: programDescription)
-                        .font(.body)
-                        .lineLimit(5)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("No program information")
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(spacing: 8) {
-                Text("Playback settings")
-                    .font(.caption)
+        VStack(alignment: .leading, spacing: 8) {
+            Text(verbatim: item.title)
+                .font(.title2.bold())
+                .lineLimit(2)
+            if let subtitle = item.subtitle, !subtitle.isEmpty {
+                Text(verbatim: subtitle)
+                    .font(.headline)
                     .foregroundStyle(.secondary)
-                playerMenu
-                    .font(.title2)
+            }
+            if let programDescription = item.programDescription, !programDescription.isEmpty {
+                Text(verbatim: programDescription)
+                    .font(.body)
+                    .lineLimit(4)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("No program information")
+                    .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 56)
-        .padding(.vertical, 28)
-        .background(.black.opacity(0.88))
+        .padding(.vertical, 22)
+        .background(.black.opacity(0.68))
     }
+
+    var tvOSPlaybackSettings: some View {
+        HStack(spacing: 12) {
+            Menu {
+                ForEach(VideoAspectRatio.allCases) { aspectRatio in
+                    Button {
+                        userSettings.videoAspectRatio = aspectRatio
+                    } label: {
+                        if userSettings.videoAspectRatio == aspectRatio {
+                            Label(aspectRatio.label, systemImage: "checkmark")
+                        } else {
+                            Text(verbatim: aspectRatio.label)
+                        }
+                    }
+                }
+            } label: {
+                playbackSettingLabel("Aspect", value: userSettings.videoAspectRatio.label, systemImage: "aspectratio", setting: .aspect)
+            }
+            .focused($focusedPlaybackSetting, equals: .aspect)
+            .buttonStyle(.plain)
+            .focusEffectDisabled()
+
+            if item.videoItem.type != .livestream {
+                Menu {
+                    ForEach(PlaybackSpeed.all) { speed in
+                        Button {
+                            playbackSpeed = speed
+                        } label: {
+                            if playbackSpeed == speed {
+                                Label(speed.text, systemImage: "checkmark")
+                            } else {
+                                Text(verbatim: speed.text)
+                            }
+                        }
+                    }
+                } label: {
+                    playbackSettingLabel("Speed", value: playbackSpeed.text, systemImage: "gauge.with.dots.needle.67percent", setting: .speed)
+                }
+                .focused($focusedPlaybackSetting, equals: .speed)
+                .buttonStyle(.plain)
+                .focusEffectDisabled()
+            }
+
+            Menu {
+                ForEach(videoTracks) { track in
+                    Button {
+                        activeVideoTrack = track
+                    } label: {
+                        if activeVideoTrack == track {
+                            Label(track.name, systemImage: "checkmark")
+                        } else {
+                            Text(verbatim: track.name)
+                        }
+                    }
+                }
+            } label: {
+                playbackSettingLabel("Video", value: activeVideoTrack.id == "none" ? String(localized: "None") : activeVideoTrack.name, systemImage: "film", setting: .video)
+            }
+            .disabled(videoTracks.isEmpty)
+            .focused($focusedPlaybackSetting, equals: .video)
+            .buttonStyle(.plain)
+            .focusEffectDisabled()
+
+            Menu {
+                ForEach(audioTracks) { track in
+                    Button {
+                        activeAudioTrack = track
+                    } label: {
+                        if activeAudioTrack == track {
+                            Label(track.name, systemImage: "checkmark")
+                        } else {
+                            Text(verbatim: track.name)
+                        }
+                    }
+                }
+            } label: {
+                playbackSettingLabel("Audio", value: activeAudioTrack.id == "none" ? String(localized: "None") : activeAudioTrack.name, systemImage: "waveform", setting: .audio)
+            }
+            .disabled(audioTracks.isEmpty)
+            .focused($focusedPlaybackSetting, equals: .audio)
+            .buttonStyle(.plain)
+            .focusEffectDisabled()
+
+            Menu {
+                Button {
+                    activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
+                } label: {
+                    if activeTextTrack.id == "none" {
+                        Label("None", systemImage: "checkmark")
+                    } else {
+                        Text("None")
+                    }
+                }
+                ForEach(textTracks) { track in
+                    Button {
+                        activeTextTrack = track
+                    } label: {
+                        if activeTextTrack == track {
+                            Label(track.name, systemImage: "checkmark")
+                        } else {
+                            Text(verbatim: track.name)
+                        }
+                    }
+                }
+            } label: {
+                playbackSettingLabel("Subtitle", value: activeTextTrack.id == "none" ? String(localized: "None") : activeTextTrack.name, systemImage: "captions.bubble", setting: .subtitle)
+            }
+            .disabled(textTracks.isEmpty)
+            .focused($focusedPlaybackSetting, equals: .subtitle)
+            .buttonStyle(.plain)
+            .focusEffectDisabled()
+        }
+        .padding(10)
+        .background(.black.opacity(0.48), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    func playbackSettingLabel(_ title: LocalizedStringKey, value: String, systemImage: String, setting: PlaybackSetting) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.body)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(verbatim: value)
+                    .font(.callout)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, minHeight: 48, maxHeight: 48)
+        .background(
+            focusedPlaybackSetting == setting ? Color.white.opacity(0.28) : Color.white.opacity(0.1),
+            in: RoundedRectangle(cornerRadius: 6)
+        )
+    }
+
+    #if os(tvOS)
+    var availablePlaybackSettings: [PlaybackSetting] {
+        var settings: [PlaybackSetting] = [.aspect]
+        if item.videoItem.type != .livestream {
+            settings.append(.speed)
+        }
+        if !videoTracks.isEmpty {
+            settings.append(.video)
+        }
+        if !audioTracks.isEmpty {
+            settings.append(.audio)
+        }
+        if !textTracks.isEmpty {
+            settings.append(.subtitle)
+        }
+        return settings
+    }
+
+    func movePlaybackSetting(by offset: Int) {
+        let settings = availablePlaybackSettings
+        guard !settings.isEmpty else {
+            return
+        }
+        let currentIndex = focusedPlaybackSetting.flatMap { settings.firstIndex(of: $0) } ?? 0
+        focusedPlaybackSetting = settings[(currentIndex + offset + settings.count) % settings.count]
+    }
+
+    func closeProgramInfo() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            isProgramInfoPresented = false
+        }
+        focusedPlaybackSetting = nil
+        showPlayerUI()
+        resetIdleTimer()
+        Task { @MainActor in
+            await Task.yield()
+            isRemoteSurfaceFocused = true
+        }
+    }
+    #endif
     
     var playerMenu: some View {
         Menu {
@@ -536,17 +747,29 @@ struct PlayerView: View {
                 playerUIOpacity = 1
             }
         }
+        #if os(tvOS)
+        isRemoteSurfaceFocused = false
+        #endif
         #if os(macOS)
         macHelper?.setWindowTitleBar(visible: true)
         #endif
     }
     
     func hidePlayerUI() {
+        guard !isProgramInfoPresented else {
+            return
+        }
         if playerUIOpacity == 1 {
             withAnimation(.default.speed(2)) {
                 playerUIOpacity = 0
                 isProgramInfoPresented = false
             }
+            #if os(tvOS)
+            Task { @MainActor in
+                await Task.yield()
+                isRemoteSurfaceFocused = true
+            }
+            #endif
         }
         #if os(macOS)
         if let macHelper, !macHelper.isFullScreen {
@@ -625,6 +848,14 @@ struct PlayerView: View {
             }
         }
     }
+}
+
+enum PlaybackSetting: Hashable {
+    case aspect
+    case speed
+    case video
+    case audio
+    case subtitle
 }
 
 enum PlaybackSpeed: Float, Hashable, Identifiable {

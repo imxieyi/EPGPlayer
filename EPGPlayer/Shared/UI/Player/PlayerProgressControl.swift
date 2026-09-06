@@ -47,6 +47,10 @@ struct PlayerProgressControl: View {
                     }
                 })
                 .disabled(playerState == .opening || !hadPlayingState)
+                #else
+                ProgressView(value: playbackPosition)
+                    .progressViewStyle(.linear)
+                    .tint(.white)
                 #endif
             } else {
                 Spacer()
@@ -155,6 +159,9 @@ struct PlayerProgressControl: View {
             playbackPosition = position.position
             playbackTime = Double(position.time) / 1000
         }
+        .onReceive(playerEvents.seekBy) { seconds in
+            seekBy(seconds: seconds)
+        }
         .onReceive(playerEvents.resetPlayer) {
             videoLength = nil
             playbackTime = 0
@@ -178,12 +185,10 @@ struct PlayerProgressControl: View {
     }
     
     func seekBy(seconds: Double) {
-        guard let videoLength else {
+        guard let videoLength, videoLength > 0 else {
             return
         }
-        let fakeLength = playbackTime / playbackPosition
-        let diff = seconds / videoLength / videoLength * fakeLength
-        let newPosition = min(max(diff + playbackPosition, 0), 1)
+        let newPosition = min(max(playbackPosition + seconds / videoLength, 0), 1)
         playerEvents.setPlaybackPosition.send(newPosition)
     }
 }
