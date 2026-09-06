@@ -35,14 +35,71 @@ struct LiveChannelsView: View {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
                 refresh(waitTime: waitTime)
             } content: {
-                if let liveStreamConfig {
-                    #if os(tvOS)
-                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
-                    #else
-                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 10)
-                    #endif
-                    ScrollView {
-                        #if os(macOS)
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar {
+                        Button {
+                            showSettings.toggle()
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                        }
+                        .controlSize(.small)
+                    }
+                    liveContent
+                }
+                #else
+                liveContent
+                #endif
+            }
+            .toolbar(content: {
+                #if os(macOS)
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                }
+                #endif
+                #if !os(tvOS)
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSettings.toggle()
+                    } label: {
+                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+                #endif
+            })
+            #if !os(tvOS)
+            .navigationTitle("Live")
+            #if !os(macOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #else
+            .toolbarTitleDisplayMode(.inline)
+            #endif
+        }
+        .sheet(isPresented: $showSettings) {
+            settings
+        }
+        .onAppear {
+            if schedules.isEmpty || liveStreamConfig == nil {
+                refresh()
+            }
+        }
+    }
+    
+    var liveContent: some View {
+        Group {
+            if let liveStreamConfig {
+                #if os(tvOS)
+                let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
+                #else
+                let gridItem = GridItem(.adaptive(minimum: 300), spacing: 10)
+                #endif
+                ScrollView {
+                    #if os(macOS)
                         Spacer()
                             .frame(height: 10)
                         #endif
@@ -175,49 +232,7 @@ struct LiveChannelsView: View {
                     ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
                 }
             }
-            .toolbar(content: {
-                #if os(macOS)
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        refresh()
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                }
-                #endif
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showSettings.toggle()
-                    } label: {
-                        #if os(tvOS)
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        #else
-                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-                        #endif
-                    }
-                    #if os(tvOS)
-                    .controlSize(.small)
-                    #endif
-                }
-            })
-            #if !os(tvOS)
-            .navigationTitle("Live")
-            #if !os(macOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            #else
-            .toolbarTitleDisplayMode(.inline)
-            #endif
         }
-        .sheet(isPresented: $showSettings) {
-            settings
-        }
-        .onAppear {
-            if schedules.isEmpty || liveStreamConfig == nil {
-                refresh()
-            }
-        }
-    }
     
     var settings: some View {
         NavigationStack {

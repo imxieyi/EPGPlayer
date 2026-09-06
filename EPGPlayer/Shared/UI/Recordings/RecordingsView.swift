@@ -27,7 +27,23 @@ struct RecordingsView: View {
     
     var body: some View {
         NavigationStack {
-            recordingsContent
+            Group {
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar {
+                        Button {
+                            showSearchView.toggle()
+                        } label: {
+                            Image(systemName: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
+                        }
+                        .controlSize(.small)
+                    }
+                    recordingsContent
+                }
+                #else
+                recordingsContent
+                #endif
+            }
             .toolbar(content: {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
@@ -38,20 +54,15 @@ struct RecordingsView: View {
                     }
                 }
                 #endif
+                #if !os(tvOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showSearchView.toggle()
                     } label: {
-                        #if os(tvOS)
-                        Image(systemName: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
-                        #else
                         Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
-                        #endif
                     }
-                    #if os(tvOS)
-                    .controlSize(.small)
-                    #endif
                 }
+                #endif
             })
             #if !os(tvOS)
             .navigationTitle("Recordings")

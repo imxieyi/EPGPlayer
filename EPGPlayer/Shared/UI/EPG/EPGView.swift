@@ -72,53 +72,27 @@ struct EPGView: View {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
                 refresh(waitTime: waitTime, manual: false)
             } content: {
-                if !schedules.isEmpty {
-                    GeometryReader { outerProxy in
-                        ScrollView([.horizontal, .vertical]) {
-                            ZStack(alignment: .topLeading) {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Spacer()
-                                        .frame(height: borderWidth)
-                                    HStack(alignment: .top, spacing: 0) {
-                                        Spacer()
-                                            .frame(width: borderWidth)
-                                        epgGrid
-                                    }
-                                }
-                                Color.red
-                                    .frame(width: channelWidth * CGFloat(schedules.count), height: 2)
-                                    .position(x: borderWidth + channelWidth * CGFloat(schedules.count) / 2, y: borderWidth + nowPosition)
-                                hourRuler
-                                    .background(.regularMaterial)
-                                    .offset(x: -scrollOffset.x)
-                                channelHeader
-                                    .background(.regularMaterial)
-                                    .offset(y: -scrollOffset.y)
-                            }
-                            .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
-                            .background(GeometryReader { (proxy: GeometryProxy) -> Color in
-                                viewSize = outerProxy.size
-                                safeAreaInsets = outerProxy.safeAreaInsets
-                                scrollOffset = proxy.frame(in: .named("outer")).origin
-                                return Color.clear
-                            })
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar {
+                        Button {
+                            showReserves.toggle()
+                        } label: {
+                            Image(systemName: "calendar.badge.clock")
                         }
-                        .refreshable {
-                            refresh(manual: false)
+                        .controlSize(.small)
+                        Button {
+                            showSettings.toggle()
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
                         }
-                        .onReceive(timer) { _ in
-                            updateNowPosition()
-                        }
+                        .controlSize(.small)
                     }
-                    #if os(tvOS)
-                    // The sticky header/ruler are positioned by counter-offsetting scroll,
-                    // not real pinning, so scrolled-past cells must be clipped to this
-                    // view's own bounds or they show through above the floating tab bar.
-                    .clipped()
-                    #endif
-                } else {
-                    ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
+                    epgContent
                 }
+                #else
+                epgContent
+                #endif
             }
             .coordinateSpace(name: "outer")
             .toolbar(content: {
@@ -131,34 +105,22 @@ struct EPGView: View {
                     }
                 }
                 #endif
+                #if !os(tvOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showReserves.toggle()
                     } label: {
-                        #if os(tvOS)
-                        Image(systemName: "calendar.badge.clock")
-                        #else
                         Label("Reserves", systemImage: "calendar.badge.clock")
-                        #endif
                     }
-                    #if os(tvOS)
-                    .controlSize(.small)
-                    #endif
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showSettings.toggle()
                     } label: {
-                        #if os(tvOS)
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        #else
                         Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-                        #endif
                     }
-                    #if os(tvOS)
-                    .controlSize(.small)
-                    #endif
                 }
+                #endif
             })
             #if !os(tvOS)
             .navigationTitle("EPG")
@@ -199,6 +161,58 @@ struct EPGView: View {
                 await notifier.updateSetProgramIds()
             }
             #endif
+        }
+    }
+    
+    var epgContent: some View {
+        Group {
+            if !schedules.isEmpty {
+                GeometryReader { outerProxy in
+                    ScrollView([.horizontal, .vertical]) {
+                        ZStack(alignment: .topLeading) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Spacer()
+                                    .frame(height: borderWidth)
+                                HStack(alignment: .top, spacing: 0) {
+                                    Spacer()
+                                        .frame(width: borderWidth)
+                                    epgGrid
+                                }
+                            }
+                            Color.red
+                                .frame(width: channelWidth * CGFloat(schedules.count), height: 2)
+                                .position(x: borderWidth + channelWidth * CGFloat(schedules.count) / 2, y: borderWidth + nowPosition)
+                            hourRuler
+                                .background(.regularMaterial)
+                                .offset(x: -scrollOffset.x)
+                            channelHeader
+                                .background(.regularMaterial)
+                                .offset(y: -scrollOffset.y)
+                        }
+                        .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
+                        .background(GeometryReader { (proxy: GeometryProxy) -> Color in
+                            viewSize = outerProxy.size
+                            safeAreaInsets = outerProxy.safeAreaInsets
+                            scrollOffset = proxy.frame(in: .named("outer")).origin
+                            return Color.clear
+                        })
+                    }
+                    .refreshable {
+                        refresh(manual: false)
+                    }
+                    .onReceive(timer) { _ in
+                        updateNowPosition()
+                    }
+                }
+                #if os(tvOS)
+                // The sticky header/ruler are positioned by counter-offsetting scroll,
+                // not real pinning, so scrolled-past cells must be clipped to this
+                // view's own bounds or they show through above the floating tab bar.
+                .clipped()
+                #endif
+            } else {
+                ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
+            }
         }
     }
     
