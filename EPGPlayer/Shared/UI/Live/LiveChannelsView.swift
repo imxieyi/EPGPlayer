@@ -127,6 +127,9 @@ struct LiveChannelsView: View {
                                         .frame(maxWidth: .infinity, minHeight: 120, idealHeight: 120, maxHeight: 120)
                                         .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
                                         .shadow(radius: 3)
+                                        #if os(tvOS)
+                                        .tvOSFocusCard()
+                                        #endif
                                     }
                                     .id(schedule.channel.id)
                                     #if !os(tvOS)

@@ -258,6 +258,9 @@ struct EPGView: View {
                                                 .padding(4)
                                         }
                                     }
+                                    #if os(tvOS)
+                                    .tvOSFocusCard(cornerRadius: 4)
+                                    #endif
                                 }
                                 #if os(macOS) || os(tvOS)
                                 .buttonStyle(.borderless)

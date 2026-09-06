@@ -108,6 +108,9 @@ struct RecordingCell: View {
             .aspectRatio(16/9, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
             .shadow(radius: 3)
+            #if os(tvOS)
+            .tvOSFocusCard()
+            #endif
         }
     }
 }
