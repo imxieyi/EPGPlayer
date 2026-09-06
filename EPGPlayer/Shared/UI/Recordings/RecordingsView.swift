@@ -42,8 +42,15 @@ struct RecordingsView: View {
                     Button {
                         showSearchView.toggle()
                     } label: {
+                        #if os(tvOS)
+                        Image(systemName: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
+                        #else
                         Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
+                        #endif
                     }
+                    #if os(tvOS)
+                    .controlSize(.small)
+                    #endif
                 }
             })
             #if !os(tvOS)
@@ -51,6 +58,8 @@ struct RecordingsView: View {
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            #else
+            .toolbarTitleDisplayMode(.inline)
             #endif
         }
         .sheet(isPresented: $showSearchView) {

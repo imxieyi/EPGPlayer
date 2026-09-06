@@ -161,8 +161,9 @@ struct RecordingDetailView: View {
                         Button {
                             showActionMenu = true
                         } label: {
-                            Label("More", systemImage: "ellipsis")
+                            Image(systemName: "ellipsis")
                         }
+                        .controlSize(.small)
                         #else
                         Menu {
                             Button(role: .destructive) {

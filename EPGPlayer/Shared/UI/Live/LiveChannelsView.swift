@@ -94,22 +94,43 @@ struct LiveChannelsView: View {
                                                 }
                                                 .frame(height: 20)
                                                 Text(schedule.channel.name)
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 16))
+                                                    .lineLimit(1)
+                                                    #endif
                                                 Spacer()
                                                 Text(schedule.channel.channelType.rawValue.uppercased())
                                                     .foregroundStyle(.secondary)
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 14))
+                                                    #endif
                                             }
                                             if let program = schedule.programs.first {
                                                 Text(verbatim: program.name)
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 22, weight: .bold))
+                                                    #else
                                                     .font(.headline)
+                                                    #endif
                                                     .multilineTextAlignment(.leading)
                                                     .lineLimit(2)
                                                     .layoutPriority(3)
                                                 Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 16))
+                                                    .lineLimit(1)
+                                                    #else
                                                     .font(.caption)
+                                                    #endif
                                                     .layoutPriority(2)
                                                 if let description = program.description {
                                                     Text(verbatim: description)
+                                                        #if os(tvOS)
+                                                        .font(.system(size: 14))
+                                                        .lineLimit(2)
+                                                        #else
                                                         .font(.footnote)
+                                                        #endif
                                                         .multilineTextAlignment(.leading)
                                                         .layoutPriority(1)
                                                 }
@@ -168,8 +189,15 @@ struct LiveChannelsView: View {
                     Button {
                         showSettings.toggle()
                     } label: {
+                        #if os(tvOS)
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        #else
                         Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                        #endif
                     }
+                    #if os(tvOS)
+                    .controlSize(.small)
+                    #endif
                 }
             })
             #if !os(tvOS)
@@ -177,6 +205,8 @@ struct LiveChannelsView: View {
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            #else
+            .toolbarTitleDisplayMode(.inline)
             #endif
         }
         .sheet(isPresented: $showSettings) {

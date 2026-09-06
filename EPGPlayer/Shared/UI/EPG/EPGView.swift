@@ -25,7 +25,12 @@ struct EPGView: View {
     @State var endAt: CGFloat = 0
     @State var channelWidth: CGFloat = 200
     @State var heightOneDay: CGFloat = 5000
+    #if os(tvOS)
+    // tvOS's larger default text needs more room than the 20pt used elsewhere.
+    @State var borderWidth: CGFloat = 60
+    #else
     @State var borderWidth: CGFloat = 20
+    #endif
     @State var viewSize = CGSize.zero
     @State var safeAreaInsets = EdgeInsets()
     @State var scrollOffset = CGPoint.zero
@@ -105,6 +110,12 @@ struct EPGView: View {
                             updateNowPosition()
                         }
                     }
+                    #if os(tvOS)
+                    // The sticky header/ruler are positioned by counter-offsetting scroll,
+                    // not real pinning, so scrolled-past cells must be clipped to this
+                    // view's own bounds or they show through above the floating tab bar.
+                    .clipped()
+                    #endif
                 } else {
                     ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
                 }
@@ -124,15 +135,29 @@ struct EPGView: View {
                     Button {
                         showReserves.toggle()
                     } label: {
+                        #if os(tvOS)
+                        Image(systemName: "calendar.badge.clock")
+                        #else
                         Label("Reserves", systemImage: "calendar.badge.clock")
+                        #endif
                     }
+                    #if os(tvOS)
+                    .controlSize(.small)
+                    #endif
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showSettings.toggle()
                     } label: {
+                        #if os(tvOS)
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                        #else
                         Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                        #endif
                     }
+                    #if os(tvOS)
+                    .controlSize(.small)
+                    #endif
                 }
             })
             #if !os(tvOS)
@@ -140,6 +165,10 @@ struct EPGView: View {
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            #else
+            // Without this, the untitled nav bar still reserves large-title-sized
+            // height, leaving a big empty gap below the floating tab bar.
+            .toolbarTitleDisplayMode(.inline)
             #endif
             .sheet(item: $selectedProgram) { program in
                 #if !os(tvOS)
@@ -179,7 +208,12 @@ struct EPGView: View {
                 .frame(width: borderWidth)
             ForEach(schedules) { schedule in
                 Text(schedule.channel.name)
+                    #if os(tvOS)
+                    .font(.system(size: 20, weight: .bold))
+                    .lineLimit(1)
+                    #else
                     .font(.headline)
+                    #endif
                     .frame(width: channelWidth)
             }
         }
@@ -193,7 +227,12 @@ struct EPGView: View {
             ForEach(0..<hourRulers.count, id: \.self) { index in
                 VStack {
                     Text(verbatim: hourRulers[index])
+                        #if os(tvOS)
+                        .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                        .lineLimit(1)
+                        #else
                         .font(.system(.headline, design: .monospaced))
+                        #endif
                     Spacer()
                 }
                 .frame(height: heightOneDay / 24)
