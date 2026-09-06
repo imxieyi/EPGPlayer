@@ -309,6 +309,11 @@ struct PlayerView: View {
                 if let savedPlaybackPosition {
                     playerEvents.setPlaybackPosition.send(savedPlaybackPosition.position)
                 }
+                if activeTextTrack.id == "none" {
+                    // VLC can finalize its own default subtitle track selection once playback
+                    // actually starts, after all per-track "disable" commands already ran.
+                    playerEvents.enableTrack.send(activeTextTrack)
+                }
             }
         })
         .onReceive(playerEvents.addVideoTrack) { track in
@@ -327,6 +332,10 @@ struct PlayerView: View {
             textTracks.append(track)
             if userSettings.enableSubtitles && textTracks.count == 1 {
                 activeTextTrack = track
+            } else if activeTextTrack.id == "none" {
+                // VLC can auto-select a newly discovered track (e.g. ARIB captions) on its own;
+                // re-assert "None" so it doesn't silently override the user's choice.
+                playerEvents.enableTrack.send(activeTextTrack)
             }
         }
         .onReceive(playerEvents.setPIPSupported, perform: { supported in
