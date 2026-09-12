@@ -341,7 +341,9 @@ struct RecordingsView: View {
                     guard let keyword = rule.value2.searchOption.keyword, !keyword.isEmpty else {
                         continue
                     }
-                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, limit: 20, isReverse: true, ruleId: ruleId))
+                    // No isReverse here: the default (unspecified) order is already newest-first,
+                    // matching "Recent Recordings" below - isReverse actually flips it to oldest-first.
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, limit: 20, ruleId: ruleId))
                     let json = try resp.ok.body.json
                     ruleResults.append((ruleId, keyword, json.total, json.records))
                 }
@@ -353,7 +355,7 @@ struct RecordingsView: View {
                 var last30DaysItems: [Components.Schemas.RecordedItem] = []
                 var last30DaysOffset = 0
                 while last30DaysOffset < 500 {
-                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: last30DaysOffset, limit: 100, isReverse: true))
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: last30DaysOffset, limit: 100))
                     let json = try resp.ok.body.json
                     if json.records.isEmpty {
                         break
@@ -373,6 +375,7 @@ struct RecordingsView: View {
                     .sorted { $0.total > $1.total }
                     .map { RecordingShelf(id: "rule-\($0.ruleId)", title: $0.keyword, items: $0.items) }
                 
+                Logger.info("Shelves: recent=\(recentShelf.items.count), last30days=\(last30DaysShelf.items.count), rules=\(ruleShelves.count)")
                 shelves = [recentShelf, last30DaysShelf].filter { !$0.items.isEmpty } + ruleShelves
                 shelvesLoadingState = .loaded
             } catch let error {
