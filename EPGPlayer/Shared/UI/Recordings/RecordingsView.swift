@@ -35,7 +35,7 @@ struct RecordingsView: View {
             Group {
                 #if os(tvOS)
                 VStack(spacing: 0) {
-                    TVTopActionBar {
+                    TVTopActionBar(alignment: .leading) {
                         Button {
                             showSearchView.toggle()
                         } label: {

@@ -12,14 +12,20 @@ import SwiftUI
 /// can't be reduced via .labelStyle/.controlSize/.navigationTitle, so instead
 /// this renders plain content positioned directly under the tab bar.
 struct TVTopActionBar<Content: View>: View {
+    var alignment: HorizontalAlignment = .trailing
     @ViewBuilder let content: Content
 
     var body: some View {
         HStack(spacing: 24) {
-            Spacer()
+            if alignment == .trailing {
+                Spacer()
+            }
             content
+            if alignment == .leading {
+                Spacer()
+            }
         }
-        .padding(.trailing, 48)
+        .padding(.horizontal, 48)
         .padding(.top, 8)
     }
 }
