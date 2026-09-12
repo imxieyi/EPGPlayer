@@ -123,15 +123,20 @@ extension EPGProgramView {
             Text(verbatim: program.name)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
+                #if os(tvOS)
+                // Without this, a long title's natural single-line width dictates the
+                // whole popup's ideal width upward instead of wrapping.
                 .frame(maxWidth: .infinity)
-                #if !os(tvOS)
+                #else
                 .textSelection(.enabled)
                 #endif
             Text(verbatim: startAt.formatted(RecordingCell.startDateFormatStyle)
                  + " ~ "
                  + endAt.formatted(RecordingCell.endDateFormatStyle)
                  + " (\((program.endAt - program.startAt) / 60 / 1000)分)")
+                #if os(tvOS)
                 .frame(maxWidth: .infinity)
+                #endif
             if let genre = program.genre1, let genreStr = EPGGenre[genre],
                let subGenre = program.subGenre1, let subGenreStr = EPGSubGenre[genre]?[subGenre] {
                 Text(genreStr + " / " + subGenreStr)
