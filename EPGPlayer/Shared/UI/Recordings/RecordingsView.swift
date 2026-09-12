@@ -348,35 +348,40 @@ struct RecordingsView: View {
                     ruleResults.append((ruleId, keyword, json.total, json.records))
                 }
                 
-                // "Recorded" is only the default-limit (24) first page, which may not cover a
-                // full 30 days for an active recorder - page through newest-first until an
-                // item older than the window is seen, rather than relying on that first page.
+                // Page through newest-first, bucketing into "last 30 days" vs "older", until
+                // we have enough older items for that shelf too (or run out of data).
                 let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 3600)
                 var last30DaysItems: [Components.Schemas.RecordedItem] = []
-                var last30DaysOffset = 0
-                while last30DaysOffset < 500 {
-                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: last30DaysOffset, limit: 100))
+                var olderItems: [Components.Schemas.RecordedItem] = []
+                var offset = 0
+                while offset < 500 {
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: offset, limit: 100))
                     let json = try resp.ok.body.json
                     if json.records.isEmpty {
                         break
                     }
-                    let inWindow = json.records.prefix(while: { $0.startTime >= thirtyDaysAgo })
-                    last30DaysItems += inWindow
-                    last30DaysOffset += json.records.count
-                    if inWindow.count < json.records.count || last30DaysOffset >= json.total {
+                    for record in json.records {
+                        if record.startTime >= thirtyDaysAgo {
+                            last30DaysItems.append(record)
+                        } else {
+                            olderItems.append(record)
+                        }
+                    }
+                    offset += json.records.count
+                    if olderItems.count >= 30 || offset >= json.total {
                         break
                     }
                 }
                 
-                let recentShelf = RecordingShelf(id: "recent", title: String(localized: "Recent Recordings"), items: Array(recorded.prefix(20)))
-                let last30DaysShelf = RecordingShelf(id: "last30days", title: String(localized: "Last 30 Days"), items: Array(last30DaysItems.prefix(30)))
+                let recentShelf = RecordingShelf(id: "recent", title: String(localized: "Recent Recordings"), items: Array(last30DaysItems.prefix(30)))
+                let olderShelf = RecordingShelf(id: "older", title: String(localized: "Older Recordings"), items: Array(olderItems.prefix(30)))
                 let ruleShelves = ruleResults
                     .filter { $0.total > 0 }
                     .sorted { $0.total > $1.total }
                     .map { RecordingShelf(id: "rule-\($0.ruleId)", title: $0.keyword, items: $0.items) }
                 
-                Logger.info("Shelves: recent=\(recentShelf.items.count), last30days=\(last30DaysShelf.items.count), rules=\(ruleShelves.count)")
-                shelves = [recentShelf, last30DaysShelf].filter { !$0.items.isEmpty } + ruleShelves
+                Logger.info("Shelves: recent=\(recentShelf.items.count), older=\(olderShelf.items.count), rules=\(ruleShelves.count)")
+                shelves = [recentShelf, olderShelf].filter { !$0.items.isEmpty } + ruleShelves
                 shelvesLoadingState = .loaded
             } catch let error {
                 Logger.error("Failed to load recording shelves: \(error.localizedDescription)")
