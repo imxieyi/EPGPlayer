@@ -144,11 +144,11 @@ struct RecordingsView: View {
                         } label: {
                             RecordingCell(item: item)
                         }
-                        #if os(macOS) || os(tvOS)
-                        .buttonStyle(.borderless)
-                        #endif
                         #if os(tvOS)
+                        .buttonStyle(.tvFlat)
                         .focusEffectDisabled()
+                        #elseif os(macOS)
+                        .buttonStyle(.borderless)
                         #endif
                         .tint(.primary)
                         .id(item.id)
@@ -213,7 +213,7 @@ struct RecordingsView: View {
                         } label: {
                             RecordingCell(item: item)
                         }
-                        .buttonStyle(.borderless)
+                        .buttonStyle(.tvFlat)
                         .focusEffectDisabled()
                         .tint(.primary)
                         .frame(width: 420)

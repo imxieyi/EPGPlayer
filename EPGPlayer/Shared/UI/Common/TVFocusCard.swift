@@ -31,4 +31,18 @@ extension View {
         modifier(TVFocusCardModifier(cornerRadius: cornerRadius, scale: scale))
     }
 }
+
+/// PlainButtonStyle/BorderlessButtonStyle still apply tvOS's own automatic
+/// focus scale/lift internally - .focusEffectDisabled() alone does not
+/// suppress it. Use this style (label rendered as-is) together with
+/// tvOSFocusCard(scale: 1.0) when only the white border should indicate focus.
+struct TVFlatButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+    }
+}
+
+extension ButtonStyle where Self == TVFlatButtonStyle {
+    static var tvFlat: TVFlatButtonStyle { TVFlatButtonStyle() }
+}
 #endif
