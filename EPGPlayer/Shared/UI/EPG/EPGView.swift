@@ -94,7 +94,6 @@ struct EPGView: View {
                 epgContent
                 #endif
             }
-            .coordinateSpace(name: "outer")
             .toolbar(content: {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
@@ -190,10 +189,9 @@ struct EPGView: View {
                                 .offset(y: -scrollOffset.y)
                         }
                         .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
-                        .background(GeometryReader { (proxy: GeometryProxy) -> Color in
+                        .background(GeometryReader { (_: GeometryProxy) -> Color in
                             viewSize = outerProxy.size
                             safeAreaInsets = outerProxy.safeAreaInsets
-                            scrollOffset = proxy.frame(in: .named("outer")).origin
                             return Color.clear
                         })
                     }
@@ -203,13 +201,21 @@ struct EPGView: View {
                     .onReceive(timer) { _ in
                         updateNowPosition()
                     }
+                    // The nested-GeometryReader + named-coordinate-space trick used to measure
+                    // scroll position was unreliable on tvOS (channelHeader/hourRuler could
+                    // render blank after scrolling). onScrollGeometryChange reports the
+                    // ScrollView's own content offset directly, so use that instead. Sign is
+                    // flipped to match the existing "-scrollOffset" convention used below.
+                    .onScrollGeometryChange(for: CGPoint.self) { geometry in
+                        geometry.contentOffset
+                    } action: { _, newValue in
+                        scrollOffset = CGPoint(x: -newValue.x, y: -newValue.y)
+                    }
                 }
                 #if os(tvOS)
                 // The sticky header/ruler are positioned by counter-offsetting scroll,
                 // not real pinning, so scrolled-past cells must be clipped to this
                 // view's own bounds or they show through above the floating tab bar.
-                // Known issue: channelHeader/hourRuler can also render blank once
-                // scrolled, independent of this - see repo memory notes.
                 .clipped()
                 #endif
             } else {
