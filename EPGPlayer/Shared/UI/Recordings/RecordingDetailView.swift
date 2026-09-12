@@ -202,6 +202,15 @@ struct RecordingDetailView: View {
                 Text(verbatim: deleteError)
             }
         }
+        #if os(tvOS)
+        // Right after the player's fullScreenCover dismisses, tvOS sometimes fails to
+        // recognize this view still has a NavigationStack to pop back into, and routes
+        // the Menu button to "exit app" instead. Handle it explicitly so Back always
+        // just pops back to the recordings list.
+        .onExitCommand {
+            dismiss()
+        }
+        #endif
     }
 
     func deleteRecording() {
