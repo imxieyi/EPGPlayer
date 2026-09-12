@@ -208,6 +208,8 @@ struct EPGView: View {
                 // The sticky header/ruler are positioned by counter-offsetting scroll,
                 // not real pinning, so scrolled-past cells must be clipped to this
                 // view's own bounds or they show through above the floating tab bar.
+                // Known issue: channelHeader/hourRuler can also render blank once
+                // scrolled, independent of this - see repo memory notes.
                 .clipped()
                 #endif
             } else {
