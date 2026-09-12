@@ -184,9 +184,8 @@ struct EPGProgramView: View {
                 }
                 #if os(tvOS)
                 // Without this, text sits flush against the floating sheet's rounded
-                // edges and looks clipped/overflowing; also widen the popup itself.
+                // edges and looks clipped/overflowing.
                 .padding(40)
-                .frame(width: 900)
                 #endif
             }
             #if !os(tvOS)
@@ -259,6 +258,11 @@ struct EPGProgramView: View {
             }
             #endif
         }
+        #if os(tvOS)
+        // Applied to the whole NavigationStack (rather than inside the ScrollView)
+        // since that's what actually sizes the floating sheet on tvOS.
+        .frame(width: 900)
+        #endif
     }
 }
 
