@@ -334,7 +334,9 @@ struct EPGView: View {
                                         }
                                     }
                                     #if os(tvOS)
-                                    .tvOSFocusCard(cornerRadius: 4)
+                                    // The white focus border is enough here; the zoom made focused
+                                    // cells overlap neighboring programs in the grid.
+                                    .tvOSFocusCard(cornerRadius: 4, scale: 1.0)
                                     #endif
                                 }
                                 #if os(macOS) || os(tvOS)

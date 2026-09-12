@@ -182,6 +182,12 @@ struct EPGProgramView: View {
                         .font(.subheadline)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                #if os(tvOS)
+                // Without this, text sits flush against the floating sheet's rounded
+                // edges and looks clipped/overflowing; also widen the popup itself.
+                .padding(40)
+                .frame(width: 900)
+                #endif
             }
             #if !os(tvOS)
             .navigationTitle(channel.name)
