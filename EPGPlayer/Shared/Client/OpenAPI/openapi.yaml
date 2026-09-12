@@ -2031,16 +2031,16 @@ components:
           type: integer
     Rule:
       description: ルール
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          $ref: '#/components/schemas/RuleId'
-        reservesCnt:
-          description: 予約件数
-          type: integer
       allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              $ref: '#/components/schemas/RuleId'
+            reservesCnt:
+              description: 予約件数
+              type: integer
         - $ref: '#/components/schemas/AddRuleOption'
     RuleKeywordItem:
       type: object

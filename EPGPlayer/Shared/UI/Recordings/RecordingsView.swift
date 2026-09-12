@@ -25,6 +25,11 @@ struct RecordingsView: View {
     @State var channels: [Components.Schemas.ChannelItem] = []
     @State var recorded: [Components.Schemas.RecordedItem] = []
     
+    #if os(tvOS)
+    @State var shelves: [RecordingShelf] = []
+    @State var shelvesLoadingState = LoadingState.loading
+    #endif
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -93,56 +98,15 @@ struct RecordingsView: View {
                     .frame(height: 10)
                 #endif
 
-                if recorded.isEmpty {
-                    ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+                #if os(tvOS)
+                if searchQuery == nil {
+                    shelvesSection
                 } else {
-                    #if os(tvOS)
-                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
-                    #else
-                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
-                    #endif
-                    LazyVGrid(columns: [gridItem], spacing: 15) {
-                        ForEach(recorded) { item in
-                            NavigationLink {
-                                RecordingDetailView(item: item, onDelete: {
-                                    recorded.removeAll { $0.id == item.id }
-                                    totalCount -= 1
-                                })
-                            } label: {
-                                RecordingCell(item: item)
-                            }
-                            #if os(macOS) || os(tvOS)
-                            .buttonStyle(.borderless)
-                            #endif
-                            .tint(.primary)
-                            .id(item.id)
-                        }
-                        if case .loaded = loadingMoreState, recorded.count < totalCount {
-                            Spacer()
-                                .onAppear {
-                                    loadMore()
-                                }
-                        }
-                    }
-                    #if !os(tvOS)
-                    .padding(.horizontal)
-                    #endif
+                    recordingsGrid
                 }
-
-                if recorded.count < totalCount {
-                    if case .loading = loadingMoreState {
-                        ProgressView()
-                            #if !os(tvOS)
-                            .controlSize(.large)
-                            #endif
-                    } else if case .error(let message) = loadingMoreState {
-                        ContentUnavailableView {
-                            Label("Error loading content", systemImage: "xmark.circle")
-                        } description: {
-                            message
-                        }
-                    }
-                }
+                #else
+                recordingsGrid
+                #endif
 
                 #if os(macOS)
                 Spacer()
@@ -159,6 +123,103 @@ struct RecordingsView: View {
             }
         }
     }
+    
+    var recordingsGrid: some View {
+        Group {
+            if recorded.isEmpty {
+                ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+            } else {
+                #if os(tvOS)
+                let gridItem = GridItem(.adaptive(minimum: 420), spacing: 15)
+                #else
+                let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                #endif
+                LazyVGrid(columns: [gridItem], spacing: 15) {
+                    ForEach(recorded) { item in
+                        NavigationLink {
+                            RecordingDetailView(item: item, onDelete: {
+                                recorded.removeAll { $0.id == item.id }
+                                totalCount -= 1
+                            })
+                        } label: {
+                            RecordingCell(item: item)
+                        }
+                        #if os(macOS) || os(tvOS)
+                        .buttonStyle(.borderless)
+                        #endif
+                        .tint(.primary)
+                        .id(item.id)
+                    }
+                    if case .loaded = loadingMoreState, recorded.count < totalCount {
+                        Spacer()
+                            .onAppear {
+                                loadMore()
+                            }
+                    }
+                }
+                #if !os(tvOS)
+                .padding(.horizontal)
+                #endif
+            }
+
+            if recorded.count < totalCount {
+                if case .loading = loadingMoreState {
+                    ProgressView()
+                        #if !os(tvOS)
+                        .controlSize(.large)
+                        #endif
+                } else if case .error(let message) = loadingMoreState {
+                    ContentUnavailableView {
+                        Label("Error loading content", systemImage: "xmark.circle")
+                    } description: {
+                        message
+                    }
+                }
+            }
+        }
+    }
+    
+    #if os(tvOS)
+    var shelvesSection: some View {
+        Group {
+            if case .loading = shelvesLoadingState, shelves.isEmpty {
+                ProgressView()
+            } else if shelves.isEmpty {
+                ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+            } else {
+                LazyVStack(alignment: .leading, spacing: 40) {
+                    ForEach(shelves) { shelf in
+                        recordingShelfRow(shelf)
+                    }
+                }
+            }
+        }
+    }
+    
+    func recordingShelfRow(_ shelf: RecordingShelf) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: shelf.title)
+                .font(.title3.bold())
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 24) {
+                    ForEach(shelf.items) { item in
+                        NavigationLink {
+                            RecordingDetailView(item: item, onDelete: {
+                                removeRecording(item)
+                            })
+                        } label: {
+                            RecordingCell(item: item)
+                        }
+                        .buttonStyle(.borderless)
+                        .tint(.primary)
+                        .frame(width: 420)
+                        .id(item.id)
+                    }
+                }
+            }
+        }
+    }
+    #endif
     
     func refresh(waitTime: Duration = .zero) {
         guard appState.clientState == .initialized else {
@@ -204,6 +265,11 @@ struct RecordingsView: View {
                 })
             }
             #endif
+            #if os(tvOS)
+            if searchQuery == nil {
+                loadShelves()
+            }
+            #endif
         }
     }
     
@@ -233,7 +299,70 @@ struct RecordingsView: View {
             }
         }
     }
+    
+    #if os(tvOS)
+    func removeRecording(_ item: Components.Schemas.RecordedItem) {
+        recorded.removeAll { $0.id == item.id }
+        totalCount -= 1
+        shelves = shelves.compactMap { shelf in
+            let items = shelf.items.filter { $0.id != item.id }
+            return items.isEmpty ? nil : RecordingShelf(id: shelf.id, title: shelf.title, items: items)
+        }
+    }
+    
+    func loadShelves() {
+        Task {
+            shelvesLoadingState = .loading
+            do {
+                var rules: [Components.Schemas.Rule] = []
+                while true {
+                    let resp = try await appState.client.api.getRules(query: .init(offset: rules.count, limit: 100))
+                    let json = try resp.ok.body.json
+                    if json.rules.isEmpty {
+                        break
+                    }
+                    rules += json.rules
+                    if rules.count >= json.total {
+                        break
+                    }
+                }
+                
+                var ruleResults: [(ruleId: Int, keyword: String, total: Int, items: [Components.Schemas.RecordedItem])] = []
+                for rule in rules {
+                    let ruleId = rule.value1.id
+                    guard let keyword = rule.value2.searchOption.keyword, !keyword.isEmpty else {
+                        continue
+                    }
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, limit: 20, isReverse: true, ruleId: ruleId))
+                    let json = try resp.ok.body.json
+                    ruleResults.append((ruleId, keyword, json.total, json.records))
+                }
+                
+                let recentShelf = RecordingShelf(id: "recent", title: String(localized: "Recent Recordings"), items: Array(recorded.prefix(20)))
+                let ruleShelves = ruleResults
+                    .filter { $0.total > 0 }
+                    .sorted { $0.total > $1.total }
+                    .map { RecordingShelf(id: "rule-\($0.ruleId)", title: $0.keyword, items: $0.items) }
+                
+                shelves = [recentShelf] + ruleShelves
+                shelvesLoadingState = .loaded
+            } catch let error {
+                Logger.error("Failed to load recording shelves: \(error.localizedDescription)")
+                shelvesLoadingState = .error(Text(verbatim: error.localizedDescription))
+            }
+        }
+    }
+    #endif
 }
 
 extension Components.Schemas.RecordedItem: Identifiable {
 }
+
+#if os(tvOS)
+struct RecordingShelf: Identifiable {
+    let id: String
+    let title: String
+    let items: [Components.Schemas.RecordedItem]
+}
+#endif
+
