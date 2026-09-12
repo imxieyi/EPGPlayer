@@ -235,12 +235,11 @@ class VLCPlayerViewController: UIViewController {
         
         view.addSubview(videoView)
 
-        #if os(tvOS)
-        // Temporary diagnostic for the tvOS stutter investigation: surface libVLC's own
-        // decoder/vout warnings (e.g. hardware decode fallback, late/dropped pictures) in
-        // the app's log so they show up in Console.app without attaching Xcode.
-        VLCLibrary.shared().loggers = [VLCDiagnosticLogger()]
-        #endif
+        // The VLCDiagnosticLogger install (VLCLibrary.shared().loggers = ...) used for the
+        // stutter investigation is disabled for now: at .debug level libVLC calls its
+        // handleMessage very frequently, and that callback overhead only exists on tvOS
+        // (nothing similar runs on iOS/macOS), so it could itself be responsible for part
+        // of the tvOS-only slowdown. Re-enable temporarily if more log evidence is needed.
 
         reload()
     }

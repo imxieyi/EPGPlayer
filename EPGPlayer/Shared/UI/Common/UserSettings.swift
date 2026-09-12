@@ -9,14 +9,25 @@
 import SwiftUI
 
 enum VideoAspectRatio: String, CaseIterable, Identifiable {
+    // Leaves the source's own aspect ratio untouched; explicitly forcing a ratio
+    // (even one matching the source) makes libVLC engage an extra per-frame
+    // scale/canvas pass that isn't needed otherwise.
+    case auto
     case fourThree = "4:3"
     case sixteenNine = "16:9"
     case zoom
 
     var id: Self { self }
-    var vlcValue: String? { self == .zoom ? nil : rawValue }
+    var vlcValue: String? { self == .zoom || self == .auto ? nil : rawValue }
     var label: String {
-        self == .zoom ? String(localized: "Zoom") : rawValue
+        switch self {
+        case .auto:
+            String(localized: "Auto")
+        case .zoom:
+            String(localized: "Zoom")
+        default:
+            rawValue
+        }
     }
 }
 
