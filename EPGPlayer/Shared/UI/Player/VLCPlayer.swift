@@ -392,11 +392,13 @@ class VLCPlayerViewController: UIViewController {
         
         // Prevent VLC deadlock causing main thread blocking.
         Task(priority: .background) { [mediaPlayer] in
-            while mediaPlayer.state != .stopped {
+            // Bounded so a genuinely stuck player (state never reaching .stopped) can't leave
+            // this polling forever, keeping a strong reference to mediaPlayer alive forever.
+            for _ in 0..<50 where mediaPlayer.state != .stopped {
                 Logger.warning("VLCPlayer not stopped")
                 try await Task.sleep(for: .milliseconds(100))
             }
-            Logger.warning("VLCPlayer stopped")
+            Logger.warning(mediaPlayer.state == .stopped ? "VLCPlayer stopped" : "VLCPlayer still not stopped after 5s, giving up")
         }
         togglePlayListener?.cancel()
         getTrackInfoListener?.cancel()
