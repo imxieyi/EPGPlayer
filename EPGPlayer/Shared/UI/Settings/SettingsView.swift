@@ -184,17 +184,23 @@ struct SettingsView: View {
             }
             .pickerStyle(.menu)
             
-            Picker(selection: liveQualityBinding) {
-                ForEach(liveQualityOptions) { option in
-                    Text(verbatim: option.label)
-                        .tag(option.id)
-                }
+            // A List-based NavigationLink instead of a Picker(.menu): the menu style
+            // picker with a dynamic ForEach + custom Binding was not reliably
+            // openable/selectable on tvOS.
+            NavigationLink {
+                liveQualityList
             } label: {
-                Text("Live quality")
+                HStack {
+                    Text("Live quality")
+                    Spacer()
+                    Text(verbatim: currentLiveQualityLabel)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .pickerStyle(.menu)
             .disabled(liveQualityOptions.isEmpty)
-            .task {
+            // Re-run whenever clientState changes so this isn't stuck empty forever
+            // if the sheet was opened before the client finished initializing.
+            .task(id: appState.clientState) {
                 await loadLiveQualityOptions()
             }
             #else
@@ -229,17 +235,27 @@ struct SettingsView: View {
     }
     
     #if os(tvOS)
-    var liveQualityBinding: Binding<String> {
-        Binding(
-            get: { "\(userSettings.tvLiveDefaultFormat)-\(userSettings.tvLiveDefaultMode)" },
-            set: { newValue in
-                guard let option = liveQualityOptions.first(where: { $0.id == newValue }) else {
-                    return
-                }
+    var currentLiveQualityLabel: String {
+        liveQualityOptions.first(where: { $0.format == userSettings.tvLiveDefaultFormat && $0.mode == userSettings.tvLiveDefaultMode })?.label
+            ?? "\(userSettings.tvLiveDefaultFormat)-\(userSettings.tvLiveDefaultMode)"
+    }
+    
+    var liveQualityList: some View {
+        List(liveQualityOptions) { option in
+            Button {
                 userSettings.tvLiveDefaultFormat = option.format
                 userSettings.tvLiveDefaultMode = option.mode
+            } label: {
+                HStack {
+                    Text(verbatim: option.label)
+                    Spacer()
+                    if option.format == userSettings.tvLiveDefaultFormat && option.mode == userSettings.tvLiveDefaultMode {
+                        Image(systemName: "checkmark")
+                    }
+                }
             }
-        )
+        }
+        .navigationTitle("Live quality")
     }
     
     func loadLiveQualityOptions() async {
@@ -263,6 +279,7 @@ struct SettingsView: View {
             if let mp4 = liveStreamConfig.mp4 {
                 options += mp4.enumerated().map { LiveQualityOption(format: "mp4", formatName: "MP4", mode: $0.offset, quality: $0.element) }
             }
+            Logger.info("Live quality candidates: m2ts=\(liveStreamConfig.m2ts?.count ?? 0), m2tsll=\(liveStreamConfig.m2tsll?.count ?? 0), webm=\(liveStreamConfig.webm?.count ?? 0), mp4=\(liveStreamConfig.mp4?.count ?? 0)")
             liveQualityOptions = options
         } catch let error {
             Logger.error("Failed to load live stream config: \(error)")
