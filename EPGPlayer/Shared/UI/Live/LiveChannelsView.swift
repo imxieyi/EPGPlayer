@@ -119,6 +119,9 @@ struct LiveChannelsView: View {
                                             channelCellLabel(for: schedule)
                                         }
                                         .buttonStyle(.plain)
+                                        // The system's own default focus-lift animation zooms the
+                                        // button regardless of tvOSFocusCard's scale; disable it too.
+                                        .focusEffectDisabled()
                                         #else
                                         Menu {
                                             if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {

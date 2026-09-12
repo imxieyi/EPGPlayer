@@ -342,6 +342,11 @@ struct EPGView: View {
                                 #if os(macOS) || os(tvOS)
                                 .buttonStyle(.borderless)
                                 #endif
+                                #if os(tvOS)
+                                // The system's own default focus-lift animation zooms the
+                                // button regardless of tvOSFocusCard's scale; disable it too.
+                                .focusEffectDisabled()
+                                #endif
                                 .tint(.primary)
                                 .padding(.all, 0.5)
                                 .fixedSize()
