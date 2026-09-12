@@ -342,13 +342,34 @@ struct RecordingsView: View {
                     ruleResults.append((ruleId, keyword, json.total, json.records))
                 }
                 
+                // "Recorded" is only the default-limit (24) first page, which may not cover a
+                // full 30 days for an active recorder - page through newest-first until an
+                // item older than the window is seen, rather than relying on that first page.
+                let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 3600)
+                var last30DaysItems: [Components.Schemas.RecordedItem] = []
+                var last30DaysOffset = 0
+                while last30DaysOffset < 500 {
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: last30DaysOffset, limit: 100, isReverse: true))
+                    let json = try resp.ok.body.json
+                    if json.records.isEmpty {
+                        break
+                    }
+                    let inWindow = json.records.prefix(while: { $0.startTime >= thirtyDaysAgo })
+                    last30DaysItems += inWindow
+                    last30DaysOffset += json.records.count
+                    if inWindow.count < json.records.count || last30DaysOffset >= json.total {
+                        break
+                    }
+                }
+                
                 let recentShelf = RecordingShelf(id: "recent", title: String(localized: "Recent Recordings"), items: Array(recorded.prefix(20)))
+                let last30DaysShelf = RecordingShelf(id: "last30days", title: String(localized: "Last 30 Days"), items: Array(last30DaysItems.prefix(30)))
                 let ruleShelves = ruleResults
                     .filter { $0.total > 0 }
                     .sorted { $0.total > $1.total }
                     .map { RecordingShelf(id: "rule-\($0.ruleId)", title: $0.keyword, items: $0.items) }
                 
-                shelves = [recentShelf] + ruleShelves
+                shelves = [recentShelf, last30DaysShelf].filter { !$0.items.isEmpty } + ruleShelves
                 shelvesLoadingState = .loaded
             } catch let error {
                 Logger.error("Failed to load recording shelves: \(error.localizedDescription)")
