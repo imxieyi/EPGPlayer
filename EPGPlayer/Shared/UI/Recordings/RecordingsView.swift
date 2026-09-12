@@ -221,6 +221,10 @@ struct RecordingsView: View {
                     }
                 }
             }
+            // Marks each horizontally-scrolling row as its own focus region, so the
+            // focus engine reliably moves up/down between rows (and up and out to
+            // TVTopActionBar's search button) instead of getting stuck inside one.
+            .focusSection()
         }
     }
     #endif
