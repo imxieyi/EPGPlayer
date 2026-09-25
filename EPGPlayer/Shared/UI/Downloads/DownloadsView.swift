@@ -182,6 +182,7 @@ struct DownloadsView: View {
                 } catch let error {
                     Logger.error("Failed to delete local file \(pii: file.id.uuidString): \(error.localizedDescription)")
                 }
+                SubtitleTranslationStore.deleteTranslations(forVideo: LocalFileManager.shared.filesDir.appending(path: file.id.uuidString))
             }
         }
     }

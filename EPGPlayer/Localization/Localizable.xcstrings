@@ -7,6 +7,22 @@
     "%.1f%%" : {
       "shouldTranslate" : false
     },
+    "%@ (Translated)" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（翻訳）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（翻译）"
+          }
+        }
+      }
+    },
     "%@ on GitHub" : {
       "localizations" : {
         "ja" : {
@@ -374,6 +390,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "频道"
+          }
+        }
+      }
+    },
+    "Choose two different languages." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "異なる2つの言語を選択してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请选择两种不同的语言。"
           }
         }
       }
@@ -909,6 +941,22 @@
         }
       }
     },
+    "From" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳元"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "源语言"
+          }
+        }
+      }
+    },
     "Genres" : {
       "localizations" : {
         "ja" : {
@@ -973,6 +1021,22 @@
         }
       }
     },
+    "Keep the app open until the translation finishes." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳が完了するまでアプリを開いたままにしてください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译完成前请保持应用在前台。"
+          }
+        }
+      }
+    },
     "Keyword" : {
       "localizations" : {
         "ja" : {
@@ -985,6 +1049,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关键词"
+          }
+        }
+      }
+    },
+    "Languages" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语言"
           }
         }
       }
@@ -1395,6 +1475,22 @@
         }
       }
     },
+    "Preparing languages…" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "言語を準備中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在准备语言…"
+          }
+        }
+      }
+    },
     "Program" : {
       "localizations" : {
         "ja" : {
@@ -1423,6 +1519,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "查询条件"
+          }
+        }
+      }
+    },
+    "Reading subtitles…" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕を読み込み中…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在读取字幕…"
+          }
+        }
+      }
+    },
+    "Ready to translate." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳の準備ができました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可以开始翻译。"
           }
         }
       }
@@ -1749,6 +1877,22 @@
         }
       }
     },
+    "Start" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始"
+          }
+        }
+      }
+    },
     "Start time" : {
       "localizations" : {
         "ja" : {
@@ -1845,6 +1989,86 @@
         }
       }
     },
+    "The languages will be downloaded when you start." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始すると言語がダウンロードされます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始后将下载所需的语言。"
+          }
+        }
+      }
+    },
+    "The video file has no ARIB subtitles." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画ファイルに ARIB 字幕がありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该视频文件没有 ARIB 字幕。"
+          }
+        }
+      }
+    },
+    "The video file is not an MPEG-TS file." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "動画ファイルが MPEG-TS 形式ではありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "该视频文件不是 MPEG-TS 格式。"
+          }
+        }
+      }
+    },
+    "This language pair is not supported." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この言語の組み合わせには対応していません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持此语言组合。"
+          }
+        }
+      }
+    },
+    "This video already has a translation for these languages. Starting will replace it." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この動画にはこの言語の翻訳がすでにあります。開始すると置き換えられます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此视频已有这两种语言的翻译，开始后将替换现有翻译。"
+          }
+        }
+      }
+    },
     "Time" : {
       "localizations" : {
         "ja" : {
@@ -1857,6 +2081,102 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "时间"
+          }
+        }
+      }
+    },
+    "To" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳先"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目标语言"
+          }
+        }
+      }
+    },
+    "Translate" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译"
+          }
+        }
+      }
+    },
+    "Translate Subtitles" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕を翻訳"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译字幕"
+          }
+        }
+      }
+    },
+    "Translated %lld sentences. Select the translation in the subtitle menu of the player." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 文を翻訳しました。プレーヤーの字幕メニューで翻訳を選択できます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已翻译 %lld 句。可在播放器的字幕菜单中选择翻译。"
+          }
+        }
+      }
+    },
+    "Translating %lld of %lld sentences…" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳中… %1$lld / %2$lld 文"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在翻译… %1$lld / %2$lld 句"
+          }
+        }
+      }
+    },
+    "Translation cancelled." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳をキャンセルしました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已取消翻译。"
           }
         }
       }

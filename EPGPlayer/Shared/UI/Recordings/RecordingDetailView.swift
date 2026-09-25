@@ -26,6 +26,7 @@ struct RecordingDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var deleteInProgress = false
     @State private var deleteError: String? = nil
+    @State private var translatingVideoItem: LocalVideoItem? = nil
 
     var body: some View {
         ScrollView(.vertical) {
@@ -122,6 +123,12 @@ struct RecordingDetailView: View {
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
                         #endif
+
+                        #if os(iOS) || os(macOS)
+                        if #available(iOS 26.0, macOS 26.0, *), let localItem = item as? LocalRecordedItem {
+                            translateMenu(item: localItem)
+                        }
+                        #endif
                     }
                 }
                 
@@ -181,7 +188,37 @@ struct RecordingDetailView: View {
                 Text(verbatim: deleteError)
             }
         }
+        #if os(iOS) || os(macOS)
+        .sheet(item: $translatingVideoItem) { videoItem in
+            if #available(iOS 26.0, macOS 26.0, *) {
+                SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name)
+            }
+        }
+        #endif
     }
+
+    #if os(iOS) || os(macOS)
+    func translateMenu(item: LocalRecordedItem) -> some View {
+        Menu {
+            ForEach(item._videoItems.filter({ $0.canPlay })) { videoItem in
+                Button {
+                    translatingVideoItem = videoItem
+                } label: {
+                    Text(verbatim: videoItem.name)
+                    Text(verbatim: ByteCountFormatter().string(fromByteCount: videoItem.fileSize))
+                }
+            }
+        } label: {
+            HStack(alignment: .center) {
+                Image(systemName: "translate")
+                    .font(.system(size: 25))
+                Text("Translate")
+            }
+        }
+        .menuStyle(.button)
+        .buttonStyle(.borderless)
+    }
+    #endif
 
     func deleteRecording() {
         deleteInProgress = true

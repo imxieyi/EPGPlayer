@@ -10,6 +10,7 @@ import AVKit
 @preconcurrency import VLCKit
 import SwiftUI
 import Combine
+import CryptoKit
 
 struct VLCPlayer: UIViewControllerRepresentable {
     let videoItem: any VideoItem
@@ -137,7 +138,9 @@ class VLCPlayerViewController: UIViewController {
     
     var forceStrokeText: Bool = false
     var forceAspectRatio: String? = nil
-    
+    /// Track ID prefix of each attached translation, mapped to its track name and rank.
+    var translatedTracks: [String: (name: String, rank: Int)] = [:]
+
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
     var pipPossibleObservation: NSKeyValueObservation?
@@ -217,7 +220,11 @@ class VLCPlayerViewController: UIViewController {
                     playerEvents.addAudioTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
                 }
                 if let track = player.textTracks.filter({ $0.trackId == trackId }).first {
-                    playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+                    if let translated = self?.translatedTrack(for: trackId) {
+                        playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: translated.name, codec: track.codecName, translationRank: translated.rank))
+                    } else {
+                        playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+                    }
                 }
             }
         })
@@ -237,6 +244,12 @@ class VLCPlayerViewController: UIViewController {
                 default:
                     Logger.error("Unknown track type \(track.name)")
                 }
+                return
+            }
+            if let combinedIds = track.combinedIds {
+                Logger.info("Enabling text tracks \(combinedIds)")
+                player.textTracks.filter({ !combinedIds.contains($0.trackId) }).forEach({ $0.isSelected = false })
+                player.textTracks.filter({ combinedIds.contains($0.trackId) }).forEach({ $0.isSelected = true })
                 return
             }
             Logger.info("Enabling track \(track.id) \(track.name)")
@@ -351,9 +364,35 @@ class VLCPlayerViewController: UIViewController {
                     }
                     Logger.info("Stored \(httpHeaders.count) headers for player")
                 }
+                addTranslatedSubtitles(to: media, videoURL: videoItem.url)
             }
             mediaPlayer.play()
         }
+    }
+
+    /// Attaches the translated subtitles of a downloaded video as extra text tracks.
+    func addTranslatedSubtitles(to media: VLCMedia, videoURL: URL) {
+        translatedTracks = [:]
+        guard videoURL.isFileURL else {
+            return
+        }
+        for (rank, translation) in SubtitleTranslationStore.translations(forVideo: videoURL).enumerated() {
+            guard media.addSlave(VLCMediaSlave(url: translation.url, type: .subtitle, priority: 4)) else {
+                Logger.error("Failed to add translated subtitles \(pii: translation.url.lastPathComponent)")
+                continue
+            }
+            // VLC identifies the track of a slave by the MD5 of its URL.
+            let digest = Insecure.MD5.hash(data: Data(translation.url.absoluteString.utf8))
+            let trackIdPrefix = digest.map { String(format: "%02x", $0) }.joined() + "/"
+            translatedTracks[trackIdPrefix] = (translation.trackName, rank)
+        }
+        if !translatedTracks.isEmpty {
+            Logger.info("Added \(translatedTracks.count) translated subtitle tracks")
+        }
+    }
+
+    func translatedTrack(for trackId: String) -> (name: String, rank: Int)? {
+        translatedTracks.first(where: { trackId.hasPrefix($0.key) })?.value
     }
 }
 

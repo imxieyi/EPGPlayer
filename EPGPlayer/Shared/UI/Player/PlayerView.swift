@@ -285,7 +285,15 @@ struct PlayerView: View {
         }
         .onReceive(playerEvents.addTextTrack) { track in
             textTracks.append(track)
-            if userSettings.enableSubtitles && textTracks.count == 1 {
+            guard userSettings.enableSubtitles else {
+                return
+            }
+            if let rank = track.translationRank {
+                // Prefer the newest translation over the broadcast subtitles.
+                if activeTextTrack.translationRank.map({ rank < $0 }) ?? true {
+                    activeTextTrack = track
+                }
+            } else if textTracks.count == 1 {
                 activeTextTrack = track
             }
         }
@@ -318,6 +326,15 @@ struct PlayerView: View {
         }
     }
     
+    /// Entries that show a translation together with an original subtitle track.
+    var combinedTextTracks: [MediaTrack] {
+        textTracks.filter({ $0.translationRank != nil }).flatMap { translation in
+            textTracks.filter({ $0.translationRank == nil }).map { original in
+                MediaTrack(id: "\(translation.id)+\(original.id)", name: "\(translation.name) + \(original.name)", codec: "", combinedIds: [translation.id, original.id])
+            }
+        }
+    }
+
     var playerMenu: some View {
         Menu {
             if item.videoItem.type != .livestream {
@@ -393,6 +410,10 @@ struct PlayerView: View {
                             Text(verbatim: track.codec)
                         }
                         .tag(track)
+                    }
+                    ForEach(combinedTextTracks) { track in
+                        Text(verbatim: track.name)
+                            .tag(track)
                     }
                 } label: {
                     Label("Subtitle", systemImage: "captions.bubble")
