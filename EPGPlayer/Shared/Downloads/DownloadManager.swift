@@ -128,11 +128,8 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
                 sendError(url, task: downloadTask, message: "Cannot find video item associated with \(url)")
                 return
             }
-            if videoItem.duration == nil, let media = VLCMedia(url: location) {
-                media.parse(options: .parseLocal)
-                if let length = media.lengthWait(until: .now.advanced(by: 60)).value?.doubleValue {
-                    videoItem.duration = length / 1000
-                }
+            if videoItem.duration == nil, let length = Self.parseLength(of: location) {
+                videoItem.duration = length / 1000
             }
             let localFileManager = DispatchQueue.main.sync { LocalFileManager.shared }
             try localFileManager.moveFile(name: videoItem.file.id.uuidString, url: location)
@@ -158,4 +155,36 @@ final class DownloadManager: NSObject, URLSessionDelegate, URLSessionDownloadDel
         return nil
     }
     
+    /// Blocks until VLC finishes parsing the media (up to 60 seconds) and returns its length in milliseconds.
+    nonisolated private static func parseLength(of url: URL) -> Double? {
+        guard let media = VLCMedia(url: url) else {
+            return nil
+        }
+        let waiter = MediaParseWaiter()
+        media.delegate = waiter
+        let parser = VLCMediaParser(library: .shared(), timeout: -1)
+        guard parser.queue(media, options: .parse) == 0 else {
+            Logger.error("Failed to queue media for parsing")
+            return nil
+        }
+        guard waiter.semaphore.wait(timeout: .now() + 60) == .success else {
+            parser.cancelParsing(for: media)
+            Logger.error("Timed out waiting for media parsing")
+            return nil
+        }
+        guard media.parsedStatus == .done else {
+            Logger.error("Failed to parse media, status \(media.parsedStatus.rawValue)")
+            return nil
+        }
+        return media.length.value?.doubleValue
+    }
+    
+}
+
+private final class MediaParseWaiter: NSObject, VLCMediaDelegate {
+    let semaphore = DispatchSemaphore(value: 0)
+    
+    func mediaDidFinishParsing(_ aMedia: VLCMedia) {
+        semaphore.signal()
+    }
 }

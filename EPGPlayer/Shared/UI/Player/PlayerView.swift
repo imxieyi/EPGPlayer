@@ -567,9 +567,9 @@ enum PlaybackSpeed: Float, Hashable, Identifiable {
 extension VLCMediaPlayerState {
     var isPlaying: Bool {
         switch self {
-        case .buffering, .playing:
+        case .playing:
             return true
-        case .opening, .paused, .error, .stopped, .stopping:
+        case .nothingSpecial, .opening, .paused, .error, .stopped, .stopping:
             return false
         @unknown default:
             return false

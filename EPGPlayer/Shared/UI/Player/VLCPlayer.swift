@@ -129,6 +129,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
 
 class VLCPlayerViewController: UIViewController {
     var mediaPlayer = VLCMediaPlayer()
+    let mediaParser = VLCMediaParser(library: .shared(), timeout: .max)
     var httpHeaders: [String: String]?
     var videoItem: VideoItem?
     var delegate: VLCPlayer.Coordinator?
@@ -298,7 +299,9 @@ class VLCPlayerViewController: UIViewController {
     }
     
     override func viewDidDisappear(_ animated: Bool) {
-        mediaPlayer.media?.parseStop()
+        if let media = mediaPlayer.media {
+            mediaParser.cancelParsing(for: media)
+        }
         mediaPlayer.stop()
         pipController?.invalidatePlaybackState()
         
@@ -330,8 +333,8 @@ class VLCPlayerViewController: UIViewController {
             if forceStrokeText {
                 media?.addOption("aribcaption-force-stroke-text")
             }
-            if videoItem.type != .livestream {
-                media?.parse(options: [.parseForced], timeout: .max)
+            if videoItem.type != .livestream, let media, mediaParser.queue(media, options: .parse) != 0 {
+                Logger.error("Failed to queue media for parsing")
             }
             mediaPlayer.media = media
             mediaPlayer.videoAspectRatio = forceAspectRatio
