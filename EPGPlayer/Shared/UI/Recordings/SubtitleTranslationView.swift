@@ -132,7 +132,7 @@ struct SubtitleTranslationView: View {
 
     @ViewBuilder
     private var languageStatus: some View {
-        if let source, let target {
+        if job.phase == .idle, let source, let target {
             if source == target {
                 Text("Choose two different languages.")
             } else {
