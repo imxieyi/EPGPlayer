@@ -11,7 +11,7 @@
 		8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
 		8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E82D946A64008E69F7 /* OpenAPIURLSession */; };
 		8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 8A76696B2D9AB337008E69F7 /* CachedAsyncImage */; };
-		8A850F272DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F262DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport */; };
+		8A850F272DB523A0004E9328 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F262DB523A0004E9328 /* FirebaseAnalyticsCore */; };
 		8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F282DB523A0004E9328 /* FirebaseCrashlytics */; };
 		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
 /* End PBXBuildFile section */
@@ -94,7 +94,7 @@
 			files = (
 				8A46FEEB2DB52ED2005DB469 /* Logging in Frameworks */,
 				8A7667E92D946A64008E69F7 /* OpenAPIURLSession in Frameworks */,
-				8A850F272DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				8A850F272DB523A0004E9328 /* FirebaseAnalyticsCore in Frameworks */,
 				8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */,
 				8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
@@ -529,7 +529,7 @@
 			repositoryURL = "https://github.com/apple/swift-log.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.6.3;
+				minimumVersion = 1.15.1;
 			};
 		};
 		8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */ = {
@@ -537,7 +537,7 @@
 			repositoryURL = "https://github.com/apple/swift-openapi-generator";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.7.1;
+				minimumVersion = 1.13.1;
 			};
 		};
 		8A7667E42D946A54008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-runtime" */ = {
@@ -545,7 +545,7 @@
 			repositoryURL = "https://github.com/apple/swift-openapi-runtime";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.8.1;
+				minimumVersion = 1.12.1;
 			};
 		};
 		8A7667E72D946A64008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-urlsession" */ = {
@@ -553,7 +553,7 @@
 			repositoryURL = "https://github.com/apple/swift-openapi-urlsession";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.2;
+				minimumVersion = 1.3.1;
 			};
 		};
 		8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */ = {
@@ -569,7 +569,7 @@
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 11.11.0;
+				minimumVersion = 12.19.2;
 			};
 		};
 		8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
@@ -603,10 +603,10 @@
 			package = 8A76696A2D9AB337008E69F7 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
 			productName = CachedAsyncImage;
 		};
-		8A850F262DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport */ = {
+		8A850F262DB523A0004E9328 /* FirebaseAnalyticsCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalyticsWithoutAdIdSupport;
+			productName = FirebaseAnalyticsCore;
 		};
 		8A850F282DB523A0004E9328 /* FirebaseCrashlytics */ = {
 			isa = XCSwiftPackageProductDependency;

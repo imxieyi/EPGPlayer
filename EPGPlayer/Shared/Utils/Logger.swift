@@ -83,11 +83,11 @@ fileprivate struct MyLogHandler: LogHandler {
         }
     }
     
-    func log(level: Logging.Logger.Level, message: Logging.Logger.Message, metadata: Logging.Logger.Metadata?, source: String, file: String, function: String, line: UInt) {
-        let redacted = message.description.replacing(piiRegex) { _ in "(redacted)" }
-        let original = message.description.replacing(piiRegex) { $0.output.1 }
-        osLogger.log(level: level.osLogLevel, "\(original)")
-        if level != .debug && crashlytics {
+    func log(event: LogEvent) {
+        let redacted = event.message.description.replacing(piiRegex) { _ in "(redacted)" }
+        let original = event.message.description.replacing(piiRegex) { $0.output.1 }
+        osLogger.log(level: event.level.osLogLevel, "\(original)")
+        if event.level != .debug && crashlytics {
             Crashlytics.crashlytics().log(redacted)
         }
     }
