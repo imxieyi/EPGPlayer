@@ -249,7 +249,8 @@ class VLCPlayerViewController: UIViewController {
             if let combinedIds = track.combinedIds {
                 Logger.info("Enabling text tracks \(combinedIds)")
                 player.textTracks.filter({ !combinedIds.contains($0.trackId) }).forEach({ $0.isSelected = false })
-                player.textTracks.filter({ combinedIds.contains($0.trackId) }).forEach({ $0.isSelected = true })
+                // Selecting the tracks one by one would replace the previous selection.
+                player.selectTextTracks(player.textTracks.filter({ combinedIds.contains($0.trackId) }))
                 return
             }
             Logger.info("Enabling track \(track.id) \(track.name)")
@@ -346,6 +347,9 @@ class VLCPlayerViewController: UIViewController {
             if forceStrokeText {
                 media?.addOption("aribcaption-force-stroke-text")
             }
+            if let media {
+                addTranslatedSubtitles(to: media, videoURL: videoItem.url)
+            }
             if videoItem.type != .livestream, let media, mediaParser.queue(media, options: .parse) != 0 {
                 Logger.error("Failed to queue media for parsing")
             }
@@ -364,20 +368,24 @@ class VLCPlayerViewController: UIViewController {
                     }
                     Logger.info("Stored \(httpHeaders.count) headers for player")
                 }
-                addTranslatedSubtitles(to: media, videoURL: videoItem.url)
             }
             mediaPlayer.play()
         }
     }
 
     /// Attaches the translated subtitles of a downloaded video as extra text tracks.
+    /// Must be called before the media is assigned to the player, which creates the input with the options at that time.
     func addTranslatedSubtitles(to media: VLCMedia, videoURL: URL) {
         translatedTracks = [:]
         guard videoURL.isFileURL else {
             return
         }
+        // VLC would otherwise pick up the translations next to the video by itself and force-select the first one,
+        // while subtitles should only be shown as selected in the player.
+        media.addOption(":no-sub-autodetect-file")
         for (rank, translation) in SubtitleTranslationStore.translations(forVideo: videoURL).enumerated() {
-            guard media.addSlave(VLCMediaSlave(url: translation.url, type: .subtitle, priority: 4)) else {
+            // The lowest priority keeps VLC from selecting the track by itself.
+            guard media.addSlave(VLCMediaSlave(url: translation.url, type: .subtitle, priority: 0)) else {
                 Logger.error("Failed to add translated subtitles \(pii: translation.url.lastPathComponent)")
                 continue
             }
