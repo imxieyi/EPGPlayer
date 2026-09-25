@@ -35,18 +35,31 @@ enum SubtitleTranslationStore {
         let prefix = videoURL.lastPathComponent + "."
         let contents = (try? FileManager.default.contentsOfDirectory(at: videoURL.deletingLastPathComponent(), includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         return contents.compactMap { url -> SubtitleTranslation? in
-            let name = url.lastPathComponent
-            guard name.hasPrefix(prefix), url.pathExtension == "srt" else {
-                return nil
-            }
-            let languages = name.dropFirst(prefix.count).dropLast(".srt".count).split(separator: "_")
-            guard languages.count == 2 else {
+            guard url.lastPathComponent.hasPrefix(prefix), let (source, target) = languages(of: url) else {
                 return nil
             }
             let date = (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-            return SubtitleTranslation(url: url, sourceLanguage: Locale.Language(identifier: String(languages[0])), targetLanguage: Locale.Language(identifier: String(languages[1])), modificationDate: date)
+            return SubtitleTranslation(url: url, sourceLanguage: source, targetLanguage: target, modificationDate: date)
         }
         .sorted { $0.modificationDate > $1.modificationDate }
+    }
+
+    /// Returns the target languages of all translations in a directory of videos.
+    static func targetLanguages(in directory: URL) -> [Locale.Language] {
+        let contents = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
+        return contents.compactMap { languages(of: $0)?.target }
+    }
+
+    private static func languages(of url: URL) -> (source: Locale.Language, target: Locale.Language)? {
+        guard url.pathExtension == "srt" else {
+            return nil
+        }
+        // Language identifiers such as "zh-Hans" contain no dots.
+        let languages = url.deletingPathExtension().pathExtension.split(separator: "_")
+        guard languages.count == 2 else {
+            return nil
+        }
+        return (Locale.Language(identifier: String(languages[0])), Locale.Language(identifier: String(languages[1])))
     }
 
     static func save(_ cues: [SubtitleCue], forVideo videoURL: URL, source: Locale.Language, target: Locale.Language) throws {

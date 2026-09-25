@@ -224,6 +224,9 @@ struct EPGPlayerApp: App {
             }
             do {
                 try LocalFileManager.shared.initialize()
+                #if os(iOS)
+                SubtitleFonts.activateForTranslations(in: LocalFileManager.shared.filesDir)
+                #endif
             } catch let error {
                 appState.downloadsSetupError = error
             }
