@@ -9,11 +9,15 @@ on:
 jobs:
   build:
     name: Build and analyse EPGPlayer using xcodebuild command
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Xcode version
+        uses: maxim-lobanov/setup-xcode@v1.7.0
+        with:
+          xcode-version: '26.6'
       - name: Disable Xcode plugin verification
         run: |
           defaults write com.apple.dt.Xcode IDESkipPackagePluginFingerprintValidatation -bool YES
@@ -24,10 +28,10 @@ jobs:
           mv VLCKit.xcframework EPGPlayer/Dependency/
       - name: Build iOS
         run: |
-          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=iOS" | xcpretty && exit ${PIPESTATUS[0]}
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -skipPackagePluginValidation -skipMacroValidation -destination "generic/platform=iOS" | xcpretty && exit ${PIPESTATUS[0]}
       - name: Build tvOS
         run: |
-          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=tvOS" | xcpretty && exit ${PIPESTATUS[0]}
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -skipPackagePluginValidation -skipMacroValidation -destination "generic/platform=tvOS" | xcpretty && exit ${PIPESTATUS[0]}
       - name: Build macOS
         run: |
-          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}
+          xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -skipPackagePluginValidation -skipMacroValidation -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}
