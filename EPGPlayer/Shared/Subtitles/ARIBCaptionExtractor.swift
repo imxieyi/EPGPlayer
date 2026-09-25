@@ -39,7 +39,24 @@ enum ARIBCaptionExtractorError: LocalizedError {
 enum ARIBCaptionExtractor {
     private static let packetSize = 188
     private static let syncByte: UInt8 = 0x47
+    /// Number of packets in a row that must start with the sync byte before the stream is trusted,
+    /// so that other file formats are not mistaken for MPEG-TS by chance.
+    private static let packetsToSync = 5
     private static let ptsMask: Int64 = (1 << 33) - 1
+
+    /// Checks whether a file starts like an MPEG-TS stream, the only container that carries ARIB captions.
+    static func isTransportStream(_ url: URL) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else {
+            return false
+        }
+        defer {
+            try? handle.close()
+        }
+        guard let head = try? handle.read(upToCount: packetSize * packetsToSync), head.count == packetSize * packetsToSync else {
+            return false
+        }
+        return (0..<packetsToSync).allSatisfy { head[head.startIndex + packetSize * $0] == syncByte }
+    }
 
     /// Reads the whole file and returns its captions in presentation order.
     /// Blocks the calling thread, so call it off the main actor. Checks for task cancellation between reads.
@@ -71,10 +88,10 @@ enum ARIBCaptionExtractor {
                         continue
                     }
                     if !foundSync {
-                        guard offset + packetSize * 2 < bytes.count else {
+                        guard offset + packetSize * (packetsToSync - 1) < bytes.count else {
                             break
                         }
-                        guard bytes[offset + packetSize] == syncByte, bytes[offset + packetSize * 2] == syncByte else {
+                        guard (1..<packetsToSync).allSatisfy({ bytes[offset + packetSize * $0] == syncByte }) else {
                             offset += 1
                             continue
                         }

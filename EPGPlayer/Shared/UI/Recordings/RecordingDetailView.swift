@@ -27,6 +27,7 @@ struct RecordingDetailView: View {
     @State private var deleteInProgress = false
     @State private var deleteError: String? = nil
     @State private var translatingVideoItem: LocalVideoItem? = nil
+    @State private var translatableVideoItems: [LocalVideoItem] = []
 
     var body: some View {
         ScrollView(.vertical) {
@@ -125,8 +126,8 @@ struct RecordingDetailView: View {
                         #endif
 
                         #if os(iOS) || os(macOS)
-                        if #available(iOS 26.0, macOS 26.0, *), let localItem = item as? LocalRecordedItem {
-                            translateMenu(item: localItem)
+                        if #available(iOS 26.0, macOS 26.0, *), !translatableVideoItems.isEmpty {
+                            translateMenu(videoItems: translatableVideoItems)
                         }
                         #endif
                     }
@@ -189,6 +190,10 @@ struct RecordingDetailView: View {
             }
         }
         #if os(iOS) || os(macOS)
+        .task(id: playableLocalVideoItems.map(\.id)) {
+            // Encoded downloads can be in any container, while only MPEG-TS files carry ARIB subtitles.
+            translatableVideoItems = playableLocalVideoItems.filter { ARIBCaptionExtractor.isTransportStream($0.url) }
+        }
         .sheet(item: $translatingVideoItem) { videoItem in
             if #available(iOS 26.0, macOS 26.0, *) {
                 SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name)
@@ -198,9 +203,13 @@ struct RecordingDetailView: View {
     }
 
     #if os(iOS) || os(macOS)
-    func translateMenu(item: LocalRecordedItem) -> some View {
+    var playableLocalVideoItems: [LocalVideoItem] {
+        (item as? LocalRecordedItem)?._videoItems.filter({ $0.canPlay }) ?? []
+    }
+
+    func translateMenu(videoItems: [LocalVideoItem]) -> some View {
         Menu {
-            ForEach(item._videoItems.filter({ $0.canPlay })) { videoItem in
+            ForEach(videoItems) { videoItem in
                 Button {
                     translatingVideoItem = videoItem
                 } label: {
