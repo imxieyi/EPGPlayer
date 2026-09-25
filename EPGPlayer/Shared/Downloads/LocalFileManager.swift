@@ -65,8 +65,9 @@ class LocalFileManager {
             let managedFiles = Set(try container.mainContext.fetch(FetchDescriptor<LocalFile>()).map { $0.id.uuidString })
             let contents = try FileManager.default.contentsOfDirectory(at: filesDir, includingPropertiesForKeys: nil)
             for content in contents {
-                let fileName = content.lastPathComponent
-                guard !managedFiles.contains(fileName) else { continue }
+                // Files that belong to a video, such as subtitle translations, are named after it.
+                let ownerName = content.lastPathComponent.split(separator: ".", maxSplits: 1).first.map(String.init) ?? content.lastPathComponent
+                guard !managedFiles.contains(ownerName) else { continue }
                 do {
                     try FileManager.default.removeItem(at: content)
                 } catch let error {
