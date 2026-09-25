@@ -14,6 +14,7 @@
 		8A850F272DB523A0004E9328 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F262DB523A0004E9328 /* FirebaseAnalyticsCore */; };
 		8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F282DB523A0004E9328 /* FirebaseCrashlytics */; };
 		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
+		8AC0DE012E8A100000A1B2C3 /* LibARIBCaption in Frameworks */ = {isa = PBXBuildFile; productRef = 8AC0DE022E8A100000A1B2C3 /* LibARIBCaption */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -99,6 +100,7 @@
 				8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */,
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
+				8AC0DE012E8A100000A1B2C3 /* LibARIBCaption in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -203,6 +205,7 @@
 				8AA515142DADAE38006C7AA7 /* XCRemoteSwiftPackageReference "keychain-swift" */,
 				8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */,
+				8AC0DE032E8A100000A1B2C3 /* XCLocalSwiftPackageReference "Packages/LibARIBCaption" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -523,6 +526,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		8AC0DE032E8A100000A1B2C3 /* XCLocalSwiftPackageReference "Packages/LibARIBCaption" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/LibARIBCaption;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -622,6 +632,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 8A7667E32D946A42008E69F7 /* XCRemoteSwiftPackageReference "swift-openapi-generator" */;
 			productName = "plugin:OpenAPIGenerator";
+		};
+		8AC0DE022E8A100000A1B2C3 /* LibARIBCaption */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = LibARIBCaption;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

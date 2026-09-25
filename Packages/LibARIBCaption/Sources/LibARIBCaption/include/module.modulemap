@@ -1,0 +1,4 @@
+module LibARIBCaption {
+    header "aribcaption/aribcaption.h"
+    export *
+}
