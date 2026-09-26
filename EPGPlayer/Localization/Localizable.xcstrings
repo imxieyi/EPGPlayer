@@ -103,6 +103,22 @@
         }
       }
     },
+    "%lld of %lld sentences are translated. Retry continues with the rest." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld 文中 %1$lld 文を翻訳済みです。再試行すると残りを翻訳します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已翻译 %1$lld / %2$lld 句。重试将继续翻译其余的句子。"
+          }
+        }
+      }
+    },
     "%llds" : {
       "localizations" : {
         "ja" : {
@@ -259,6 +275,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apple智能"
+          }
+        }
+      }
+    },
+    "Apple Intelligence does not support %@." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceは%@に対応していません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能不支持%@。"
           }
         }
       }
@@ -1920,6 +1952,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "重置"
+          }
+        }
+      }
+    },
+    "Retry" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再試行"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重试"
           }
         }
       }

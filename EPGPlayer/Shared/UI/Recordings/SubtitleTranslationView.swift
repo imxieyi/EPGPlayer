@@ -100,18 +100,20 @@ struct SubtitleTranslationView: View {
                                 .tag(engine)
                         }
                     }
+                    // A retry can continue with another model, but not in another language.
+                    .disabled(job.phase != .idle && !canRetry)
                     Picker("Translate to", selection: $target) {
-                        ForEach(targetLanguages, id: \.self) { identifier in
+                        ForEach(pickerLanguages, id: \.self) { identifier in
                             Text(verbatim: displayName(of: identifier))
                                 .tag(identifier)
                         }
                     }
+                    .disabled(job.phase != .idle)
                 } footer: {
-                    if job.phase == .idle {
+                    if job.phase == .idle || canRetry {
                         engineStatus
                     }
                 }
-                .disabled(job.phase != .idle)
 
                 if job.phase != .idle {
                     Section {
@@ -146,7 +148,12 @@ struct SubtitleTranslationView: View {
                         Button("Start") {
                             start()
                         }
-                        .disabled(!canStart)
+                        .disabled(!canTranslate)
+                    } else if canRetry {
+                        Button("Retry") {
+                            retry()
+                        }
+                        .disabled(!canTranslate)
                     }
                 }
             }
@@ -156,8 +163,8 @@ struct SubtitleTranslationView: View {
             await load()
         }
         .onChange(of: engine) {
-            // The target is empty until the languages are loaded.
-            if !target.isEmpty, !targetLanguages.contains(target), let first = targetLanguages.first {
+            // The target is empty until the languages are loaded, and can't change for a retry.
+            if job.phase == .idle, !target.isEmpty, !targetLanguages.contains(target), let first = targetLanguages.first {
                 target = first
             }
         }
@@ -165,6 +172,13 @@ struct SubtitleTranslationView: View {
 
     private var isFinished: Bool {
         if case .finished = job.phase {
+            return true
+        }
+        return false
+    }
+
+    private var canRetry: Bool {
+        if case .failed(_, canRetry: true) = job.phase {
             return true
         }
         return false
@@ -182,7 +196,17 @@ struct SubtitleTranslationView: View {
         return identifiers.sorted { displayName(of: $0).localizedStandardCompare(displayName(of: $1)) == .orderedAscending }
     }
 
-    private var canStart: Bool {
+    /// The languages of the selected model, and the language of a failed translation even if the model doesn't support it.
+    private var pickerLanguages: [String] {
+        let languages = targetLanguages
+        if !target.isEmpty, !languages.contains(target) {
+            return languages + [target]
+        }
+        return languages
+    }
+
+    /// Whether the selected model can translate to the selected language.
+    private var canTranslate: Bool {
         guard targetLanguages.contains(target) else {
             return false
         }
@@ -201,6 +225,9 @@ struct SubtitleTranslationView: View {
             if let appleIntelligenceProblem {
                 Text(verbatim: appleIntelligenceProblem)
                     .foregroundStyle(.red)
+            } else if !target.isEmpty, !targetLanguages.contains(target) {
+                Text("Apple Intelligence does not support \(displayName(of: target)).")
+                    .foregroundStyle(.red)
             } else {
                 Text("The subtitles are translated by Apple Foundation Models on Private Cloud Compute.")
             }
@@ -213,7 +240,7 @@ struct SubtitleTranslationView: View {
                     .foregroundStyle(.red)
             }
         }
-        if existingTranslations.contains(where: { $0.targetLanguage.minimalIdentifier == Locale.Language(identifier: target).minimalIdentifier }) {
+        if job.phase == .idle, existingTranslations.contains(where: { $0.targetLanguage.minimalIdentifier == Locale.Language(identifier: target).minimalIdentifier }) {
             Text("This video already has a translation to this language. Starting will replace it.")
         }
     }
@@ -236,12 +263,17 @@ struct SubtitleTranslationView: View {
             if !untranslated.isEmpty {
                 untranslatedLines(untranslated)
             }
-        case .failed(let message):
+        case .failed(let message, let canRetry):
             Label {
                 Text(verbatim: message)
             } icon: {
                 Image(systemName: "exclamationmark.triangle")
                     .foregroundStyle(.red)
+            }
+            if canRetry, let translatedCount = job.progress?.translatedCount, translatedCount > 0 {
+                Text("\(translatedCount) of \(job.sentences.count) sentences are translated. Retry continues with the rest.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         case .cancelled:
             Text("Translation cancelled.")
@@ -278,24 +310,36 @@ struct SubtitleTranslationView: View {
         }
     }
 
-    private func start() {
-        let model: any SubtitleTranslationModel
+    /// Creates the selected model with its current settings.
+    private func makeModel() -> (any SubtitleTranslationModel)? {
         switch engine {
         case .appleIntelligence:
             #if compiler(>=6.4) && canImport(FoundationModels)
-            guard #available(iOS 27.0, macOS 27.0, *) else {
-                return
+            if #available(iOS 27.0, macOS 27.0, *) {
+                return PrivateCloudComputeTranslationModel()
             }
-            model = PrivateCloudComputeTranslationModel()
-            #else
-            return
             #endif
+            return nil
         case .customModel:
-            model = CustomTranslationModel(configuration: customConfiguration)
+            return CustomTranslationModel(configuration: customConfiguration)
+        }
+    }
+
+    private func start() {
+        guard let model = makeModel() else {
+            return
         }
         userSettings.translationEngine = engine.rawValue
         userSettings.translationTargetLanguage = target
         job.start(model: model, target: Locale.Language(identifier: target), program: program)
+    }
+
+    private func retry() {
+        guard let model = makeModel() else {
+            return
+        }
+        userSettings.translationEngine = engine.rawValue
+        job.retry(model: model)
     }
 
     private func displayName(of identifier: String) -> String {

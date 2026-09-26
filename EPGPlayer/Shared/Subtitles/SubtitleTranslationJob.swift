@@ -25,6 +25,7 @@ enum SubtitleTranslationError: LocalizedError {
 }
 
 /// Extracts the ARIB subtitles of a downloaded video, translates them and saves the result as an SRT file.
+/// When the translation stops with an error, it can be retried without losing the lines translated so far.
 @available(iOS 26.0, macOS 26.0, *)
 @MainActor
 @Observable
@@ -35,7 +36,8 @@ final class SubtitleTranslationJob {
         case translating(completed: Int, total: Int)
         /// Lines that could not be translated are saved in Japanese and listed.
         case finished(count: Int, untranslated: [SubtitleTranslator.UntranslatedLine])
-        case failed(message: String)
+        /// Only a failure after the subtitles were read can be retried, since reading them again gives the same result.
+        case failed(message: String, canRetry: Bool)
         case cancelled
     }
 
@@ -43,6 +45,10 @@ final class SubtitleTranslationJob {
     static let sourceLanguage = Locale.Language(identifier: "ja")
 
     private(set) var phase = Phase.idle
+    /// The subtitles to translate, kept for a retry.
+    private(set) var sentences: [SubtitleCue] = []
+    /// The progress of the translation, kept for a retry.
+    private(set) var progress: SubtitleTranslator.Progress?
 
     var isRunning: Bool {
         switch phase {
@@ -54,6 +60,8 @@ final class SubtitleTranslationJob {
     }
 
     private let videoURL: URL
+    @ObservationIgnored private var target = SubtitleTranslationJob.sourceLanguage
+    @ObservationIgnored private var program: SubtitleProgramInfo?
     @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var extractionTask: Task<[ARIBCaption], Error>?
 
@@ -65,13 +73,28 @@ final class SubtitleTranslationJob {
         guard !isRunning else {
             return
         }
+        self.target = target
+        self.program = program
+        sentences = []
+        progress = nil
         phase = .readingSubtitles(progress: 0)
         task = Task {
-            await run(model: model, target: target, program: program)
+            await run(model: model)
         }
     }
 
-    private func run(model: any SubtitleTranslationModel, target: Locale.Language, program: SubtitleProgramInfo?) async {
+    /// Continues a failed translation with the lines that are not translated yet, possibly with another model.
+    func retry(model: any SubtitleTranslationModel) {
+        guard case .failed(_, canRetry: true) = phase else {
+            return
+        }
+        phase = .translating(completed: progress?.translatedCount ?? 0, total: sentences.count)
+        task = Task {
+            await run(model: model)
+        }
+    }
+
+    private func run(model: any SubtitleTranslationModel) async {
         let wakeLock = acquireWakeLock()
         defer {
             releaseWakeLock(wakeLock)
@@ -79,72 +102,94 @@ final class SubtitleTranslationJob {
             task = nil
         }
         do {
-            let videoURL = self.videoURL
-            let extraction = Task.detached(priority: .userInitiated) { [weak self] in
-                var lastReported = 0.0
-                return try ARIBCaptionExtractor.extract(from: videoURL) { progress in
-                    guard progress - lastReported >= 0.01 || progress == 1 else {
-                        return
-                    }
-                    lastReported = progress
-                    Task { @MainActor in
-                        self?.updateReadingProgress(progress)
-                    }
-                }
+            if sentences.isEmpty {
+                try await readSubtitles()
             }
-            extractionTask = extraction
-            let captions = try await withTaskCancellationHandler {
-                try await extraction.value
-            } onCancel: {
-                extraction.cancel()
-            }
-            try Task.checkCancellation()
+        } catch {
+            fail(error, canRetry: false)
+            return
+        }
+        do {
+            try await translate(model: model)
+        } catch {
+            fail(error, canRetry: true)
+        }
+    }
 
-            var sentences = SubtitleCue.sentences(from: SubtitleCue.cues(from: captions))
-            guard !sentences.isEmpty else {
-                throw SubtitleTranslationError.noSubtitles
-            }
-            Logger.info("Translating \(sentences.count) subtitle sentences to \(target.minimalIdentifier)")
+    private func fail(_ error: any Error, canRetry: Bool) {
+        if Task.isCancelled || error is CancellationError {
+            Logger.info("Subtitle translation cancelled")
+            phase = .cancelled
+        } else {
+            Logger.error("Subtitle translation failed: \(error)")
+            phase = .failed(message: error.localizedDescription, canRetry: canRetry)
+        }
+    }
 
-            #if os(iOS)
-            if SubtitleFonts.needsDownloadableFont(for: target) {
-                do {
-                    try await SubtitleFonts.activate()
-                } catch let error {
-                    // The translation is still useful without the font, which is activated again in the next launch.
-                    Logger.error("Failed to activate the subtitle font: \(error)")
-                }
-                try Task.checkCancellation()
-            }
-            #endif
-
-            let total = sentences.count
-            phase = .translating(completed: 0, total: total)
-            let translator = SubtitleTranslator(model: model, target: target, program: program)
-            let result = try await translator.translate(sentences.map(\.text)) { [weak self] completed in
-                guard let self, case .translating = self.phase else {
+    private func readSubtitles() async throws {
+        let videoURL = self.videoURL
+        let extraction = Task.detached(priority: .userInitiated) { [weak self] in
+            var lastReported = 0.0
+            return try ARIBCaptionExtractor.extract(from: videoURL) { progress in
+                guard progress - lastReported >= 0.01 || progress == 1 else {
                     return
                 }
-                self.phase = .translating(completed: completed, total: total)
-            }
-            try Task.checkCancellation()
-            for (index, translation) in result.translations.enumerated() {
-                if let translation {
-                    sentences[index].text = translation
+                lastReported = progress
+                Task { @MainActor in
+                    self?.updateReadingProgress(progress)
                 }
             }
+        }
+        extractionTask = extraction
+        let captions = try await withTaskCancellationHandler {
+            try await extraction.value
+        } onCancel: {
+            extraction.cancel()
+        }
+        try Task.checkCancellation()
 
-            try SubtitleTranslationStore.save(sentences, forVideo: videoURL, source: Self.sourceLanguage, target: target)
-            phase = .finished(count: total, untranslated: result.untranslated)
-        } catch {
-            if Task.isCancelled || error is CancellationError {
-                Logger.info("Subtitle translation cancelled")
-                phase = .cancelled
-            } else {
-                Logger.error("Subtitle translation failed: \(error)")
-                phase = .failed(message: error.localizedDescription)
+        let sentences = SubtitleCue.sentences(from: SubtitleCue.cues(from: captions))
+        guard !sentences.isEmpty else {
+            throw SubtitleTranslationError.noSubtitles
+        }
+        self.sentences = sentences
+
+        #if os(iOS)
+        if SubtitleFonts.needsDownloadableFont(for: target) {
+            do {
+                try await SubtitleFonts.activate()
+            } catch let error {
+                // The translation is still useful without the font, which is activated again in the next launch.
+                Logger.error("Failed to activate the subtitle font: \(error)")
+            }
+            try Task.checkCancellation()
+        }
+        #endif
+    }
+
+    private func translate(model: any SubtitleTranslationModel) async throws {
+        let total = sentences.count
+        Logger.info("Translating \(total - (progress?.translatedCount ?? 0)) of \(total) subtitle sentences to \(target.minimalIdentifier)")
+        phase = .translating(completed: progress?.translatedCount ?? 0, total: total)
+        let translator = SubtitleTranslator(model: model, target: target, program: program)
+        let result = try await translator.translate(sentences.map(\.text), resumingFrom: progress) { [weak self] progress in
+            guard let self, case .translating = self.phase else {
+                return
+            }
+            self.progress = progress
+            self.phase = .translating(completed: progress.translatedCount, total: total)
+        }
+        try Task.checkCancellation()
+        progress = result
+        var translated = sentences
+        for (index, translation) in result.translations.enumerated() {
+            if let translation {
+                translated[index].text = translation
             }
         }
+
+        try SubtitleTranslationStore.save(translated, forVideo: videoURL, source: Self.sourceLanguage, target: target)
+        phase = .finished(count: total, untranslated: result.untranslated)
     }
 
     /// Stops the job and discards everything translated so far.

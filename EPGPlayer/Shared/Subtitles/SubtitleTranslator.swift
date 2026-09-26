@@ -55,6 +55,8 @@ protocol SubtitleTranslationModel: Sendable {
 /// `{"id", "source", "translation"}` objects. The model copies each source text before translating it, so that its
 /// translation stays attached to the right line. A reply entry is only accepted when its source matches the text of
 /// its id. Lines that are missing from a reply are sent again.
+///
+/// A translation that stops with an error can be resumed from its last progress.
 struct SubtitleTranslator {
     struct UntranslatedLine: Hashable, Sendable {
         enum Reason: Sendable {
@@ -69,10 +71,15 @@ struct SubtitleTranslator {
         let reason: Reason
     }
 
-    struct Result: Sendable {
-        /// The translation of each line, or nil for a line that could not be translated.
+    /// The lines translated so far, and the lines that were given up.
+    struct Progress: Sendable {
+        /// The translation of each line, or nil for a line that is not translated.
         var translations: [String?]
         var untranslated: [UntranslatedLine]
+
+        var translatedCount: Int {
+            translations.count { $0 != nil }
+        }
     }
 
     /// Number of earlier lines sent with a request for context.
@@ -86,14 +93,25 @@ struct SubtitleTranslator {
     let target: Locale.Language
     let program: SubtitleProgramInfo?
 
-    /// Translates the lines, reporting the number of translated lines after each request.
-    func translate(_ texts: [String], progress: @MainActor @Sendable (Int) -> Void) async throws -> Result {
+    /// Translates the lines, reporting the progress after each request.
+    ///
+    /// When resuming from the progress of an earlier call, only the lines without a translation are sent.
+    /// Lines that the model refused stay refused, while lines that failed for other reasons are tried again.
+    func translate(_ texts: [String], resumingFrom previous: Progress? = nil,
+                   onProgress: @MainActor @Sendable (Progress) -> Void) async throws -> Progress {
         let instructions = Self.instructions(target: target, program: program)
-        var translations = [String?](repeating: nil, count: texts.count)
-        var untranslated: [UntranslatedLine] = []
+        var translations = previous?.translations ?? [String?](repeating: nil, count: texts.count)
+        var untranslated = previous?.untranslated.filter { $0.reason == .refused } ?? []
+        let refused = Set(untranslated.map(\.index))
+        let pending = texts.indices.filter { translations[$0] == nil && !refused.contains($0) }
+        /// Lines translated in this call, which tells whether the model follows the reply format at all.
         var translatedCount = 0
         var unusableReplies = 0
         var lastUnusableReply = ""
+
+        func report() async {
+            await onProgress(Progress(translations: translations, untranslated: untranslated))
+        }
 
         func request(_ indices: [Int]) async throws -> [Int: String] {
             try Task.checkCancellation()
@@ -120,7 +138,7 @@ struct SubtitleTranslator {
                     translations[index] = translation
                 }
                 translatedCount += accepted.count
-                await progress(translatedCount)
+                await report()
                 let missing = indices.filter { translations[$0] == nil }
                 guard !missing.isEmpty else {
                     return
@@ -133,7 +151,7 @@ struct SubtitleTranslator {
                 } else if attempt < Self.attemptsPerLine {
                     try await translate(missing, attempt: attempt + 1)
                 } else {
-                    giveUp(missing[0], reason: .failed)
+                    await giveUp(missing[0], reason: .failed)
                 }
             } catch let error as SubtitleTranslationModelError {
                 switch error {
@@ -147,9 +165,9 @@ struct SubtitleTranslator {
                         try await translate(indices, attempt: attempt + 1)
                     } else {
                         if case .refused = error {
-                            giveUp(indices[0], reason: .refused)
+                            await giveUp(indices[0], reason: .refused)
                         } else {
-                            giveUp(indices[0], reason: .failed)
+                            await giveUp(indices[0], reason: .failed)
                         }
                     }
                 }
@@ -162,18 +180,20 @@ struct SubtitleTranslator {
             try await translate(Array(indices[half...]), attempt: 1)
         }
 
-        func giveUp(_ index: Int, reason: UntranslatedLine.Reason) {
+        func giveUp(_ index: Int, reason: UntranslatedLine.Reason) async {
             Logger.error("Giving up translating line \(index + 1): \(reason)")
             untranslated.append(UntranslatedLine(index: index, text: texts[index], reason: reason))
+            await report()
         }
 
-        for chunk in Self.chunks(of: texts, maxCharacters: model.maxSourceCharactersPerRequest) {
+        for chunk in Self.chunks(of: pending, texts: texts, maxCharacters: model.maxSourceCharactersPerRequest) {
             try await translate(chunk, attempt: 1)
         }
-        if translatedCount == 0, !texts.isEmpty, !lastUnusableReply.isEmpty {
+        if translatedCount == 0, !pending.isEmpty, !lastUnusableReply.isEmpty {
             throw Self.unexpectedFormat(lastUnusableReply)
         }
-        return Result(translations: translations, untranslated: untranslated.sorted { $0.index < $1.index })
+        untranslated.sort { $0.index < $1.index }
+        return Progress(translations: translations, untranslated: untranslated)
     }
 
     /// Translates one line in a single request without retrying, to check that the model works and follows the reply format.
@@ -261,19 +281,19 @@ struct SubtitleTranslator {
     }
 
     /// Splits the lines into requests of similar size that each fit the character budget.
-    static func chunks(of texts: [String], maxCharacters: Int) -> [[Int]] {
-        let total = texts.reduce(0) { $0 + $1.count }
+    static func chunks(of indices: [Int], texts: [String], maxCharacters: Int) -> [[Int]] {
+        let total = indices.reduce(0) { $0 + texts[$1].count }
         guard total > maxCharacters else {
-            return texts.isEmpty ? [] : [Array(texts.indices)]
+            return indices.isEmpty ? [] : [indices]
         }
         let chunkCount = (total + maxCharacters - 1) / maxCharacters
         let target = Double(total) / Double(chunkCount)
         var chunks: [[Int]] = []
         var current: [Int] = []
         var currentCharacters = 0
-        for (index, text) in texts.enumerated() {
+        for index in indices {
             current.append(index)
-            currentCharacters += text.count
+            currentCharacters += texts[index].count
             if Double(currentCharacters) >= target && chunks.count < chunkCount - 1 {
                 chunks.append(current)
                 current = []
