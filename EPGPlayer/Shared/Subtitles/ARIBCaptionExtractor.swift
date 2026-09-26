@@ -16,7 +16,8 @@ struct ARIBCaption: Sendable {
     let time: Int
     /// Display duration in milliseconds, or nil if the caption stays until the next one.
     let duration: Int?
-    /// Caption text with ruby excluded. Empty for statements that only clear the screen.
+    /// Caption text with ruby excluded and the words of each speaker on a separate line.
+    /// Empty for statements that only clear the screen.
     let text: String
 }
 
@@ -286,8 +287,39 @@ enum ARIBCaptionExtractor {
             }
             let hasDuration = caption.flags.rawValue & ARIBCC_CAPTIONFLAGS_WAITDURATION.rawValue != 0
                 && caption.wait_duration != Int64.max
-            let text = caption.text.map { String(cString: $0) } ?? ""
-            captions.append(ARIBCaption(time: time, duration: hasDuration ? Int(caption.wait_duration) : nil, text: text))
+            captions.append(ARIBCaption(time: time, duration: hasDuration ? Int(caption.wait_duration) : nil, text: Self.text(of: caption)))
+        }
+
+        /// Returns the text of a caption without ruby, with the words of each speaker on a separate line.
+        /// The text that libaribcaption provides only breaks lines on APR, but broadcasters usually place each row
+        /// with APS, which glues the lines of different speakers together. Speakers are told apart by the text color,
+        /// so a row in the same color continues the sentence of the previous one.
+        private static func text(of caption: aribcc_caption_t) -> String {
+            var lines: [String] = []
+            var lineColor: aribcc_color_t?
+            for regionIndex in 0..<Int(caption.region_count) {
+                let region = caption.regions[regionIndex]
+                guard !region.is_ruby else {
+                    continue
+                }
+                for charIndex in 0..<Int(region.char_count) {
+                    let char = region.chars[charIndex]
+                    // Like libaribcaption's text, show a geta mark for a DRCS character without alternative text.
+                    let string = char.type == ARIBCC_CHARTYPE_DRCS ? "〓" : withUnsafeBytes(of: char.u8str) { bytes in
+                        String(decoding: bytes.prefix(while: { $0 != 0 }), as: UTF8.self)
+                    }
+                    // Spaces between the lines of two speakers may have either color.
+                    if !string.allSatisfy(\.isWhitespace), char.text_color != lineColor {
+                        lines.append("")
+                        lineColor = char.text_color
+                    }
+                    if lines.isEmpty {
+                        lines.append("")
+                    }
+                    lines[lines.count - 1] += string
+                }
+            }
+            return lines.map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }.joined(separator: "\n")
         }
     }
 }
