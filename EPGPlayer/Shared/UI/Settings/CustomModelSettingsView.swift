@@ -21,6 +21,14 @@ extension CustomModelConfiguration {
     }
 }
 
+private extension View {
+    /// Shows a text field as the value of a labeled row.
+    func fieldInLabeledContent() -> some View {
+        labelsHidden()
+            .multilineTextAlignment(.trailing)
+    }
+}
+
 /// Settings of the language model on a server of the user's choice for translating subtitles.
 struct CustomModelSettingsView: View {
     @Environment(AppState.self) private var appState
@@ -45,20 +53,30 @@ struct CustomModelSettingsView: View {
                             .tag(format)
                     }
                 }
-                TextField("Base URL", text: userSettings.$customModelBaseURL, prompt: Text(verbatim: format.defaultBaseURL))
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.URL)
-                    #endif
-                    .autocorrectionDisabled()
-                    .textContentType(.URL)
-                SecureField("API key", text: $apiKey, prompt: Text("Optional for local servers"))
-                    .autocorrectionDisabled()
-                TextField("Model", text: userSettings.$customModelName, prompt: Text("Model ID"))
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    #endif
-                    .autocorrectionDisabled()
+                // Forms on iOS don't show the labels of text fields.
+                LabeledContent("Base URL") {
+                    TextField("Base URL", text: userSettings.$customModelBaseURL, prompt: Text(verbatim: format.defaultBaseURL))
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.URL)
+                        #endif
+                        .autocorrectionDisabled()
+                        .textContentType(.URL)
+                        .fieldInLabeledContent()
+                }
+                LabeledContent("API key") {
+                    SecureField("API key", text: $apiKey, prompt: Text("Optional for local servers"))
+                        .autocorrectionDisabled()
+                        .fieldInLabeledContent()
+                }
+                LabeledContent("Model") {
+                    TextField("Model", text: userSettings.$customModelName, prompt: Text("Model ID"))
+                        #if os(iOS)
+                        .textInputAutocapitalization(.never)
+                        #endif
+                        .autocorrectionDisabled()
+                        .fieldInLabeledContent()
+                }
             } footer: {
                 VStack(alignment: .leading, spacing: 4) {
                     if let endpoint = configuration.endpointURL {
