@@ -58,7 +58,6 @@ enum SubtitleTranslationTarget {
 
 /// Sheet that translates the ARIB subtitles of a downloaded video. It can only be closed with its own buttons,
 /// so that the translation is not stopped by accident.
-@available(iOS 26.0, macOS 26.0, *)
 struct SubtitleTranslationView: View {
     let videoURL: URL
     let recordingName: String

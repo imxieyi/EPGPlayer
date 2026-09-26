@@ -26,7 +26,6 @@ enum SubtitleTranslationError: LocalizedError {
 
 /// Extracts the ARIB subtitles of a downloaded video, translates them and saves the result as an SRT file.
 /// When the translation stops with an error, it can be retried without losing the lines translated so far.
-@available(iOS 26.0, macOS 26.0, *)
 @MainActor
 @Observable
 final class SubtitleTranslationJob {

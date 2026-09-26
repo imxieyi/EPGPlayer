@@ -126,7 +126,7 @@ struct RecordingDetailView: View {
                         #endif
 
                         #if os(iOS) || os(macOS)
-                        if #available(iOS 26.0, macOS 26.0, *), !translatableVideoItems.isEmpty {
+                        if !translatableVideoItems.isEmpty {
                             translateMenu(videoItems: translatableVideoItems)
                         }
                         #endif
@@ -195,9 +195,7 @@ struct RecordingDetailView: View {
             translatableVideoItems = playableLocalVideoItems.filter { ARIBCaptionExtractor.isTransportStream($0.url) }
         }
         .sheet(item: $translatingVideoItem) { videoItem in
-            if #available(iOS 26.0, macOS 26.0, *) {
-                SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name, program: programInfo)
-            }
+            SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name, program: programInfo)
         }
         #endif
     }

@@ -35,10 +35,7 @@ struct SettingsView: View {
                 serverSection
                 playerSection
                 #if os(iOS) || os(macOS)
-                // Subtitles can only be translated on these versions.
-                if #available(iOS 26.0, macOS 26.0, *) {
-                    translationSection
-                }
+                translationSection
                 #endif
                 storageSection
                 resetSection
