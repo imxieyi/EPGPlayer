@@ -42,6 +42,8 @@ struct PlayerView: View {
     @State var audioTracks: [MediaTrack] = []
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
+    /// Whether the subtitles still follow the default, until the user selects a subtitle track.
+    @State var usesDefaultTextTrack = true
     
     @State var audioStereoMode: VLCMediaPlayer.AudioStereoMode = .unset
     
@@ -294,17 +296,10 @@ struct PlayerView: View {
                 return
             }
             textTracks.append(track)
-            guard userSettings.enableSubtitles else {
+            guard userSettings.enableSubtitles, usesDefaultTextTrack, let defaultTextTrack else {
                 return
             }
-            if let rank = track.translationRank {
-                // Prefer the newest translation over the broadcast subtitles.
-                if activeTextTrack.translationRank.map({ rank < $0 }) ?? true {
-                    activeTextTrack = track
-                }
-            } else if textTracks.count == 1 {
-                activeTextTrack = track
-            }
+            activeTextTrack = defaultTextTrack
         }
         .onReceive(playerEvents.setPIPSupported, perform: { supported in
             isPIPSupported = supported
@@ -329,12 +324,26 @@ struct PlayerView: View {
             videoTracks = []
             audioTracks = []
             textTracks = []
+            usesDefaultTextTrack = true
             showPlayerUI()
             resetIdleTimer()
             fetchSavedPlaybackPosition()
         }
     }
     
+    /// The newest translation together with the broadcast subtitles when the video has a translation,
+    /// or else the first subtitle track.
+    var defaultTextTrack: MediaTrack? {
+        let original = textTracks.first { $0.translationRank == nil }
+        guard let translation = textTracks.filter({ $0.translationRank != nil }).min(by: { $0.translationRank! < $1.translationRank! }) else {
+            return original
+        }
+        guard let original else {
+            return translation
+        }
+        return combinedTextTracks.first { $0.combinedIds == [translation.id, original.id] }
+    }
+
     /// Entries that show a translation together with an original subtitle track.
     var combinedTextTracks: [MediaTrack] {
         textTracks.filter({ $0.translationRank != nil }).flatMap { translation in
@@ -409,7 +418,10 @@ struct PlayerView: View {
             }
             
             if !textTracks.isEmpty {
-                Picker(selection: $activeTextTrack) {
+                Picker(selection: Binding(get: { activeTextTrack }, set: { track in
+                    usesDefaultTextTrack = false
+                    activeTextTrack = track
+                })) {
                     Text("None")
                         .tag(MediaTrack(id: "none", name: "text", codec: ""))
                     ForEach(textTracks) { track in
