@@ -121,8 +121,11 @@ struct LiveChannelsView: View {
                                             }
                                         }
                                         .padding(.all, 6)
-                                        #if !os(tvOS)
+                                        #if os(macOS)
                                         .background(.fill)
+                                        #elseif os(iOS)
+                                        // The fill style is drawn black in a menu label on iOS 27.
+                                        .background(Color(uiColor: .secondarySystemBackground))
                                         #endif
                                         .frame(maxWidth: .infinity, minHeight: 120, idealHeight: 120, maxHeight: 120)
                                         .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
