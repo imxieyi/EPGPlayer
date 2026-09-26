@@ -2245,6 +2245,22 @@
         }
       }
     },
+    "Test Connection" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続をテスト"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试连接"
+          }
+        }
+      }
+    },
     "The authentication method %@ is not supported. Please try signing in with a custom HTTP header." : {
       "localizations" : {
         "ja" : {
@@ -2337,6 +2353,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "模型拒绝翻译字幕。"
+          }
+        }
+      }
+    },
+    "The model replied in %@." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルは%@で応答しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型回复用时%@。"
           }
         }
       }
@@ -2545,6 +2577,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已翻译 %lld 句。可在播放器的字幕菜单中选择翻译。"
+          }
+        }
+      }
+    },
+    "Translates a sample caption line to check the settings." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "サンプルの字幕を1行翻訳して、設定を確認します。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译一行示例字幕以检查设置。"
           }
         }
       }

@@ -105,8 +105,7 @@ struct SubtitleTranslator {
                 lastUnusableReply = reply
                 Logger.error("Translation reply for \(indices.count) lines has no usable lines: \(pii: String(reply.prefix(500)))")
                 if unusableReplies >= Self.maxUnusableReplies && translatedCount == 0 {
-                    let snippet = reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200)
-                    throw SubtitleTranslationModelError.fatal(String(localized: "The reply of the model is not in the expected format: \(String(snippet))"))
+                    throw Self.unexpectedFormat(reply)
                 }
             } else {
                 unusableReplies = 0
@@ -172,10 +171,25 @@ struct SubtitleTranslator {
             try await translate(chunk, attempt: 1)
         }
         if translatedCount == 0, !texts.isEmpty, !lastUnusableReply.isEmpty {
-            let snippet = lastUnusableReply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200)
-            throw SubtitleTranslationModelError.fatal(String(localized: "The reply of the model is not in the expected format: \(String(snippet))"))
+            throw Self.unexpectedFormat(lastUnusableReply)
         }
         return Result(translations: translations, untranslated: untranslated.sorted { $0.index < $1.index })
+    }
+
+    /// Translates one line in a single request without retrying, to check that the model works and follows the reply format.
+    func translateSample(_ text: String) async throws -> String {
+        let instructions = Self.instructions(target: target, program: program)
+        let prompt = Self.prompt(for: [0], texts: [text], translations: [nil])
+        let reply = try await model.respond(instructions: instructions, prompt: prompt)
+        guard let translation = Self.acceptedTranslations(in: reply, indices: [0], texts: [text])[0] else {
+            throw Self.unexpectedFormat(reply)
+        }
+        return translation
+    }
+
+    private static func unexpectedFormat(_ reply: String) -> SubtitleTranslationModelError {
+        let snippet = reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200)
+        return .fatal(String(localized: "The reply of the model is not in the expected format: \(String(snippet))"))
     }
 
     // MARK: - Requests

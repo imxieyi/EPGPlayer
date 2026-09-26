@@ -38,13 +38,28 @@ enum SubtitleTranslationEngine: String, CaseIterable, Identifiable {
     }
 }
 
+/// Languages that subtitles can be translated to.
+enum SubtitleTranslationTarget {
+    static let identifiers = ["en", "zh-Hans", "zh-Hant", "ko", "fr", "de", "es", "it", "pt-BR", "nl", "ru", "vi", "th", "id"]
+
+    /// The language translated to last time, or the language of the app unless it is Japanese.
+    static func defaultIdentifier(saved: String, available: [String] = identifiers) -> String {
+        if available.contains(saved) {
+            return saved
+        }
+        let preferred = Locale.Language(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        let match = available.first { identifier in
+            let language = Locale.Language(identifier: identifier)
+            return language.languageCode == preferred.languageCode && (preferred.script == nil || language.script == preferred.script)
+        }
+        return match ?? (available.contains("en") ? "en" : available.first ?? "")
+    }
+}
+
 /// Sheet that translates the ARIB subtitles of a downloaded video. It can only be closed with its own buttons,
 /// so that the translation is not stopped by accident.
 @available(iOS 26.0, macOS 26.0, *)
 struct SubtitleTranslationView: View {
-    /// Languages that subtitles can be translated to.
-    private static let targetLanguageIdentifiers = ["en", "zh-Hans", "zh-Hant", "ko", "fr", "de", "es", "it", "pt-BR", "nl", "ru", "vi", "th", "id"]
-
     let videoURL: URL
     let recordingName: String
     let videoName: String
@@ -160,7 +175,7 @@ struct SubtitleTranslationView: View {
     }
 
     private var targetLanguages: [String] {
-        var identifiers = Self.targetLanguageIdentifiers
+        var identifiers = SubtitleTranslationTarget.identifiers
         if engine == .appleIntelligence, let codes = appleIntelligenceLanguages {
             identifiers = identifiers.filter { Locale.Language(identifier: $0).languageCode.map(codes.contains) ?? false }
         }
@@ -300,21 +315,7 @@ struct SubtitleTranslationView: View {
             }
         }
         #endif
-        target = defaultTarget()
-    }
-
-    /// The language translated to last time, or the language of the app unless it is Japanese.
-    private func defaultTarget() -> String {
-        let languages = targetLanguages
-        if languages.contains(userSettings.translationTargetLanguage) {
-            return userSettings.translationTargetLanguage
-        }
-        let preferred = Locale.Language(identifier: Bundle.main.preferredLocalizations.first ?? "en")
-        let match = languages.first { identifier in
-            let language = Locale.Language(identifier: identifier)
-            return language.languageCode == preferred.languageCode && (preferred.script == nil || language.script == preferred.script)
-        }
-        return match ?? (languages.contains("en") ? "en" : languages.first ?? "")
+        target = SubtitleTranslationTarget.defaultIdentifier(saved: userSettings.translationTargetLanguage, available: targetLanguages)
     }
 }
 #endif

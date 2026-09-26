@@ -34,14 +34,25 @@ struct CustomModelSettingsView: View {
     @Environment(AppState.self) private var appState
     @EnvironmentObject private var userSettings: UserSettings
 
+    private enum TestResult {
+        case success(translation: String, duration: Duration)
+        case failure(String)
+    }
+
+    /// A caption line that also shows whether the model keeps the speaker name in parentheses.
+    private static let sampleLine = "(のび太)ドラえもん、助けてよ!"
+
     @State private var apiKey = ""
+    @State private var testTask: Task<Void, Never>?
+    @State private var testResult: TestResult?
 
     private var format: CustomModelAPIFormat {
         CustomModelAPIFormat(rawValue: userSettings.customModelAPIFormat) ?? .openAIChatCompletions
     }
 
     private var configuration: CustomModelConfiguration {
-        CustomModelConfiguration(format: format, baseURL: userSettings.customModelBaseURL, model: userSettings.customModelName, apiKey: apiKey)
+        CustomModelConfiguration(format: format, baseURL: userSettings.customModelBaseURL, model: userSettings.customModelName,
+                                 apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     var body: some View {
@@ -89,11 +100,39 @@ struct CustomModelSettingsView: View {
                     Text("When you translate with the custom model, the subtitles and the program information are sent to this server.")
                 }
             }
+
+            Section {
+                Button {
+                    testConnection()
+                } label: {
+                    HStack {
+                        Text("Test Connection")
+                        if testTask != nil {
+                            Spacer()
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+                }
+                .disabled(!configuration.isComplete || testTask != nil)
+                if let testResult {
+                    testResultView(testResult)
+                }
+            } footer: {
+                Text("Translates a sample caption line to check the settings.")
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("Custom Model")
         .onAppear {
             apiKey = appState.keychain?.get(UserSettings.customModelAPIKeyKeychainKey) ?? ""
+        }
+        .onDisappear {
+            resetTest()
+        }
+        .onChange(of: [userSettings.customModelAPIFormat, userSettings.customModelBaseURL, userSettings.customModelName, apiKey]) {
+            // A result is only meaningful for the settings it was tested with.
+            resetTest()
         }
         .onChange(of: apiKey) { _, newValue in
             guard let keychain = appState.keychain else {
@@ -106,6 +145,60 @@ struct CustomModelSettingsView: View {
                 Logger.error("Failed to save the API key of the custom model")
             }
         }
+    }
+
+    @ViewBuilder
+    private func testResultView(_ result: TestResult) -> some View {
+        switch result {
+        case .success(let translation, let duration):
+            Label {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("The model replied in \(duration.formatted(.units(allowed: [.seconds], fractionalPart: .show(length: 1)))).")
+                    Text(verbatim: "\(Self.sampleLine) → \(translation)")
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: "checkmark.circle")
+                    .foregroundStyle(.green)
+            }
+        case .failure(let message):
+            Label {
+                Text(verbatim: message)
+            } icon: {
+                Image(systemName: "exclamationmark.triangle")
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+
+    private func testConnection() {
+        let model = CustomTranslationModel(configuration: configuration)
+        let target = Locale.Language(identifier: SubtitleTranslationTarget.defaultIdentifier(saved: userSettings.translationTargetLanguage))
+        testResult = nil
+        testTask = Task {
+            let translator = SubtitleTranslator(model: model, target: target, program: nil)
+            let clock = ContinuousClock()
+            let start = clock.now
+            let result: TestResult
+            do {
+                let translation = try await translator.translateSample(Self.sampleLine)
+                result = .success(translation: translation, duration: clock.now - start)
+            } catch {
+                result = .failure(error.localizedDescription)
+            }
+            // A cancelled test belongs to settings that were changed since.
+            guard !Task.isCancelled else {
+                return
+            }
+            testResult = result
+            testTask = nil
+        }
+    }
+
+    private func resetTest() {
+        testTask?.cancel()
+        testTask = nil
+        testResult = nil
     }
 }
 #endif
