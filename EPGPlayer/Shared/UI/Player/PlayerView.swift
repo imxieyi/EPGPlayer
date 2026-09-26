@@ -272,18 +272,27 @@ struct PlayerView: View {
             }
         })
         .onReceive(playerEvents.addVideoTrack) { track in
+            guard !videoTracks.contains(where: { $0.id == track.id }) else {
+                return
+            }
             videoTracks.append(track)
             if videoTracks.count == 1 {
                 activeVideoTrack = track
             }
         }
         .onReceive(playerEvents.addAudioTrack) { track in
+            guard !audioTracks.contains(where: { $0.id == track.id }) else {
+                return
+            }
             audioTracks.append(track)
             if audioTracks.count == 1 {
                 activeAudioTrack = track
             }
         }
         .onReceive(playerEvents.addTextTrack) { track in
+            guard !textTracks.contains(where: { $0.id == track.id }) else {
+                return
+            }
             textTracks.append(track)
             guard userSettings.enableSubtitles else {
                 return

@@ -209,23 +209,8 @@ class VLCPlayerViewController: UIViewController {
             }
         })
         getTrackInfoListener = playerEvents.getTrackInfo.sink(receiveValue: { [weak self] trackId in
-            guard let player = self?.mediaPlayer else {
-                return
-            }
             DispatchQueue.main.async {
-                if let track = player.videoTracks.filter({ $0.trackId == trackId }).first {
-                    playerEvents.addVideoTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
-                }
-                if let track = player.audioTracks.filter({ $0.trackId == trackId }).first {
-                    playerEvents.addAudioTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
-                }
-                if let track = player.textTracks.filter({ $0.trackId == trackId }).first {
-                    if let translated = self?.translatedTrack(for: trackId) {
-                        playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: translated.name, codec: track.codecName, translationRank: translated.rank))
-                    } else {
-                        playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
-                    }
-                }
+                self?.reportTrack(trackId)
             }
         })
         enableTrackListener = playerEvents.enableTrack.sink(receiveValue: { [weak self] track in
@@ -310,6 +295,9 @@ class VLCPlayerViewController: UIViewController {
             }
         })
         #endif
+
+        // Playback starts in viewDidLoad, so VLC may have added tracks before the listeners above existed.
+        (mediaPlayer.videoTracks + mediaPlayer.audioTracks + mediaPlayer.textTracks).forEach { reportTrack($0.trackId) }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
@@ -396,6 +384,26 @@ class VLCPlayerViewController: UIViewController {
         }
         if !translatedTracks.isEmpty {
             Logger.info("Added \(translatedTracks.count) translated subtitle tracks")
+        }
+    }
+
+    /// Adds a track to the menus of the player. A track may be reported more than once.
+    func reportTrack(_ trackId: String) {
+        guard let playerEvents else {
+            return
+        }
+        if let track = mediaPlayer.videoTracks.first(where: { $0.trackId == trackId }) {
+            playerEvents.addVideoTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+        }
+        if let track = mediaPlayer.audioTracks.first(where: { $0.trackId == trackId }) {
+            playerEvents.addAudioTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+        }
+        if let track = mediaPlayer.textTracks.first(where: { $0.trackId == trackId }) {
+            if let translated = translatedTrack(for: trackId) {
+                playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: translated.name, codec: track.codecName, translationRank: translated.rank))
+            } else {
+                playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
+            }
         }
     }
 
