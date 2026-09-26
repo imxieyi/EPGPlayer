@@ -36,6 +36,16 @@ class UserSettings: ObservableObject {
     @AppStorage("live_show_cs") var liveShowCS = true
     @AppStorage("live_show_sky") var liveShowSKY = true
     
+    // Translation Settings
+    @AppStorage("translation_engine") var translationEngine = ""
+    @AppStorage("translation_target_language") var translationTargetLanguage = ""
+    @AppStorage("custom_model_api_format") var customModelAPIFormat = ""
+    @AppStorage("custom_model_base_url") var customModelBaseURL = ""
+    @AppStorage("custom_model_name") var customModelName = ""
+
+    /// Keychain key of the API key of the custom translation model.
+    static let customModelAPIKeyKeychainKey = "custom_model_api_key"
+    
     // Debug Settings
     #if DEBUG
     @Published var demoMode = false

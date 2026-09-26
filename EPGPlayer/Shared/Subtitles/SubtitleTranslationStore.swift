@@ -17,8 +17,17 @@ struct SubtitleTranslation: Sendable, Hashable {
 
     /// Name of the subtitle track in the player, e.g. "English (Translated)".
     var trackName: String {
-        let language = Locale.current.localizedString(forIdentifier: targetLanguage.minimalIdentifier) ?? targetLanguage.minimalIdentifier
+        let identifier = Self.displayIdentifier(of: targetLanguage)
+        let language = Locale.current.localizedString(forIdentifier: identifier) ?? identifier
         return String(localized: "\(language) (Translated)")
+    }
+
+    /// Names Chinese by its script, since the file names of Chinese translations are "zh" and "zh-TW".
+    private static func displayIdentifier(of language: Locale.Language) -> String {
+        if language.languageCode == .chinese, let script = Locale.Language(identifier: language.maximalIdentifier).script {
+            return "zh-\(script.identifier)"
+        }
+        return language.minimalIdentifier
     }
 }
 

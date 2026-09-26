@@ -196,7 +196,7 @@ struct RecordingDetailView: View {
         }
         .sheet(item: $translatingVideoItem) { videoItem in
             if #available(iOS 26.0, macOS 26.0, *) {
-                SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name)
+                SubtitleTranslationView(videoURL: videoItem.url, recordingName: item.name, videoName: videoItem.name, program: programInfo)
             }
         }
         #endif
@@ -205,6 +205,13 @@ struct RecordingDetailView: View {
     #if os(iOS) || os(macOS)
     var playableLocalVideoItems: [LocalVideoItem] {
         (item as? LocalRecordedItem)?._videoItems.filter({ $0.canPlay }) ?? []
+    }
+
+    /// The program information that helps translating the subtitles, limited so that it doesn't dominate the requests.
+    var programInfo: SubtitleProgramInfo {
+        let description = [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n")
+            .replacing("\r\n", with: "\n")
+        return SubtitleProgramInfo(title: item.name, description: String(description.prefix(2000)))
     }
 
     func translateMenu(videoItems: [LocalVideoItem]) -> some View {

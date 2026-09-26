@@ -34,6 +34,9 @@ struct SettingsView: View {
             Form {
                 serverSection
                 playerSection
+                #if os(iOS) || os(macOS)
+                translationSection
+                #endif
                 storageSection
                 resetSection
                 aboutSection
@@ -192,6 +195,28 @@ struct SettingsView: View {
         }
     }
     
+    #if os(iOS) || os(macOS)
+    var translationSection: some View {
+        Section {
+            NavigationLink {
+                CustomModelSettingsView()
+            } label: {
+                LabeledContent("Custom model") {
+                    if userSettings.customModelName.isEmpty {
+                        Text("Not set up")
+                    } else {
+                        Text(verbatim: userSettings.customModelName)
+                    }
+                }
+            }
+        } header: {
+            Label("Subtitle Translation", systemImage: "translate")
+        } footer: {
+            Text("Choose the custom model when translating the subtitles of a downloaded recording.")
+        }
+    }
+    #endif
+    
     var storageSection: some View {
         Section {
             #if !os(tvOS)
@@ -276,7 +301,16 @@ struct SettingsView: View {
                     DispatchQueue.global(qos: .background).async {
                         HTTPCookieStorage.shared.removeCookies(since: .distantPast)
                     }
-                    if !appState.keychain.clear() {
+                    // Keep the API key of the translation model, which is not login info.
+                    let keychain = appState.keychain!
+                    let allKeys = keychain.allKeys
+                    if allKeys.contains(UserSettings.customModelAPIKeyKeychainKey) {
+                        for key in allKeys where key != UserSettings.customModelAPIKeyKeychainKey {
+                            if !keychain.delete(key) {
+                                Logger.error("Failed to delete keychain item")
+                            }
+                        }
+                    } else if !keychain.clear() {
                         Logger.error("Failed to clear keychain")
                     }
                 }

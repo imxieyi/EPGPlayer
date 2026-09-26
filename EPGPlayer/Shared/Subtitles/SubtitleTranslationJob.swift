@@ -9,7 +9,6 @@
 #if os(iOS) || os(macOS)
 import Foundation
 import Observation
-@preconcurrency import Translation
 #if os(iOS)
 import UIKit
 #endif
@@ -33,59 +32,55 @@ final class SubtitleTranslationJob {
     enum Phase: Equatable {
         case idle
         case readingSubtitles(progress: Double)
-        case preparingLanguages
         case translating(completed: Int, total: Int)
-        case finished(count: Int)
+        /// Lines that could not be translated are saved in Japanese and listed.
+        case finished(count: Int, untranslated: [SubtitleTranslator.UntranslatedLine])
         case failed(message: String)
         case cancelled
     }
+
+    /// ARIB subtitles are always in Japanese.
+    static let sourceLanguage = Locale.Language(identifier: "ja")
 
     private(set) var phase = Phase.idle
 
     var isRunning: Bool {
         switch phase {
-        case .readingSubtitles, .preparingLanguages, .translating:
+        case .readingSubtitles, .translating:
             return true
         default:
             return false
         }
     }
 
-    /// Number of sentences sent in one batch request, so that progress updates often and cancellation is quick.
-    private static let batchSize = 25
-
     private let videoURL: URL
-    @ObservationIgnored private var session: TranslationSession?
+    @ObservationIgnored private var task: Task<Void, Never>?
     @ObservationIgnored private var extractionTask: Task<[ARIBCaption], Error>?
-    @ObservationIgnored private var isCancelled = false
 
     init(videoURL: URL) {
         self.videoURL = videoURL
     }
 
-    /// Marks the job as started so that the UI switches to the progress view before the session is ready.
-    func prepare() {
-        phase = .readingSubtitles(progress: 0)
-    }
-
-    /// Runs the whole job with a session provided by `translationTask`. The session must not outlive this call.
-    func run(session: TranslationSession) async {
-        guard let source = session.sourceLanguage, let target = session.targetLanguage else {
-            phase = .failed(message: String(localized: "Choose two different languages."))
+    func start(model: any SubtitleTranslationModel, target: Locale.Language, program: SubtitleProgramInfo?) {
+        guard !isRunning else {
             return
         }
-        self.session = session
-        isCancelled = false
+        phase = .readingSubtitles(progress: 0)
+        task = Task {
+            await run(model: model, target: target, program: program)
+        }
+    }
+
+    private func run(model: any SubtitleTranslationModel, target: Locale.Language, program: SubtitleProgramInfo?) async {
         let wakeLock = acquireWakeLock()
         defer {
             releaseWakeLock(wakeLock)
-            self.session = nil
             extractionTask = nil
+            task = nil
         }
         do {
-            phase = .readingSubtitles(progress: 0)
             let videoURL = self.videoURL
-            let task = Task.detached(priority: .userInitiated) { [weak self] in
+            let extraction = Task.detached(priority: .userInitiated) { [weak self] in
                 var lastReported = 0.0
                 return try ARIBCaptionExtractor.extract(from: videoURL) { progress in
                     guard progress - lastReported >= 0.01 || progress == 1 else {
@@ -97,19 +92,20 @@ final class SubtitleTranslationJob {
                     }
                 }
             }
-            extractionTask = task
-            let captions = try await task.value
-            try checkCancelled()
+            extractionTask = extraction
+            let captions = try await withTaskCancellationHandler {
+                try await extraction.value
+            } onCancel: {
+                extraction.cancel()
+            }
+            try Task.checkCancellation()
 
-            let sentences = SubtitleCue.sentences(from: SubtitleCue.cues(from: captions))
+            var sentences = SubtitleCue.sentences(from: SubtitleCue.cues(from: captions))
             guard !sentences.isEmpty else {
                 throw SubtitleTranslationError.noSubtitles
             }
-            Logger.info("Translating \(sentences.count) subtitle sentences from \(source.minimalIdentifier) to \(target.minimalIdentifier)")
+            Logger.info("Translating \(sentences.count) subtitle sentences to \(target.minimalIdentifier)")
 
-            phase = .preparingLanguages
-            try await session.prepareTranslation()
-            try checkCancelled()
             #if os(iOS)
             if SubtitleFonts.needsDownloadableFont(for: target) {
                 do {
@@ -118,32 +114,30 @@ final class SubtitleTranslationJob {
                     // The translation is still useful without the font, which is activated again in the next launch.
                     Logger.error("Failed to activate the subtitle font: \(error)")
                 }
-                try checkCancelled()
+                try Task.checkCancellation()
             }
             #endif
 
-            var translated = sentences
-            var completed = 0
-            phase = .translating(completed: 0, total: sentences.count)
-            for batchStart in stride(from: 0, to: sentences.count, by: Self.batchSize) {
-                let requests = (batchStart..<min(batchStart + Self.batchSize, sentences.count)).map {
-                    TranslationSession.Request(sourceText: sentences[$0].text, clientIdentifier: String($0))
+            let total = sentences.count
+            phase = .translating(completed: 0, total: total)
+            let translator = SubtitleTranslator(model: model, target: target, program: program)
+            let result = try await translator.translate(sentences.map(\.text)) { [weak self] completed in
+                guard let self, case .translating = self.phase else {
+                    return
                 }
-                for try await response in session.translate(batch: requests) {
-                    guard let identifier = response.clientIdentifier, let index = Int(identifier) else {
-                        continue
-                    }
-                    translated[index].text = response.targetText
-                    completed += 1
-                    phase = .translating(completed: completed, total: sentences.count)
+                self.phase = .translating(completed: completed, total: total)
+            }
+            try Task.checkCancellation()
+            for (index, translation) in result.translations.enumerated() {
+                if let translation {
+                    sentences[index].text = translation
                 }
-                try checkCancelled()
             }
 
-            try SubtitleTranslationStore.save(translated, forVideo: videoURL, source: source, target: target)
-            phase = .finished(count: sentences.count)
+            try SubtitleTranslationStore.save(sentences, forVideo: videoURL, source: Self.sourceLanguage, target: target)
+            phase = .finished(count: total, untranslated: result.untranslated)
         } catch {
-            if isCancelled || error is CancellationError {
+            if Task.isCancelled || error is CancellationError {
                 Logger.info("Subtitle translation cancelled")
                 phase = .cancelled
             } else {
@@ -158,21 +152,14 @@ final class SubtitleTranslationJob {
         guard isRunning else {
             return
         }
-        isCancelled = true
+        task?.cancel()
         extractionTask?.cancel()
-        session?.cancel()
         phase = .cancelled
     }
 
     private func updateReadingProgress(_ progress: Double) {
         if case .readingSubtitles = phase {
             phase = .readingSubtitles(progress: progress)
-        }
-    }
-
-    private func checkCancelled() throws {
-        if isCancelled {
-            throw CancellationError()
         }
     }
 

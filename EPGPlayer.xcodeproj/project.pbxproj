@@ -15,6 +15,7 @@
 		8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F282DB523A0004E9328 /* FirebaseCrashlytics */; };
 		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
 		8AC0DE012E8A100000A1B2C3 /* LibARIBCaption in Frameworks */ = {isa = PBXBuildFile; productRef = 8AC0DE022E8A100000A1B2C3 /* LibARIBCaption */; };
+		8AD1A0012EA2000000A1B2C3 /* AnyLanguageModel in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, macos, ); productRef = 8AD1A0022EA2000000A1B2C3 /* AnyLanguageModel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +45,7 @@
 				Info.plist,
 			);
 			platformFiltersByRelativePath = {
+				Licenses/AnyLanguageModel.license = (ios, macos, );
 				Platform/iOS/AppDelegate.swift = (ios, );
 				Platform/iOS/ExternalDisplay/ExternalDisplayHelper.swift = (ios, );
 				Platform/iOS/ExternalDisplay/ExternalLaunchScreen.storyboard = (ios, );
@@ -101,6 +103,7 @@
 				8A76696C2D9AB337008E69F7 /* CachedAsyncImage in Frameworks */,
 				8A7667E62D946A54008E69F7 /* OpenAPIRuntime in Frameworks */,
 				8AC0DE012E8A100000A1B2C3 /* LibARIBCaption in Frameworks */,
+				8AD1A0012EA2000000A1B2C3 /* AnyLanguageModel in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -206,6 +209,7 @@
 				8A850F252DB523A0004E9328 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				8A46FEE92DB52ED2005DB469 /* XCRemoteSwiftPackageReference "swift-log" */,
 				8AC0DE032E8A100000A1B2C3 /* XCLocalSwiftPackageReference "Packages/LibARIBCaption" */,
+				8AD1A0032EA2000000A1B2C3 /* XCRemoteSwiftPackageReference "AnyLanguageModel" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 8A7744592D92C2F30080D3BA /* Products */;
@@ -425,6 +429,8 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=appletvos*]" = "EPGPlayer/EPGPlayer-tvOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=appletvsimulator*]" = "EPGPlayer/EPGPlayer-tvOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -468,6 +474,8 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = EPGPlayer/EPGPlayer.entitlements;
+				"CODE_SIGN_ENTITLEMENTS[sdk=appletvos*]" = "EPGPlayer/EPGPlayer-tvOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=appletvsimulator*]" = "EPGPlayer/EPGPlayer-tvOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -590,6 +598,14 @@
 				kind = branch;
 			};
 		};
+		8AD1A0032EA2000000A1B2C3 /* XCRemoteSwiftPackageReference "AnyLanguageModel" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/huggingface/AnyLanguageModel";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.14.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -636,6 +652,11 @@
 		8AC0DE022E8A100000A1B2C3 /* LibARIBCaption */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = LibARIBCaption;
+		};
+		8AD1A0022EA2000000A1B2C3 /* AnyLanguageModel */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 8AD1A0032EA2000000A1B2C3 /* XCRemoteSwiftPackageReference "AnyLanguageModel" */;
+			productName = AnyLanguageModel;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

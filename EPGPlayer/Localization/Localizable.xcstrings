@@ -215,6 +215,150 @@
         }
       }
     },
+    "API format" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API形式"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API格式"
+          }
+        }
+      }
+    },
+    "API key" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "APIキー"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "API密钥"
+          }
+        }
+      }
+    },
+    "Apple Intelligence" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligence"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能"
+          }
+        }
+      }
+    },
+    "Apple Intelligence does not support this language." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceはこの言語に対応していません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能不支持此语言。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence is not available." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceを利用できません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能不可用。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence is not ready. Make sure it is turned on in Settings." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceの準備ができていません。設定でオンになっていることを確認してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能尚未就绪。请确认已在设置中打开。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence is not supported on this device." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このデバイスはApple Intelligenceに対応していません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此设备不支持Apple智能。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence is receiving too many requests. Try again later." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceへのリクエストが多すぎます。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能收到的请求过多，请稍后再试。"
+          }
+        }
+      }
+    },
+    "Apple Intelligence is temporarily unavailable. Try again later." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceは一時的に利用できません。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple智能暂时不可用，请稍后再试。"
+          }
+        }
+      }
+    },
     "Are you sure?" : {
       "localizations" : {
         "ja" : {
@@ -294,6 +438,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已完成后台下载"
+          }
+        }
+      }
+    },
+    "Base URL" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ベースURL"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "基础地址"
           }
         }
       }
@@ -394,18 +554,18 @@
         }
       }
     },
-    "Choose two different languages." : {
+    "Choose the custom model when translating the subtitles of a downloaded recording." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "異なる2つの言語を選択してください。"
+            "value" : "ダウンロードした録画の字幕を翻訳するときに、カスタムモデルを選択できます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请选择两种不同的语言。"
+            "value" : "翻译已下载录制的字幕时可选择自定义模型。"
           }
         }
       }
@@ -470,6 +630,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "继续"
+          }
+        }
+      }
+    },
+    "Could not connect to Apple Intelligence. Check your network connection." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceに接続できませんでした。ネットワーク接続を確認してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法连接到Apple智能，请检查网络连接。"
+          }
+        }
+      }
+    },
+    "Custom Model" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カスタムモデル"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义模型"
+          }
+        }
+      }
+    },
+    "Custom model" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カスタムモデル"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义模型"
           }
         }
       }
@@ -941,22 +1149,6 @@
         }
       }
     },
-    "From" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "翻訳元"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "源语言"
-          }
-        }
-      }
-    },
     "Genres" : {
       "localizations" : {
         "ja" : {
@@ -1053,18 +1245,18 @@
         }
       }
     },
-    "Languages" : {
+    "Leave the base URL empty to use the official server. Any server that is compatible with the API format works." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "言語"
+            "value" : "ベースURLを空欄にすると公式サーバーを使用します。API形式に互換性のあるサーバーであれば利用できます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "语言"
+            "value" : "基础地址留空则使用官方服务器。也可以使用任何兼容该API格式的服务器。"
           }
         }
       }
@@ -1145,6 +1337,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "登录信息"
+          }
+        }
+      }
+    },
+    "Model" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデル"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型"
+          }
+        }
+      }
+    },
+    "Model ID" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルID"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型ID"
           }
         }
       }
@@ -1296,6 +1520,22 @@
         }
       }
     },
+    "Not set up" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未設定"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未设置"
+          }
+        }
+      }
+    },
     "Notification permission is disabled" : {
       "localizations" : {
         "ja" : {
@@ -1359,6 +1599,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "打开测试页面"
+          }
+        }
+      }
+    },
+    "Optional for local servers" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ローカルサーバーでは省略可"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "本地服务器可不填"
           }
         }
       }
@@ -1475,22 +1731,6 @@
         }
       }
     },
-    "Preparing languages…" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語を準備中…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在准备语言…"
-          }
-        }
-      }
-    },
     "Program" : {
       "localizations" : {
         "ja" : {
@@ -1535,22 +1775,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在读取字幕…"
-          }
-        }
-      }
-    },
-    "Ready to translate." : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "翻訳の準備ができました。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "可以开始翻译。"
           }
         }
       }
@@ -1632,6 +1856,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "汇报问题"
+          }
+        }
+      }
+    },
+    "Requests are sent to %@" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "リクエストの送信先：%@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请求将发送到：%@"
           }
         }
       }
@@ -1777,6 +2017,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "设置EPGStation的地址"
+          }
+        }
+      }
+    },
+    "Set up the custom model in Settings first." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先に設定でカスタムモデルを設定してください。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先在设置中设置自定义模型。"
           }
         }
       }
@@ -1973,6 +2229,22 @@
         }
       }
     },
+    "Subtitle Translation" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕の翻訳"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕翻译"
+          }
+        }
+      }
+    },
     "The authentication method %@ is not supported. Please try signing in with a custom HTTP header." : {
       "localizations" : {
         "ja" : {
@@ -1989,18 +2261,146 @@
         }
       }
     },
-    "The languages will be downloaded when you start." : {
+    "The base URL is invalid." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開始すると言語がダウンロードされます。"
+            "value" : "ベースURLが無効です。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "开始后将下载所需的语言。"
+            "value" : "基础地址无效。"
+          }
+        }
+      }
+    },
+    "The base URL of the custom model is invalid." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カスタムモデルのベースURLが無効です。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "自定义模型的基础地址无效。"
+          }
+        }
+      }
+    },
+    "The model failed to translate %lld sentences." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 文を翻訳できませんでした。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型未能翻译 %lld 句。"
+          }
+        }
+      }
+    },
+    "The model refused to translate %lld sentences." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルが %lld 文の翻訳を拒否しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型拒绝翻译 %lld 句。"
+          }
+        }
+      }
+    },
+    "The model refused to translate the subtitles." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルが字幕の翻訳を拒否しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型拒绝翻译字幕。"
+          }
+        }
+      }
+    },
+    "The reply of the model is not in the expected format: %@" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルの応答が想定された形式ではありません：%@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型的回复格式不正确：%@"
+          }
+        }
+      }
+    },
+    "The subtitles and the program information are sent to %@ and translated by %@." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕と番組情報は%1$@に送信され、%2$@で翻訳されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕和节目信息将发送到%1$@，由%2$@翻译。"
+          }
+        }
+      }
+    },
+    "The subtitles are too long for the model." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕が長すぎてモデルで処理できません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕过长，模型无法处理。"
+          }
+        }
+      }
+    },
+    "The subtitles are translated by Apple Foundation Models on Private Cloud Compute." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕はPrivate Cloud Compute上のApple Foundation Modelsで翻訳されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "字幕将由私有云计算上的Apple基础模型翻译。"
           }
         }
       }
@@ -2037,34 +2437,34 @@
         }
       }
     },
-    "This language pair is not supported." : {
+    "They are kept in Japanese:" : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "この言語の組み合わせには対応していません。"
+            "value" : "これらの文は日本語のまま残されます："
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不支持此语言组合。"
+            "value" : "这些句子保留为日语："
           }
         }
       }
     },
-    "This video already has a translation for these languages. Starting will replace it." : {
+    "This video already has a translation to this language. Starting will replace it." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "この動画にはこの言語の翻訳がすでにあります。開始すると置き換えられます。"
+            "value" : "このビデオにはすでにこの言語の翻訳があります。開始すると置き換えられます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "此视频已有这两种语言的翻译，开始后将替换现有翻译。"
+            "value" : "此视频已有该语言的翻译，开始后将替换它。"
           }
         }
       }
@@ -2081,22 +2481,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "时间"
-          }
-        }
-      }
-    },
-    "To" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "翻訳先"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "目标语言"
           }
         }
       }
@@ -2129,6 +2513,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "翻译字幕"
+          }
+        }
+      }
+    },
+    "Translate to" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳先"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译为"
           }
         }
       }
@@ -2296,6 +2696,22 @@
         }
       }
     },
+    "When you translate with the custom model, the subtitles and the program information are sent to this server." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カスタムモデルで翻訳すると、字幕と番組情報がこのサーバーに送信されます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "使用自定义模型翻译时，字幕和节目信息会发送到此服务器。"
+          }
+        }
+      }
+    },
     "Yes" : {
       "localizations" : {
         "ja" : {
@@ -2308,6 +2724,38 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "是"
+          }
+        }
+      }
+    },
+    "You have reached the usage limit of Apple Intelligence." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceの利用上限に達しました。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已达到Apple智能的使用上限。"
+          }
+        }
+      }
+    },
+    "You have reached the usage limit of Apple Intelligence. It resets %@." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apple Intelligenceの利用上限に達しました。%@にリセットされます。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已达到Apple智能的使用上限，将于%@重置。"
           }
         }
       }
