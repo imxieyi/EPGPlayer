@@ -45,6 +45,12 @@ public struct SearchView: View {
                 }
             }
         }
+        #if os(tvOS)
+        // Widen the sheet without touching NavigationStack (which is required here for
+        // tvOS's text-input/focus system to work at all - see repo memory notes).
+        .presentationSizing(.form)
+        .frame(width: 1100)
+        #endif
         .onAppear {
             loadInitialQuery()
         }
@@ -55,27 +61,43 @@ extension SearchView {
     var searchFields: some View {
         Group {
             TextField("Keyword", text: $keyword)
-            Picker("Channel", selection: $channel) {
-                Text("All")
-                    .tag(nil as SearchChannel?)
-                Divider()
-                ForEach(channels) { channel in
-                    Text(verbatim: channel.name)
-                        .tag(channel as SearchChannel?)
-                }
-            }
-            .pickerStyle(.menu)
-            if !rules.isEmpty {
-                Picker("Recording rule", selection: $rule) {
+            // tvOS's .menu Picker style shows only the selected value, not the label
+            // passed to Picker(_:selection:) - so show the field name explicitly.
+            HStack {
+                Text("Channel")
+                Spacer()
+                Picker(selection: $channel) {
                     Text("All")
-                        .tag(nil as SearchRule?)
+                        .tag(nil as SearchChannel?)
                     Divider()
-                    ForEach(rules) { rule in
-                        Text(verbatim: rule.keyword)
-                            .tag(rule as SearchRule?)
+                    ForEach(channels) { channel in
+                        Text(verbatim: channel.name)
+                            .tag(channel as SearchChannel?)
                     }
+                } label: {
+                    EmptyView()
                 }
                 .pickerStyle(.menu)
+                .labelsHidden()
+            }
+            if !rules.isEmpty {
+                HStack {
+                    Text("Tags")
+                    Spacer()
+                    Picker(selection: $rule) {
+                        Text("All")
+                            .tag(nil as SearchRule?)
+                        Divider()
+                        ForEach(rules) { rule in
+                            Text(verbatim: rule.keyword)
+                                .tag(rule as SearchRule?)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.menu)
+                    .labelsHidden()
+                }
             }
         }
     }
