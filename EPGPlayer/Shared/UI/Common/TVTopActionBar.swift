@@ -27,6 +27,11 @@ struct TVTopActionBar<Content: View>: View {
         }
         .padding(.horizontal, 48)
         .padding(.top, 8)
+        // Without its own section, the focus engine can skip over this bar entirely
+        // when moving down from the tab bar into a sibling that also declares a
+        // focusSection() (e.g. Recordings' shelf rows), landing directly in the
+        // content below instead.
+        .focusSection()
     }
 }
 #endif
