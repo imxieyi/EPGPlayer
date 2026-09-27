@@ -10,60 +10,27 @@ import SwiftUI
 import OpenAPIRuntime
 
 public struct SearchView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) var dismiss
+    @Environment(AppState.self) var appState
     
     @Binding var searchQuery: SearchQuery?
     
     let channels: [SearchChannel]
+    var rules: [SearchRule] = []
     
-    @State private var keyword: String = ""
-    @State private var channel: SearchChannel? = nil
+    @State var keyword: String = ""
+    @State var channel: SearchChannel? = nil
+    @State var rule: SearchRule? = nil
     
     public var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    TextField("Keyword", text: $keyword)
-                    Picker("Channel", selection: $channel) {
-                        Text("All")
-                            .tag(nil as SearchChannel?)
-                        Divider()
-                        ForEach(channels) { channel in
-                            Text(verbatim: channel.name)
-                                .tag(channel as SearchChannel?)
-                        }
-                    }
-                    .pickerStyle(.menu)
+                    searchFields
                 } header: {
                     Label("Query", systemImage: "magnifyingglass")
                 }
-                
-                HStack {
-                    Button(role: .destructive) {
-                        searchQuery = nil
-                        dismiss()
-                    } label: {
-                        Text("Reset")
-                    }
-                    #if !os(macOS)
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red)
-                    #endif
-                    
-                    Spacer()
-                    
-                    Button {
-                        searchQuery = SearchQuery(keyword: keyword, channel: channel)
-                        dismiss()
-                    } label: {
-                        Text("Search")
-                    }
-                    #if !os(macOS)
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.tint)
-                    #endif
-                }
+                searchActions
             }
             .formStyle(.grouped)
             .navigationTitle("Search")
@@ -79,10 +46,73 @@ public struct SearchView: View {
             }
         }
         .onAppear {
-            if let searchQuery {
-                keyword = searchQuery.keyword
-                channel = searchQuery.channel
+            loadInitialQuery()
+        }
+    }
+}
+
+extension SearchView {
+    var searchFields: some View {
+        Group {
+            TextField("Keyword", text: $keyword)
+            Picker("Channel", selection: $channel) {
+                Text("All")
+                    .tag(nil as SearchChannel?)
+                Divider()
+                ForEach(channels) { channel in
+                    Text(verbatim: channel.name)
+                        .tag(channel as SearchChannel?)
+                }
             }
+            .pickerStyle(.menu)
+            if !rules.isEmpty {
+                Picker("Recording rule", selection: $rule) {
+                    Text("All")
+                        .tag(nil as SearchRule?)
+                    Divider()
+                    ForEach(rules) { rule in
+                        Text(verbatim: rule.keyword)
+                            .tag(rule as SearchRule?)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
+    }
+    
+    var searchActions: some View {
+        HStack {
+            Button(role: .destructive) {
+                searchQuery = nil
+                dismiss()
+            } label: {
+                Text("Reset")
+            }
+            #if !os(macOS)
+            .buttonStyle(.plain)
+            .foregroundStyle(.red)
+            #endif
+            
+            Spacer()
+            
+            Button {
+                searchQuery = SearchQuery(keyword: keyword, channel: channel, rule: rule)
+                dismiss()
+            } label: {
+                Text("Search")
+            }
+            #if !os(macOS)
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+            #endif
+        }
+    }
+    
+    func loadInitialQuery() {
+        if let searchQuery {
+            keyword = searchQuery.keyword
+            channel = searchQuery.channel
+            rule = searchQuery.rule
         }
     }
 }

@@ -40,9 +40,10 @@ final class AppState {
 struct SearchQuery: Equatable {
     let keyword: String
     let channel: SearchChannel?
+    var rule: SearchRule? = nil
     
     func apiQuery(offset: Int? = nil) -> Operations.GetRecorded.Input.Query {
-        return Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: offset, channelId: channel?.channelId, keyword: keyword)
+        return Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: offset, ruleId: rule?.id, channelId: channel?.channelId, keyword: keyword)
     }
 }
 
@@ -57,6 +58,13 @@ struct SearchChannel: Hashable, Identifiable {
             name
         }
     }
+}
+
+/// A recording rule, offered as a search filter by its keyword (e.g. "search recordings
+/// that were recorded because they matched this rule").
+struct SearchRule: Hashable, Identifiable {
+    let id: Int
+    let keyword: String
 }
 
 enum ClientState {

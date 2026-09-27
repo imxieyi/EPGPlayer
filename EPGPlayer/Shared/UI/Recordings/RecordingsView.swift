@@ -24,6 +24,7 @@ struct RecordingsView: View {
     @State var totalCount = 0
     @State var channels: [Components.Schemas.ChannelItem] = []
     @State var recorded: [Components.Schemas.RecordedItem] = []
+    @State var searchRules: [SearchRule] = []
     
     #if os(tvOS)
     @State var shelves: [RecordingShelf] = []
@@ -79,7 +80,7 @@ struct RecordingsView: View {
             #endif
         }
         .sheet(isPresented: $showSearchView) {
-            SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
+            SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) }, rules: searchRules)
         }
         .onChange(of: searchQuery, initial: true) { oldValue, newValue in
             if oldValue != newValue {
@@ -273,11 +274,48 @@ struct RecordingsView: View {
                 })
             }
             #endif
+            if searchRules.isEmpty {
+                loadSearchRules()
+            }
             #if os(tvOS)
             if searchQuery == nil {
                 loadShelves()
             }
             #endif
+        }
+    }
+    
+    /// Fetches every recording rule that has a keyword, for the search sheet's "Recording
+    /// rule" filter. Shared with loadShelves() below, which needs the same full rule list.
+    func fetchAllRules() async throws -> [Components.Schemas.Rule] {
+        var rules: [Components.Schemas.Rule] = []
+        while true {
+            let resp = try await appState.client.api.getRules(query: .init(offset: rules.count, limit: 100))
+            let json = try resp.ok.body.json
+            if json.rules.isEmpty {
+                break
+            }
+            rules += json.rules
+            if rules.count >= json.total {
+                break
+            }
+        }
+        return rules
+    }
+    
+    func loadSearchRules() {
+        Task {
+            do {
+                let rules = try await fetchAllRules()
+                searchRules = rules.compactMap { rule in
+                    guard let keyword = rule.value2.searchOption.keyword, !keyword.isEmpty else {
+                        return nil
+                    }
+                    return SearchRule(id: rule.value1.id, keyword: keyword)
+                }
+            } catch let error {
+                Logger.error("Failed to load search rules: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -322,18 +360,7 @@ struct RecordingsView: View {
         Task {
             shelvesLoadingState = .loading
             do {
-                var rules: [Components.Schemas.Rule] = []
-                while true {
-                    let resp = try await appState.client.api.getRules(query: .init(offset: rules.count, limit: 100))
-                    let json = try resp.ok.body.json
-                    if json.rules.isEmpty {
-                        break
-                    }
-                    rules += json.rules
-                    if rules.count >= json.total {
-                        break
-                    }
-                }
+                let rules = try await fetchAllRules()
                 
                 var ruleResults: [(ruleId: Int, keyword: String, total: Int, items: [Components.Schemas.RecordedItem])] = []
                 for rule in rules {
