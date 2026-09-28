@@ -14,6 +14,7 @@ An unofficial native iOS/iPadOS/macOS app for [EPGStation](https://github.com/l3
     - Livestream playback
     - Supports both encoded and original `TS` (無変換) formats
     - Supports [ARIB STD-B24](https://en.wikipedia.org/wiki/ARIB_STD_B24_character_set) subtitles through [libaribcaption](https://github.com/xqq/libaribcaption)
+    - iOS/iPadOS/macOS: Translates subtitles into other languages with AI, for recorded programs, downloads and livestreams
     - iOS/iPadOS: Supports [PiP](https://support.apple.com/guide/iphone/multitask-with-picture-in-picture-iphcc3587b5d/ios) (Picture in Picture) mode
     - iOS/iPadOS: Supports playback on external displays (e.g. AirPlay)
 - Downloads
