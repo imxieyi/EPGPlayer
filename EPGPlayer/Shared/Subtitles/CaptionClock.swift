@@ -17,6 +17,8 @@ import Foundation
 /// VLC then counts from the first PCR after the seek.
 ///
 /// VLC also only updates the playback time about once a second, so the time in between is counted from the last update.
+/// An update can put the time a little behind that count, so the time doesn't go back by that much while VLC plays.
+/// Otherwise the previous caption would show again for a moment when a caption changes.
 struct CaptionClock {
     /// Longer than the time between the updates of VLC, but short enough to stay close to a stream that stalls.
     private static let maxTimeSinceUpdate = 1_200
@@ -28,6 +30,8 @@ struct CaptionClock {
     private var offset = 0
     /// The last playback time that VLC reported, and when it was reported.
     private var lastUpdate: (time: Int, date: TimeInterval)?
+    /// The latest caption time returned while VLC plays.
+    private var latestCaptionTime: Int?
 
     /// Called with the caption time where a connection that VLC opened to seek starts.
     mutating func seek(to time: Int) {
@@ -43,7 +47,13 @@ struct CaptionClock {
         guard hasShownVideo || startsVideo(atPlaybackTime: time) else {
             return 0
         }
-        return time + offset + timeSinceUpdate
+        let captionTime = time + offset + timeSinceUpdate
+        // Going back further than the count can run ahead is a seek.
+        if isPlaying, let latestCaptionTime, captionTime < latestCaptionTime, latestCaptionTime - captionTime <= Self.maxTimeSinceUpdate {
+            return latestCaptionTime
+        }
+        latestCaptionTime = captionTime
+        return captionTime
     }
 
     private mutating func timeSinceUpdate(to time: Int, isPlaying: Bool, rate: Float) -> Int {
