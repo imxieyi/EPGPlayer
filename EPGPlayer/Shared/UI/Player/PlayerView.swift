@@ -360,6 +360,8 @@ struct PlayerView: View {
             videoTracks = []
             audioTracks = []
             textTracks = []
+            // VLC shows no subtitles in the new media, so the subtitles are selected again when their track is added.
+            activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
             usesDefaultTextTrack = true
             showPlayerUI()
             resetIdleTimer()
