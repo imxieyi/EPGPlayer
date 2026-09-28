@@ -31,6 +31,18 @@ protocol VideoItem {
     var canPlay: Bool { get }
 }
 
+extension VideoItem {
+    /// Whether the video is streamed from the server and may be in MPEG-TS, which carries the ARIB captions that live
+    /// translation reads. Encoded recordings can be MPEG-TS as well, depending on the settings of the server.
+    /// Downloaded videos are translated as a whole instead.
+    var supportsLiveTranslation: Bool {
+        if let liveStream = self as? EPGLiveStreamItem {
+            return liveStream.format.hasPrefix("m2ts")
+        }
+        return self is Components.Schemas.VideoFile
+    }
+}
+
 enum VideoFileType: Codable {
     case ts
     case encoded

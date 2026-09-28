@@ -212,7 +212,7 @@ struct SettingsView: View {
         } header: {
             Label("Subtitle Translation", systemImage: "translate")
         } footer: {
-            Text("Choose the custom model when translating the subtitles of a downloaded recording.")
+            Text("Choose the custom model when translating the subtitles of a downloaded recording, or in the Translation menu of the player.")
         }
     }
     #endif

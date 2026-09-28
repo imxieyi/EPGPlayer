@@ -14,6 +14,8 @@ final class PlayerEvents: ObservableObject, Sendable {
     let togglePlay = PassthroughSubject<Void, Never>()
     let getTrackInfo = PassthroughSubject<String, Never>()
     let resetPlayer = PassthroughSubject<Void, Never>()
+    /// Opens the media again, e.g. to read it through the caption proxy.
+    let reloadMedia = PassthroughSubject<Void, Never>()
     
     let addVideoTrack = PassthroughSubject<MediaTrack, Never>()
     let addAudioTrack = PassthroughSubject<MediaTrack, Never>()

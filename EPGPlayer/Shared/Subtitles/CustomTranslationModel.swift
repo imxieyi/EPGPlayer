@@ -59,7 +59,7 @@ enum CustomModelAPIFormat: String, CaseIterable, Identifiable, Sendable {
 }
 
 /// The server, model and credentials of a custom language model.
-struct CustomModelConfiguration: Sendable {
+struct CustomModelConfiguration: Sendable, Equatable {
     var format: CustomModelAPIFormat
     /// Base URL of the API, or empty for the default of the format.
     var baseURL: String
@@ -102,6 +102,8 @@ struct CustomTranslationModel: SubtitleTranslationModel {
     /// Large enough to send a typical episode in one request. Longer programs are split,
     /// and lines missing from a reply that hit the output limit of the model are sent again.
     let maxSourceCharactersPerRequest = 12_000
+    /// Several minutes of captions. The cached turns cost little, and the context improves the translation.
+    let maxConversationCharacters = 24_000
 
     /// Replies to a whole episode can take minutes without any data in between.
     private static let urlSession: URLSession = {
@@ -132,12 +134,34 @@ struct CustomTranslationModel: SubtitleTranslationModel {
     }
 
     func respond(instructions: String, prompt: String) async throws -> String {
-        let session = LanguageModelSession(model: try makeModel(), instructions: instructions)
+        try await respond(session: LanguageModelSession(model: try makeModel(), instructions: instructions), prompt: prompt, conversationID: nil)
+    }
+
+    func respond(instructions: String, history: [SubtitleTranslationTurn], prompt: String, conversationID: String) async throws -> String {
+        var entries: [Transcript.Entry] = [.instructions(Transcript.Instructions(segments: [.text(Transcript.TextSegment(content: instructions))], toolDefinitions: []))]
+        for turn in history {
+            entries.append(.prompt(Transcript.Prompt(segments: [.text(Transcript.TextSegment(content: turn.prompt))])))
+            entries.append(.response(Transcript.Response(assetIDs: [], segments: [.text(Transcript.TextSegment(content: turn.reply))])))
+        }
+        let session = LanguageModelSession(model: try makeModel(), transcript: Transcript(entries: entries))
+        return try await respond(session: session, prompt: prompt, conversationID: conversationID)
+    }
+
+    private func respond(session: LanguageModelSession, prompt: String, conversationID: String?) async throws -> String {
         // Anthropic requires a limit and defaults to 1,024 tokens. The other APIs default to the limit of the model,
         // and some compatible servers reject the parameter.
-        let options = configuration.format == .anthropicMessages ? GenerationOptions(maximumResponseTokens: 16_384) : GenerationOptions()
+        var options = configuration.format == .anthropicMessages ? GenerationOptions(maximumResponseTokens: 16_384) : GenerationOptions()
+        if let conversationID {
+            addCacheOptions(to: &options, conversationID: conversationID)
+        }
+        let start = ContinuousClock.now
         do {
-            return try await session.respond(to: prompt, options: options).content
+            let response = try await session.respond(to: prompt, options: options)
+            if conversationID != nil {
+                let input = response.usage.input
+                Logger.info("Custom model replied in \(ContinuousClock.now - start), \(input.cachedTokenCount) of \(input.totalTokenCount) input tokens cached")
+            }
+            return response.content
         } catch let error as LanguageModelSession.GenerationError {
             switch error {
             case .guardrailViolation, .refusal:
@@ -156,6 +180,29 @@ struct CustomTranslationModel: SubtitleTranslationModel {
         } catch {
             // The HTTP errors of AnyLanguageModel only describe the status and the reply of the server in their description.
             throw SubtitleTranslationModelError.fatal(String(describing: error))
+        }
+    }
+
+    /// Asks the official servers to cache the conversation. OpenAI and Gemini cache the start of a request that
+    /// repeats an earlier one by themselves, but OpenAI routes the requests of a conversation to the same cache
+    /// with a key, and Anthropic only caches when asked. Other servers get no extra parameters,
+    /// since compatible servers may reject parameters they don't know.
+    private func addCacheOptions(to options: inout GenerationOptions, conversationID: String) {
+        guard let host = configuration.resolvedBaseURL?.host()?.lowercased() else {
+            return
+        }
+        switch configuration.format {
+        case .openAIChatCompletions, .openAIResponses:
+            if host == "api.openai.com" {
+                options[custom: OpenAILanguageModel.self] = OpenAILanguageModel.CustomGenerationOptions(promptCacheKey: conversationID)
+            }
+        case .anthropicMessages:
+            if host == "api.anthropic.com" {
+                // Caches everything up to the last message, which moves forward with each turn.
+                options[custom: AnthropicLanguageModel.self] = AnthropicLanguageModel.CustomGenerationOptions(extraBody: ["cache_control": ["type": "ephemeral"]])
+            }
+        case .gemini:
+            break
         }
     }
 }

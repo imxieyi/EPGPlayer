@@ -79,7 +79,7 @@ struct RecordingDetailView: View {
                                 Section("TS") {
                                     ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, program: programInfo)
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif
@@ -95,7 +95,7 @@ struct RecordingDetailView: View {
                                 Section("Encoded") {
                                     ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, program: programInfo)
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif
@@ -200,16 +200,14 @@ struct RecordingDetailView: View {
         #endif
     }
 
+    /// The program information that helps translating the subtitles.
+    var programInfo: SubtitleProgramInfo {
+        SubtitleProgramInfo(title: item.name, descriptions: [item.shortDesc, item.extendedDesc])
+    }
+
     #if os(iOS) || os(macOS)
     var playableLocalVideoItems: [LocalVideoItem] {
         (item as? LocalRecordedItem)?._videoItems.filter({ $0.canPlay }) ?? []
-    }
-
-    /// The program information that helps translating the subtitles, limited so that it doesn't dominate the requests.
-    var programInfo: SubtitleProgramInfo {
-        let description = [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n")
-            .replacing("\r\n", with: "\n")
-        return SubtitleProgramInfo(title: item.name, description: String(description.prefix(2000)))
     }
 
     func translateMenu(videoItems: [LocalVideoItem]) -> some View {

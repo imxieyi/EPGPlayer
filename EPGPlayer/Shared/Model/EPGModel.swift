@@ -82,6 +82,17 @@ extension Components.Schemas.VideoFile: VideoItem {
     
 }
 
+extension Components.Schemas.ScheduleProgramItem {
+    /// The program information that helps translating the subtitles.
+    var subtitleProgramInfo: SubtitleProgramInfo {
+        SubtitleProgramInfo(title: name, descriptions: [description, extended])
+    }
+
+    var endDate: Date {
+        Date(timeIntervalSince1970: TimeInterval(endAt) / 1000)
+    }
+}
+
 struct EPGLiveStreamItem: VideoItem {
     let channel: Components.Schemas.ScheduleChannleItem
     let format: String

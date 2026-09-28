@@ -78,10 +78,16 @@ class PlayerItem: Identifiable {
 
     let videoItem: any VideoItem
     let title: String
+    /// The program that is played, which helps translating its subtitles.
+    let program: SubtitleProgramInfo?
+    /// When the program of a live stream ends and the channel moves on to the next one.
+    let programEnd: Date?
     
-    init(videoItem: any VideoItem, title: String) {
+    init(videoItem: any VideoItem, title: String, program: SubtitleProgramInfo? = nil, programEnd: Date? = nil) {
         self.videoItem = videoItem
         self.title = title
+        self.program = program
+        self.programEnd = programEnd
     }
 }
 

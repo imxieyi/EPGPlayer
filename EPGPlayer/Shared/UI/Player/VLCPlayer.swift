@@ -25,6 +25,13 @@ struct VLCPlayer: UIViewControllerRepresentable {
     @Binding var hadErrorState: Bool
     @Binding var hadPlayingState: Bool
     
+    #if os(iOS) || os(macOS)
+    /// Receives the captions of the stream when `translateSubtitles` is on.
+    var liveTranslator: LiveSubtitleTranslator? = nil
+    /// Whether to read the stream through the caption proxy for live translation.
+    var translateSubtitles = false
+    #endif
+    
     #if !os(macOS)
     func makeUIViewController(context: Context) -> VLCPlayerViewController {
         return makeViewController(context: context)
@@ -52,6 +59,10 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.forceStrokeText = forceStrokeText
         playerVC.forceAspectRatio = force16To9 ? "16:9" : nil
         playerVC.mediaPlayer.audioStereoMode = audioStereoMode
+        #if os(iOS) || os(macOS)
+        playerVC.liveTranslator = liveTranslator
+        playerVC.readsCaptions = translateSubtitles && videoItem.supportsLiveTranslation
+        #endif
         return playerVC
     }
 
@@ -59,6 +70,9 @@ struct VLCPlayer: UIViewControllerRepresentable {
 //        if uiViewController.mediaPlayer.audioStereoMode != audioStereoMode {
 //            uiViewController.mediaPlayer.audioStereoMode = audioStereoMode
 //        }
+        #if os(iOS) || os(macOS)
+        uiViewController.readsCaptions = translateSubtitles && videoItem.supportsLiveTranslation
+        #endif
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
         }
@@ -141,6 +155,16 @@ class VLCPlayerViewController: UIViewController {
     /// Track ID prefix of each attached translation, mapped to its track name and rank.
     var translatedTracks: [String: (name: String, rank: Int)] = [:]
 
+    #if os(iOS) || os(macOS)
+    var liveTranslator: LiveSubtitleTranslator?
+    /// Whether the next load reads the stream through the caption proxy.
+    var readsCaptions = false
+    /// The stream registered with the caption proxy for the current media.
+    private var captionStreamID: String?
+    private var loadTask: Task<Void, Never>?
+    private var translationClock: Timer?
+    #endif
+
     var videoView: UIView!
     var pipController: VLCPictureInPictureWindowControlling?
     var pipPossibleObservation: NSKeyValueObservation?
@@ -187,6 +211,7 @@ class VLCPlayerViewController: UIViewController {
     var setPlaybackPositionListener: AnyCancellable?
     var setPlaybackTimeListener: AnyCancellable?
     var togglePIPModeListener: AnyCancellable?
+    var reloadMediaListener: AnyCancellable?
     var externalDisplayObservation: NSKeyValueObservation?
     
     override func viewWillAppear(_ animated: Bool) {
@@ -261,6 +286,12 @@ class VLCPlayerViewController: UIViewController {
             }
             player.time = VLCTime(int: Int32(time * 1000))
         })
+        reloadMediaListener = playerEvents.reloadMedia.sink(receiveValue: { [weak self] in
+            // Let SwiftUI finish the update that asked for the reload, which also updates the settings of this controller.
+            DispatchQueue.main.async {
+                self?.reload()
+            }
+        })
         togglePIPModeListener = playerEvents.togglePIPMode.sink(receiveValue: { [weak self] enable in
             guard let pipController = self?.pipController else {
                 return
@@ -322,44 +353,136 @@ class VLCPlayerViewController: UIViewController {
         setPlaybackPositionListener?.cancel()
         setPlaybackTimeListener?.cancel()
         togglePIPModeListener?.cancel()
+        reloadMediaListener?.cancel()
         externalDisplayObservation?.invalidate()
+        #if os(iOS) || os(macOS)
+        stopReadingCaptions()
+        #endif
     }
     
     func reload() {
         mediaPlayer.stop()
         playerEvents?.resetPlayer.send()
+        #if os(iOS) || os(macOS)
+        stopReadingCaptions()
+        if let videoItem, readsCaptions, let liveTranslator {
+            loadThroughCaptionProxy(videoItem, translator: liveTranslator)
+            return
+        }
+        #endif
         if let videoItem {
-            Logger.info("Media URL: \(pii: videoItem.url.absoluteString)")
-            let media = VLCMedia(url: videoItem.url)
-            media?.delegate = delegate
-            if forceStrokeText {
-                media?.addOption("aribcaption-force-stroke-text")
-            }
-            if let media {
-                addTranslatedSubtitles(to: media, videoURL: videoItem.url)
-            }
-            if videoItem.type != .livestream, let media, mediaParser.queue(media, options: .parse) != 0 {
-                Logger.error("Failed to queue media for parsing")
-            }
-            mediaPlayer.media = media
-            mediaPlayer.videoAspectRatio = forceAspectRatio
-            if let media {
-                if let cookies = HTTPCookieStorage.shared.cookies(for: videoItem.url) {
-                    cookies.forEach { cookie in
-                        media.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
-                    }
-                    Logger.info("Stored \(cookies.count) cookies for player")
-                }
-                if let httpHeaders {
-                    httpHeaders.forEach { (key: String, value: String) in
-                        media.storeHeader(forName: key, value: value)
-                    }
-                    Logger.info("Stored \(httpHeaders.count) headers for player")
-                }
-            }
-            mediaPlayer.play()
+            load(videoItem, url: videoItem.url)
         }
     }
+
+    /// Plays a video from a URL, which is the URL of the video unless it is read through the caption proxy.
+    private func load(_ videoItem: any VideoItem, url: URL, readsCaptions: Bool = false) {
+        Logger.info("Media URL: \(pii: url.absoluteString)")
+        let media = VLCMedia(url: url)
+        media?.delegate = delegate
+        if forceStrokeText {
+            media?.addOption("aribcaption-force-stroke-text")
+        }
+        if readsCaptions && videoItem.type == .livestream {
+            // Buffer the stream longer, so that the model has time to translate a caption before it is shown.
+            media?.addOption(":network-caching=3000")
+        }
+        if let media {
+            addTranslatedSubtitles(to: media, videoURL: videoItem.url)
+        }
+        if videoItem.type != .livestream, let media, mediaParser.queue(media, options: .parse) != 0 {
+            Logger.error("Failed to queue media for parsing")
+        }
+        mediaPlayer.media = media
+        mediaPlayer.videoAspectRatio = forceAspectRatio
+        // The caption proxy sends the cookies and headers to the server itself.
+        if let media, !readsCaptions {
+            if let cookies = HTTPCookieStorage.shared.cookies(for: videoItem.url) {
+                cookies.forEach { cookie in
+                    media.storeCookie("\(cookie.name)=\(cookie.value)", forHost: cookie.domain, path: cookie.path)
+                }
+                Logger.info("Stored \(cookies.count) cookies for player")
+            }
+            if let httpHeaders {
+                httpHeaders.forEach { (key: String, value: String) in
+                    media.storeHeader(forName: key, value: value)
+                }
+                Logger.info("Stored \(httpHeaders.count) headers for player")
+            }
+        }
+        mediaPlayer.play()
+    }
+
+    #if os(iOS) || os(macOS)
+    /// Plays a video through the caption proxy, which passes the captions of the stream to the translator.
+    private func loadThroughCaptionProxy(_ videoItem: any VideoItem, translator: LiveSubtitleTranslator) {
+        let streamID = UUID().uuidString
+        let stream = CaptionStreamProxy.Stream(id: streamID, upstreamURL: videoItem.url, headers: httpHeaders ?? [:], onCaption: { [weak translator] caption, connection in
+            Task { @MainActor in
+                translator?.receive(caption, connection: connection)
+            }
+        }, onStart: { [weak translator] in
+            Task { @MainActor in
+                translator?.streamStarted()
+            }
+        }, onCaptionStream: { [weak translator] found in
+            Task { @MainActor in
+                translator?.captionStreamFound(found)
+            }
+        })
+        captionStreamID = streamID
+        translator.attach(isLive: videoItem.type == .livestream)
+        startTranslationClock()
+        loadTask = Task { [weak self] in
+            let url: URL
+            do {
+                url = try await CaptionStreamProxy.shared.register(stream)
+            } catch {
+                Logger.error("Failed to start the caption proxy: \(error)")
+                guard let self, !Task.isCancelled else {
+                    return
+                }
+                // Playing without translation is better than not playing.
+                self.stopReadingCaptions()
+                self.load(videoItem, url: videoItem.url)
+                return
+            }
+            guard let self, !Task.isCancelled, self.captionStreamID == streamID else {
+                CaptionStreamProxy.shared.unregister(streamID)
+                return
+            }
+            self.load(videoItem, url: url, readsCaptions: true)
+        }
+    }
+
+    private func stopReadingCaptions() {
+        loadTask?.cancel()
+        loadTask = nil
+        translationClock?.invalidate()
+        translationClock = nil
+        if let captionStreamID {
+            CaptionStreamProxy.shared.unregister(captionStreamID)
+            self.captionStreamID = nil
+            liveTranslator?.detach()
+        }
+    }
+
+    /// Tells the translator the playback time often enough to show each translation with its caption.
+    private func startTranslationClock() {
+        translationClock?.invalidate()
+        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let liveTranslator = self.liveTranslator else {
+                    return
+                }
+                liveTranslator.update(playbackTime: Int(self.mediaPlayer.time.intValue))
+            }
+        }
+        // Keep running while a menu is open.
+        RunLoop.main.add(timer, forMode: .common)
+        translationClock = timer
+    }
+    #endif
 
     /// Attaches the translated subtitles of a downloaded video as extra text tracks.
     /// Must be called before the media is assigned to the player, which creates the input with the options at that time.

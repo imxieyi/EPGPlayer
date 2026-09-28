@@ -36,6 +36,21 @@ enum SubtitleTranslationEngine: String, CaseIterable, Identifiable {
         #endif
         return [.customModel]
     }
+
+    /// Creates the model, or returns nil when the system doesn't support it or the custom model is not set up.
+    func makeModel(customConfiguration: CustomModelConfiguration) -> (any SubtitleTranslationModel)? {
+        switch self {
+        case .appleIntelligence:
+            #if compiler(>=6.4) && canImport(FoundationModels)
+            if #available(iOS 27.0, macOS 27.0, *) {
+                return PrivateCloudComputeTranslationModel()
+            }
+            #endif
+            return nil
+        case .customModel:
+            return customConfiguration.isComplete ? CustomTranslationModel(configuration: customConfiguration) : nil
+        }
+    }
 }
 
 /// Languages that subtitles can be translated to.
@@ -53,6 +68,20 @@ enum SubtitleTranslationTarget {
             return language.languageCode == preferred.languageCode && (preferred.script == nil || language.script == preferred.script)
         }
         return match ?? (available.contains("en") ? "en" : available.first ?? "")
+    }
+
+    /// The languages that a model can translate to, sorted by their names.
+    /// - Parameter appleIntelligenceLanguages: the languages that Apple Intelligence supports, if known.
+    static func identifiers(for engine: SubtitleTranslationEngine, appleIntelligenceLanguages: Set<Locale.LanguageCode>?) -> [String] {
+        var identifiers = identifiers
+        if engine == .appleIntelligence, let codes = appleIntelligenceLanguages {
+            identifiers = identifiers.filter { Locale.Language(identifier: $0).languageCode.map(codes.contains) ?? false }
+        }
+        return identifiers.sorted { displayName(of: $0).localizedStandardCompare(displayName(of: $1)) == .orderedAscending }
+    }
+
+    static func displayName(of identifier: String) -> String {
+        Locale.current.localizedString(forIdentifier: identifier) ?? identifier
     }
 }
 
@@ -188,11 +217,7 @@ struct SubtitleTranslationView: View {
     }
 
     private var targetLanguages: [String] {
-        var identifiers = SubtitleTranslationTarget.identifiers
-        if engine == .appleIntelligence, let codes = appleIntelligenceLanguages {
-            identifiers = identifiers.filter { Locale.Language(identifier: $0).languageCode.map(codes.contains) ?? false }
-        }
-        return identifiers.sorted { displayName(of: $0).localizedStandardCompare(displayName(of: $1)) == .orderedAscending }
+        SubtitleTranslationTarget.identifiers(for: engine, appleIntelligenceLanguages: appleIntelligenceLanguages)
     }
 
     /// The languages of the selected model, and the language of a failed translation even if the model doesn't support it.
@@ -311,17 +336,7 @@ struct SubtitleTranslationView: View {
 
     /// Creates the selected model with its current settings.
     private func makeModel() -> (any SubtitleTranslationModel)? {
-        switch engine {
-        case .appleIntelligence:
-            #if compiler(>=6.4) && canImport(FoundationModels)
-            if #available(iOS 27.0, macOS 27.0, *) {
-                return PrivateCloudComputeTranslationModel()
-            }
-            #endif
-            return nil
-        case .customModel:
-            return CustomTranslationModel(configuration: customConfiguration)
-        }
+        engine.makeModel(customConfiguration: customConfiguration)
     }
 
     private func start() {
@@ -342,7 +357,7 @@ struct SubtitleTranslationView: View {
     }
 
     private func displayName(of identifier: String) -> String {
-        Locale.current.localizedString(forIdentifier: identifier) ?? identifier
+        SubtitleTranslationTarget.displayName(of: identifier)
     }
 
     private func load() async {

@@ -16,7 +16,7 @@ struct SubtitleCue: Sendable, Equatable {
 
     /// Arrow that ARIB captions put at the end of a line whose sentence continues in the next caption
     /// (U+FFEB, which becomes U+2192 after compatibility normalization).
-    private static let continuationMark = "→"
+    static let continuationMark = "→"
     /// How long the last caption stays on screen when it has no duration of its own.
     private static let defaultLastDuration = 5000
 

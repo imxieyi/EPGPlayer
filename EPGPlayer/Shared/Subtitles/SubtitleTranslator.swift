@@ -6,14 +6,22 @@
 //
 //  SPDX-License-Identifier: MPL-2.0
 
-#if os(iOS) || os(macOS)
 import Foundation
 
 /// Information about a program that helps the model understand its subtitles.
-struct SubtitleProgramInfo: Sendable {
+struct SubtitleProgramInfo: Sendable, Equatable {
     var title: String
     var description: String
+
+    /// Limits the description so that it doesn't dominate the requests.
+    init(title: String, descriptions: [String?]) {
+        self.title = title
+        let description = descriptions.compactMap { $0 }.joined(separator: "\n").replacing("\r\n", with: "\n")
+        self.description = String(description.prefix(2000))
+    }
 }
+
+#if os(iOS) || os(macOS)
 
 /// Why a request to a translation model failed.
 enum SubtitleTranslationModelError: Error {
@@ -40,13 +48,26 @@ extension SubtitleTranslationModelError: LocalizedError {
     }
 }
 
+/// A prompt and its reply in an earlier turn of a conversation with a translation model.
+struct SubtitleTranslationTurn: Sendable {
+    let prompt: String
+    let reply: String
+}
+
 /// A language model that translates subtitles.
 protocol SubtitleTranslationModel: Sendable {
     /// The largest number of source characters to send in one request.
     var maxSourceCharactersPerRequest: Int { get }
+    /// The largest number of characters of earlier turns to send with a request of a live translation.
+    var maxConversationCharacters: Int { get }
 
     /// Returns the reply of the model to a prompt. Throws `SubtitleTranslationModelError` or `CancellationError`.
     func respond(instructions: String, prompt: String) async throws -> String
+
+    /// Returns the reply of the model to a prompt that continues a conversation.
+    /// Each request of a conversation repeats the previous one with a turn appended, so that the server can reuse
+    /// its cache of the instructions and the earlier turns instead of processing them again.
+    func respond(instructions: String, history: [SubtitleTranslationTurn], prompt: String, conversationID: String) async throws -> String
 }
 
 /// Translates subtitle lines with a language model.
@@ -214,12 +235,18 @@ struct SubtitleTranslator {
 
     // MARK: - Requests
 
-    private static func instructions(target: Locale.Language, program: SubtitleProgramInfo?) -> String {
+    static func instructions(target: Locale.Language, program: SubtitleProgramInfo?, live: Bool = false) -> String {
         var instructions = """
         You are a professional subtitle translator. Translate the Japanese closed captions of a TV program into natural \(englishName(of: target)) subtitles.
 
         The input is a JSON array of caption lines, each with an "id" and a "text". Reply with only a JSON array that has one object {"id": id, "source": text, "translation": translation} for every input line, in the same order. The "source" is the input text of that line, copied exactly.
-
+        """
+        if live {
+            instructions += "\n\n" + """
+            The captions are shown while the program plays, so they arrive a few lines at a time. The earlier messages of this conversation hold the lines before them and their translations. Only translate the lines of the latest message.
+            """
+        }
+        instructions += "\n\n" + """
         Rules for the translation:
         - A line break in a text separates the words of different speakers. Keep the line breaks.
         - A speaker name or a sound description in parentheses, such as (田中) or (拍手), belongs to the caption. Translate it and keep the parentheses.
@@ -333,19 +360,31 @@ struct SubtitleTranslator {
 
     /// Returns the translations in a reply whose source matches the line of their id, by line index.
     static func acceptedTranslations(in reply: String, indices: [Int], texts: [String]) -> [Int: String] {
-        let wanted = Set(indices)
+        let lines = Dictionary(uniqueKeysWithValues: indices.map { ($0 + 1, texts[$0]) })
+        return Dictionary(uniqueKeysWithValues: acceptedTranslations(in: reply, lines: lines).map { ($0.key - 1, $0.value) })
+    }
+
+    /// Returns the translations in a reply whose source matches the text of their id, by id.
+    static func acceptedTranslations(in reply: String, lines: [Int: String]) -> [Int: String] {
         var accepted: [Int: String] = [:]
         for entry in replyEntries(in: reply) {
-            let index = entry.id - 1
-            guard wanted.contains(index), accepted[index] == nil,
-                  let source = entry.source, sourceMatches(source, texts[index]),
+            guard let text = lines[entry.id], accepted[entry.id] == nil,
+                  let source = entry.source, sourceMatches(source, text),
                   let translation = entry.translation?.replacingOccurrences(of: "\r\n", with: "\n").trimmingCharacters(in: .whitespacesAndNewlines),
                   !translation.isEmpty else {
                 continue
             }
-            accepted[index] = translation
+            accepted[entry.id] = translation
         }
         return accepted
+    }
+
+    /// Returns a prompt that asks to translate caption lines with the given ids.
+    static func livePrompt(for lines: [(id: Int, text: String)]) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let data = (try? encoder.encode(lines.map { InputLine(id: $0.id, text: $0.text) })) ?? Data()
+        return "Translate these caption lines:\n" + String(decoding: data, as: UTF8.self)
     }
 
     /// Decodes every complete JSON object in a reply, so that code fences, extra text and a cut-off end are ignored.

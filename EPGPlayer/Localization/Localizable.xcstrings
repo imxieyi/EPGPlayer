@@ -586,18 +586,18 @@
         }
       }
     },
-    "Choose the custom model when translating the subtitles of a downloaded recording." : {
+    "Choose the custom model when translating the subtitles of a downloaded recording, or in the Translation menu of the player." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ダウンロードした録画の字幕を翻訳するときに、カスタムモデルを選択できます。"
+            "value" : "ダウンロードした録画の字幕を翻訳するときや、プレーヤーの翻訳メニューで、カスタムモデルを選択できます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "翻译已下载录制的字幕时可选择自定义模型。"
+            "value" : "翻译已下载录制的字幕时，或在播放器的翻译菜单中，可选择自定义模型。"
           }
         }
       }
@@ -2549,6 +2549,22 @@
         }
       }
     },
+    "This video has no subtitles to translate." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "この動画には翻訳できる字幕がありません。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此视频没有可翻译的字幕。"
+          }
+        }
+      }
+    },
     "Time" : {
       "localizations" : {
         "ja" : {
@@ -2661,6 +2677,22 @@
         }
       }
     },
+    "Translation" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译"
+          }
+        }
+      }
+    },
     "Translation cancelled." : {
       "localizations" : {
         "ja" : {
@@ -2673,6 +2705,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已取消翻译。"
+          }
+        }
+      }
+    },
+    "Translation failed: %@" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻訳に失敗しました: %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "翻译失败：%@"
           }
         }
       }
