@@ -126,6 +126,9 @@ enum ARIBCaptionExtractor {
         private var pcrPID: Int?
         private var captionPID: Int?
         private var firstPCR: Int64?
+        /// The start of the PAT or PMT section on each PID, which may continue in the following packets.
+        /// The PMT of a broadcast with many data components, such as NHK, doesn't fit in one packet.
+        private var sections = [Int: [UInt8]]()
 
         private var pes = [UInt8]()
         private var pesActive = false
@@ -165,12 +168,12 @@ enum ARIBCaptionExtractor {
             let payload = UnsafeBufferPointer(rebasing: packet[payloadOffset...])
 
             if pid == 0 {
-                if payloadUnitStart && pmtPID == nil {
-                    parsePAT(payload)
+                if pmtPID == nil, let body = section(pid: pid, payload: payload, payloadUnitStart: payloadUnitStart) {
+                    parsePAT(body)
                 }
             } else if pid == pmtPID {
-                if payloadUnitStart && captionPID == nil {
-                    parsePMT(payload)
+                if captionPID == nil, let body = section(pid: pid, payload: payload, payloadUnitStart: payloadUnitStart) {
+                    parsePMT(body)
                 }
             } else if pid == captionPID {
                 guard firstPCR != nil else {
@@ -190,25 +193,51 @@ enum ARIBCaptionExtractor {
             flushPES()
         }
 
-        /// Returns the section body (after the 3-byte section header) up to the CRC, if the section fits in this packet.
-        private func section(_ payload: UnsafeBufferPointer<UInt8>) -> UnsafeBufferPointer<UInt8>? {
-            guard payload.count > 1 else {
-                return nil
+        /// Collects the section on a PID and returns its body (after the 3-byte section header) up to the CRC
+        /// once all of its packets have arrived.
+        private func section(pid: Int, payload: UnsafeBufferPointer<UInt8>, payloadUnitStart: Bool) -> [UInt8]? {
+            guard payloadUnitStart else {
+                guard sections[pid] != nil else {
+                    return nil
+                }
+                sections[pid]!.append(contentsOf: payload)
+                return completedSection(pid: pid)
             }
             let start = 1 + Int(payload[0])
-            guard start + 3 <= payload.count else {
+            if sections[pid] != nil, start > 1 {
+                // The bytes before the pointer finish the section of the previous packets. The section that starts
+                // after them is dropped, since the tables repeat.
+                sections[pid]!.append(contentsOf: payload[1..<min(start, payload.count)])
+                if let body = completedSection(pid: pid) {
+                    return body
+                }
+            }
+            guard start < payload.count else {
+                sections[pid] = nil
                 return nil
             }
-            let sectionLength = Int(payload[start + 1] & 0x0F) << 8 | Int(payload[start + 2])
-            let end = start + 3 + sectionLength - 4
-            guard sectionLength >= 4, end <= payload.count else {
-                return nil
-            }
-            return UnsafeBufferPointer(rebasing: payload[(start + 3)..<end])
+            sections[pid] = Array(payload[start...])
+            return completedSection(pid: pid)
         }
 
-        private func parsePAT(_ payload: UnsafeBufferPointer<UInt8>) {
-            guard let body = section(payload), body.count >= 5 else {
+        private func completedSection(pid: Int) -> [UInt8]? {
+            guard let bytes = sections[pid], bytes.count >= 3 else {
+                return nil
+            }
+            let sectionLength = Int(bytes[1] & 0x0F) << 8 | Int(bytes[2])
+            guard sectionLength >= 4, sectionLength <= 1021 else {
+                sections[pid] = nil
+                return nil
+            }
+            guard bytes.count >= 3 + sectionLength else {
+                return nil
+            }
+            sections[pid] = nil
+            return Array(bytes[3..<(3 + sectionLength - 4)])
+        }
+
+        private func parsePAT(_ body: [UInt8]) {
+            guard body.count >= 5 else {
                 return
             }
             var offset = 5
@@ -222,8 +251,8 @@ enum ARIBCaptionExtractor {
             }
         }
 
-        private func parsePMT(_ payload: UnsafeBufferPointer<UInt8>) {
-            guard let body = section(payload), body.count >= 9 else {
+        private func parsePMT(_ body: [UInt8]) {
+            guard body.count >= 9 else {
                 return
             }
             pcrPID = Int(body[5] & 0x1F) << 8 | Int(body[6])
