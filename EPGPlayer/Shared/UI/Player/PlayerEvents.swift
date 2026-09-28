@@ -56,11 +56,7 @@ struct MediaTrack: Hashable, Identifiable {
     let id: String
     let name: String
     let codec: String
-    /// Set for translated subtitle tracks. 0 is the newest translation.
-    var translationRank: Int? = nil
-    /// Set for an entry that shows several text tracks at the same time.
-    var combinedIds: [String]? = nil
-
+    
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }

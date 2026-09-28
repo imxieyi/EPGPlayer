@@ -152,18 +152,6 @@ final class SubtitleTranslationJob {
             throw SubtitleTranslationError.noSubtitles
         }
         self.sentences = sentences
-
-        #if os(iOS)
-        if SubtitleFonts.needsDownloadableFont(for: target) {
-            do {
-                try await SubtitleFonts.activate()
-            } catch let error {
-                // The translation is still useful without the font, which is activated again in the next launch.
-                Logger.error("Failed to activate the subtitle font: \(error)")
-            }
-            try Task.checkCancellation()
-        }
-        #endif
     }
 
     private func translate(model: any SubtitleTranslationModel) async throws {

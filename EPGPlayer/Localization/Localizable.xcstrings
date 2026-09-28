@@ -7,22 +7,6 @@
     "%.1f%%" : {
       "shouldTranslate" : false
     },
-    "%@ (Translated)" : {
-      "localizations" : {
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@（翻訳）"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@（翻译）"
-          }
-        }
-      }
-    },
     "%@ on GitHub" : {
       "localizations" : {
         "ja" : {
@@ -1600,6 +1584,22 @@
         }
       }
     },
+    "Off" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフ"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
     "OK" : {
 
     },
@@ -2629,18 +2629,18 @@
         }
       }
     },
-    "Translated %lld sentences. Select the translation in the subtitle menu of the player." : {
+    "Translated %lld sentences. Select the translation in the Translation menu of the player." : {
       "localizations" : {
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld 文を翻訳しました。プレーヤーの字幕メニューで翻訳を選択できます。"
+            "value" : "%lld 文を翻訳しました。プレーヤーの翻訳メニューで翻訳を選択できます。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已翻译 %lld 句。可在播放器的字幕菜单中选择翻译。"
+            "value" : "已翻译 %lld 句。可在播放器的翻译菜单中选择翻译。"
           }
         }
       }

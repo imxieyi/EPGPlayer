@@ -1,5 +1,5 @@
 //
-//  LiveSubtitleOverlay.swift
+//  SubtitleOverlay.swift
 //  EPGPlayer
 //
 //  Created by Yi Xie on 2026/09/28.
@@ -9,10 +9,12 @@
 #if os(iOS) || os(macOS)
 import SwiftUI
 
-/// Shows the live translation at the bottom of the video. VLC draws the video and the broadcast subtitles,
+/// Shows a translation at the bottom of the video. VLC draws the video and the broadcast subtitles,
 /// but it can't show text that changes while the stream plays, so the translation is drawn on top of it.
-struct LiveSubtitleOverlay: View {
-    let translator: LiveSubtitleTranslator
+struct SubtitleOverlay: View {
+    let text: String?
+    /// A problem to show above the text.
+    var notice: String? = nil
     /// The top of the player controls in the coordinate space of the player, which the translation stays above,
     /// or nil when the controls are hidden.
     let controlsTop: CGFloat?
@@ -26,7 +28,7 @@ struct LiveSubtitleOverlay: View {
             let bottom = controlsTop.map { min(video.maxY - video.height * 0.04, $0 - geometry.frame(in: .named(Self.coordinateSpace)).minY - 8) }
                 ?? video.maxY - video.height * 0.04
             VStack(spacing: fontSize * 0.3) {
-                if let notice = translator.notice {
+                if let notice {
                     Text(verbatim: notice)
                         .font(.system(size: max(fontSize * 0.6, 12)))
                         .foregroundStyle(.white.opacity(0.9))
@@ -34,7 +36,7 @@ struct LiveSubtitleOverlay: View {
                         .padding(.vertical, 4)
                         .background(.black.opacity(0.6), in: Capsule())
                 }
-                if let text = translator.visibleText {
+                if let text {
                     Text(verbatim: text)
                         .font(.system(size: fontSize, weight: .semibold))
                         .foregroundStyle(.white)

@@ -42,8 +42,6 @@ struct PlayerView: View {
     @State var audioTracks: [MediaTrack] = []
     @State var activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
     @State var textTracks: [MediaTrack] = []
-    /// Whether the subtitles still follow the default, until the user selects a subtitle track.
-    @State var usesDefaultTextTrack = true
     
     @State var audioStereoMode: VLCMediaPlayer.AudioStereoMode = .unset
     
@@ -61,6 +59,9 @@ struct PlayerView: View {
     
     #if os(iOS) || os(macOS)
     @State var liveTranslator = LiveSubtitleTranslator()
+    /// The translations saved next to a downloaded video, newest first.
+    @State var savedTranslations: [SubtitleTranslation] = []
+    @State var savedSubtitles = SavedSubtitles()
     /// Why Apple Intelligence can't be used, or nil when it can.
     @State var appleIntelligenceProblem: String?
     @State var appleIntelligenceLanguages: Set<Locale.LanguageCode>?
@@ -73,6 +74,7 @@ struct PlayerView: View {
         #if os(iOS) || os(macOS)
         player.liveTranslator = liveTranslator
         player.translateSubtitles = userSettings.liveTranslation
+        player.savedSubtitles = savedSubtitles
         #endif
         return player
     }
@@ -96,8 +98,10 @@ struct PlayerView: View {
             
             #if os(iOS) || os(macOS)
             // A live stream stops instead of pausing, which leaves no video to translate.
-            if item.videoItem.supportsLiveTranslation && !isExternalPlay && playerState != .stopping && playerState != .stopped {
-                LiveSubtitleOverlay(translator: liveTranslator, controlsTop: playerUIOpacity == 1 ? controlsTop : nil)
+            if !isExternalPlay && playerState != .stopping && playerState != .stopped {
+                let isLive = item.videoItem.supportsLiveTranslation
+                SubtitleOverlay(text: isLive ? liveTranslator.visibleText : savedSubtitles.visibleText, notice: isLive ? liveTranslator.notice : nil,
+                                controlsTop: playerUIOpacity == 1 ? controlsTop : nil)
                     .ignoresSafeArea(edges: .vertical)
             }
             #endif
@@ -198,7 +202,7 @@ struct PlayerView: View {
                 .background(.black.opacity(0.7))
                 #if os(iOS) || os(macOS)
                 .onGeometryChange(for: CGFloat.self) { geometry in
-                    geometry.frame(in: .named(LiveSubtitleOverlay.coordinateSpace)).minY
+                    geometry.frame(in: .named(SubtitleOverlay.coordinateSpace)).minY
                 } action: { top in
                     controlsTop = top
                 }
@@ -231,7 +235,7 @@ struct PlayerView: View {
             #endif
         }
         #if os(iOS) || os(macOS)
-        .coordinateSpace(.named(LiveSubtitleOverlay.coordinateSpace))
+        .coordinateSpace(.named(SubtitleOverlay.coordinateSpace))
         #endif
         .preferredColorScheme(.dark)
         .tint(.primary)
@@ -332,10 +336,9 @@ struct PlayerView: View {
                 return
             }
             textTracks.append(track)
-            guard userSettings.enableSubtitles, usesDefaultTextTrack, let defaultTextTrack else {
-                return
+            if userSettings.enableSubtitles && textTracks.count == 1 {
+                activeTextTrack = track
             }
-            activeTextTrack = defaultTextTrack
         }
         .onReceive(playerEvents.setPIPSupported, perform: { supported in
             isPIPSupported = supported
@@ -362,7 +365,6 @@ struct PlayerView: View {
             textTracks = []
             // VLC shows no subtitles in the new media, so the subtitles are selected again when their track is added.
             activeTextTrack = MediaTrack(id: "none", name: "text", codec: "")
-            usesDefaultTextTrack = true
             showPlayerUI()
             resetIdleTimer()
             fetchSavedPlaybackPosition()
@@ -373,6 +375,7 @@ struct PlayerView: View {
         #if os(iOS) || os(macOS)
         .task {
             liveTranslator.updateProgram(item.program)
+            loadSavedTranslations()
             await loadAppleIntelligenceStatus()
         }
         .task(id: userSettings.liveTranslation) {
@@ -394,28 +397,6 @@ struct PlayerView: View {
         #endif
     }
     
-    /// The newest translation together with the broadcast subtitles when the video has a translation,
-    /// or else the first subtitle track.
-    var defaultTextTrack: MediaTrack? {
-        let original = textTracks.first { $0.translationRank == nil }
-        guard let translation = textTracks.filter({ $0.translationRank != nil }).min(by: { $0.translationRank! < $1.translationRank! }) else {
-            return original
-        }
-        guard let original else {
-            return translation
-        }
-        return combinedTextTracks.first { $0.combinedIds == [translation.id, original.id] }
-    }
-
-    /// Entries that show a translation together with an original subtitle track.
-    var combinedTextTracks: [MediaTrack] {
-        textTracks.filter({ $0.translationRank != nil }).flatMap { translation in
-            textTracks.filter({ $0.translationRank == nil }).map { original in
-                MediaTrack(id: "\(translation.id)+\(original.id)", name: "\(translation.name) + \(original.name)", codec: "", combinedIds: [translation.id, original.id])
-            }
-        }
-    }
-
     var playerMenu: some View {
         Menu {
             if item.videoItem.type != .livestream {
@@ -481,10 +462,7 @@ struct PlayerView: View {
             }
             
             if !textTracks.isEmpty {
-                Picker(selection: Binding(get: { activeTextTrack }, set: { track in
-                    usesDefaultTextTrack = false
-                    activeTextTrack = track
-                })) {
+                Picker(selection: $activeTextTrack) {
                     Text("None")
                         .tag(MediaTrack(id: "none", name: "text", codec: ""))
                     ForEach(textTracks) { track in
@@ -495,10 +473,6 @@ struct PlayerView: View {
                         }
                         .tag(track)
                     }
-                    ForEach(combinedTextTracks) { track in
-                        Text(verbatim: track.name)
-                            .tag(track)
-                    }
                 } label: {
                     Label("Subtitle", systemImage: "captions.bubble")
                 }
@@ -508,10 +482,12 @@ struct PlayerView: View {
             #if os(iOS) || os(macOS)
             if item.videoItem.supportsLiveTranslation {
                 liveTranslationMenu
+            } else if !savedTranslations.isEmpty {
+                savedTranslationPicker
             }
             #endif
             
-            if !videoTracks.isEmpty || !audioTracks.isEmpty || !textTracks.isEmpty || showsLiveTranslationMenu {
+            if !videoTracks.isEmpty || !audioTracks.isEmpty || !textTracks.isEmpty || showsTranslationMenu {
                 Divider()
             }
             
@@ -647,9 +623,9 @@ struct PlayerView: View {
 }
 
 extension PlayerView {
-    var showsLiveTranslationMenu: Bool {
+    var showsTranslationMenu: Bool {
         #if os(iOS) || os(macOS)
-        item.videoItem.supportsLiveTranslation
+        item.videoItem.supportsLiveTranslation || !savedTranslations.isEmpty
         #else
         false
         #endif
@@ -711,6 +687,32 @@ extension PlayerView {
             }
         } label: {
             Label("Translation", systemImage: "translate")
+        }
+    }
+
+    /// Picks the saved translation of a downloaded video to show over the video.
+    var savedTranslationPicker: some View {
+        Picker(selection: Binding(get: { savedSubtitles.translation }, set: { savedSubtitles.show($0) })) {
+            Text("Off")
+                .tag(SubtitleTranslation?.none)
+            ForEach(savedTranslations, id: \.self) { translation in
+                Text(verbatim: translation.languageName)
+                    .tag(Optional(translation))
+            }
+        } label: {
+            Label("Translation", systemImage: "translate")
+        }
+        .pickerStyle(.menu)
+    }
+
+    func loadSavedTranslations() {
+        guard item.videoItem.url.isFileURL else {
+            return
+        }
+        savedTranslations = SubtitleTranslationStore.translations(forVideo: item.videoItem.url)
+        // Like the broadcast subtitles, the newest translation is shown when subtitles are enabled.
+        if userSettings.enableSubtitles, let newest = savedTranslations.first {
+            savedSubtitles.show(newest)
         }
     }
 

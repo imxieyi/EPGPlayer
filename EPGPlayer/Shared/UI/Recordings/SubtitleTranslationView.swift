@@ -283,7 +283,7 @@ struct SubtitleTranslationView: View {
                 Text("Translating \(completed) of \(total) sentences…")
             }
         case .finished(let count, let untranslated):
-            Label("Translated \(count) sentences. Select the translation in the subtitle menu of the player.", systemImage: "checkmark.circle")
+            Label("Translated \(count) sentences. Select the translation in the Translation menu of the player.", systemImage: "checkmark.circle")
             if !untranslated.isEmpty {
                 untranslatedLines(untranslated)
             }

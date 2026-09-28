@@ -10,7 +10,6 @@ import AVKit
 @preconcurrency import VLCKit
 import SwiftUI
 import Combine
-import CryptoKit
 
 struct VLCPlayer: UIViewControllerRepresentable {
     let videoItem: any VideoItem
@@ -30,6 +29,8 @@ struct VLCPlayer: UIViewControllerRepresentable {
     var liveTranslator: LiveSubtitleTranslator? = nil
     /// Whether to read the stream through the caption proxy for live translation.
     var translateSubtitles = false
+    /// Shows the translation saved next to a downloaded video.
+    var savedSubtitles: SavedSubtitles? = nil
     #endif
     
     #if !os(macOS)
@@ -61,6 +62,7 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.mediaPlayer.audioStereoMode = audioStereoMode
         #if os(iOS) || os(macOS)
         playerVC.liveTranslator = liveTranslator
+        playerVC.savedSubtitles = savedSubtitles
         playerVC.readsCaptions = translateSubtitles && videoItem.supportsLiveTranslation
         #endif
         return playerVC
@@ -152,11 +154,10 @@ class VLCPlayerViewController: UIViewController {
     
     var forceStrokeText: Bool = false
     var forceAspectRatio: String? = nil
-    /// Track ID prefix of each attached translation, mapped to its track name and rank.
-    var translatedTracks: [String: (name: String, rank: Int)] = [:]
 
     #if os(iOS) || os(macOS)
     var liveTranslator: LiveSubtitleTranslator?
+    var savedSubtitles: SavedSubtitles?
     /// Whether the next load reads the stream through the caption proxy.
     var readsCaptions = false
     /// The stream registered with the caption proxy for the current media.
@@ -255,13 +256,6 @@ class VLCPlayerViewController: UIViewController {
                 default:
                     Logger.error("Unknown track type \(track.name)")
                 }
-                return
-            }
-            if let combinedIds = track.combinedIds {
-                Logger.info("Enabling text tracks \(combinedIds)")
-                player.textTracks.filter({ !combinedIds.contains($0.trackId) }).forEach({ $0.isSelected = false })
-                // Selecting the tracks one by one would replace the previous selection.
-                player.selectTextTracks(player.textTracks.filter({ combinedIds.contains($0.trackId) }))
                 return
             }
             Logger.info("Enabling track \(track.id) \(track.name)")
@@ -371,6 +365,10 @@ class VLCPlayerViewController: UIViewController {
             loadThroughCaptionProxy(videoItem, translator: liveTranslator)
             return
         }
+        if let videoItem, videoItem.url.isFileURL, savedSubtitles != nil {
+            captionClock = CaptionClock()
+            startTranslationClock()
+        }
         #endif
         if let videoItem {
             load(videoItem, url: videoItem.url)
@@ -389,8 +387,10 @@ class VLCPlayerViewController: UIViewController {
             // Buffer the stream longer, so that the model has time to translate a caption before it is shown.
             media?.addOption(":network-caching=3000")
         }
-        if let media {
-            addTranslatedSubtitles(to: media, videoURL: videoItem.url)
+        if videoItem.url.isFileURL {
+            // VLC would otherwise pick up the translations saved next to the video and show the first one,
+            // while they are drawn over the video when they are selected in the player.
+            media?.addOption(":no-sub-autodetect-file")
         }
         if videoItem.type != .livestream, let media, mediaParser.queue(media, options: .parse) != 0 {
             Logger.error("Failed to queue media for parsing")
@@ -477,19 +477,25 @@ class VLCPlayerViewController: UIViewController {
         }
     }
 
-    /// Tells the translator the playback time often enough to show each translation with its caption.
+    /// Tells the translator or the saved translation the playback time often enough to show each translation with its caption.
     private func startTranslationClock() {
         translationClock?.invalidate()
-        let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in
+        let timer = Timer(timeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, let liveTranslator = self.liveTranslator else {
+                guard let self else {
                     return
                 }
                 // A stopped player reads the stream from its start again when it plays.
                 if [.nothingSpecial, .stopping, .stopped].contains(self.mediaPlayer.state) {
                     self.captionClock = CaptionClock()
                 }
-                liveTranslator.update(playbackTime: self.captionClock.captionTime(atPlaybackTime: Int(self.mediaPlayer.time.intValue)))
+                let time = self.captionClock.captionTime(atPlaybackTime: Int(self.mediaPlayer.time.intValue),
+                                                         isPlaying: self.mediaPlayer.state == .playing, rate: self.mediaPlayer.rate)
+                if self.captionStreamID != nil {
+                    self.liveTranslator?.update(playbackTime: time)
+                } else {
+                    self.savedSubtitles?.update(playbackTime: time)
+                }
             }
         }
         // Keep running while a menu is open.
@@ -497,32 +503,6 @@ class VLCPlayerViewController: UIViewController {
         translationClock = timer
     }
     #endif
-
-    /// Attaches the translated subtitles of a downloaded video as extra text tracks.
-    /// Must be called before the media is assigned to the player, which creates the input with the options at that time.
-    func addTranslatedSubtitles(to media: VLCMedia, videoURL: URL) {
-        translatedTracks = [:]
-        guard videoURL.isFileURL else {
-            return
-        }
-        // VLC would otherwise pick up the translations next to the video by itself and force-select the first one,
-        // while subtitles should only be shown as selected in the player.
-        media.addOption(":no-sub-autodetect-file")
-        for (rank, translation) in SubtitleTranslationStore.translations(forVideo: videoURL).enumerated() {
-            // The lowest priority keeps VLC from selecting the track by itself.
-            guard media.addSlave(VLCMediaSlave(url: translation.url, type: .subtitle, priority: 0)) else {
-                Logger.error("Failed to add translated subtitles \(pii: translation.url.lastPathComponent)")
-                continue
-            }
-            // VLC identifies the track of a slave by the MD5 of its URL.
-            let digest = Insecure.MD5.hash(data: Data(translation.url.absoluteString.utf8))
-            let trackIdPrefix = digest.map { String(format: "%02x", $0) }.joined() + "/"
-            translatedTracks[trackIdPrefix] = (translation.trackName, rank)
-        }
-        if !translatedTracks.isEmpty {
-            Logger.info("Added \(translatedTracks.count) translated subtitle tracks")
-        }
-    }
 
     /// Adds a track to the menus of the player. A track may be reported more than once.
     func reportTrack(_ trackId: String) {
@@ -536,16 +516,8 @@ class VLCPlayerViewController: UIViewController {
             playerEvents.addAudioTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
         }
         if let track = mediaPlayer.textTracks.first(where: { $0.trackId == trackId }) {
-            if let translated = translatedTrack(for: trackId) {
-                playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: translated.name, codec: track.codecName, translationRank: translated.rank))
-            } else {
-                playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
-            }
+            playerEvents.addTextTrack.send(MediaTrack(id: trackId, name: track.trackName, codec: track.codecName))
         }
-    }
-
-    func translatedTrack(for trackId: String) -> (name: String, rank: Int)? {
-        translatedTracks.first(where: { trackId.hasPrefix($0.key) })?.value
     }
 }
 

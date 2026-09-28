@@ -7,18 +7,27 @@
 //  SPDX-License-Identifier: MPL-2.0
 
 #if os(iOS) || os(macOS)
+import Foundation
+
 /// Converts the playback time of VLC to the time of the captions that the caption proxy reads.
 ///
 /// VLC counts the time from the first PCR that it reads, and keeps counting from there until the playback stops.
 /// The captions are timed from the first PCR of the stream. The two differ when VLC seeks before it has read
 /// a PCR, which happens when the saved position is restored as soon as the playback starts.
 /// VLC then counts from the first PCR after the seek.
+///
+/// VLC also only updates the playback time about once a second, so the time in between is counted from the last update.
 struct CaptionClock {
+    /// Longer than the time between the updates of VLC, but short enough to stay close to a stream that stalls.
+    private static let maxTimeSinceUpdate = 1_200
+
     private var seekTime: Int?
     /// The first playback time after the clock started, which VLC keeps reporting until it shows the video.
     private var initialTime: Int?
     private var hasShownVideo = false
     private var offset = 0
+    /// The last playback time that VLC reported, and when it was reported.
+    private var lastUpdate: (time: Int, date: TimeInterval)?
 
     /// Called with the caption time where a connection that VLC opened to seek starts.
     mutating func seek(to time: Int) {
@@ -29,11 +38,22 @@ struct CaptionClock {
     }
 
     /// Returns the caption time of the video that VLC shows at a playback time, or 0 before it shows the video.
-    mutating func captionTime(atPlaybackTime time: Int) -> Int {
+    mutating func captionTime(atPlaybackTime time: Int, isPlaying: Bool, rate: Float) -> Int {
+        let timeSinceUpdate = self.timeSinceUpdate(to: time, isPlaying: isPlaying, rate: rate)
         guard hasShownVideo || startsVideo(atPlaybackTime: time) else {
             return 0
         }
-        return time + offset
+        return time + offset + timeSinceUpdate
+    }
+
+    private mutating func timeSinceUpdate(to time: Int, isPlaying: Bool, rate: Float) -> Int {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard isPlaying, let lastUpdate, lastUpdate.time == time else {
+            // VLC reported a new time, or the time stands still because the player doesn't play.
+            lastUpdate = (time, now)
+            return 0
+        }
+        return min(Int((now - lastUpdate.date) * 1000 * Double(rate)), Self.maxTimeSinceUpdate)
     }
 
     private mutating func startsVideo(atPlaybackTime time: Int) -> Bool {

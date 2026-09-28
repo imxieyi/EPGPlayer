@@ -15,11 +15,10 @@ struct SubtitleTranslation: Sendable, Hashable {
     let targetLanguage: Locale.Language
     let modificationDate: Date
 
-    /// Name of the subtitle track in the player, e.g. "English (Translated)".
-    var trackName: String {
+    /// Name of the language of the translation in the player, e.g. "English".
+    var languageName: String {
         let identifier = Self.displayIdentifier(of: targetLanguage)
-        let language = Locale.current.localizedString(forIdentifier: identifier) ?? identifier
-        return String(localized: "\(language) (Translated)")
+        return Locale.current.localizedString(forIdentifier: identifier) ?? identifier
     }
 
     /// Names Chinese by its script, since the file names of Chinese translations are "zh" and "zh-TW".
@@ -51,12 +50,6 @@ enum SubtitleTranslationStore {
             return SubtitleTranslation(url: url, sourceLanguage: source, targetLanguage: target, modificationDate: date)
         }
         .sorted { $0.modificationDate > $1.modificationDate }
-    }
-
-    /// Returns the target languages of all translations in a directory of videos.
-    static func targetLanguages(in directory: URL) -> [Locale.Language] {
-        let contents = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
-        return contents.compactMap { languages(of: $0)?.target }
     }
 
     private static func languages(of url: URL) -> (source: Locale.Language, target: Locale.Language)? {

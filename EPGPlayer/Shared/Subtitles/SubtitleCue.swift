@@ -106,4 +106,41 @@ struct SubtitleCue: Sendable, Equatable {
         let ms = max(milliseconds, 0)
         return String(format: "%02d:%02d:%02d,%03d", ms / 3_600_000, ms / 60_000 % 60, ms / 1000 % 60, ms % 1000)
     }
+
+    /// Parses cues in SubRip format, as written by `srt(from:)`.
+    static func cues(fromSRT srt: String) -> [SubtitleCue] {
+        var cues: [SubtitleCue] = []
+        var current: SubtitleCue?
+        for line in srt.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline) {
+            let line = line.trimmingCharacters(in: .whitespaces)
+            if var cue = current {
+                // A blank line ends the cue.
+                guard !line.isEmpty else {
+                    cues.append(cue)
+                    current = nil
+                    continue
+                }
+                cue.text += cue.text.isEmpty ? line : "\n" + line
+                current = cue
+            } else if let arrow = line.range(of: "-->"),
+                      let start = milliseconds(fromSRTTime: line[..<arrow.lowerBound]),
+                      let end = milliseconds(fromSRTTime: line[arrow.upperBound...]) {
+                current = SubtitleCue(start: start, end: end, text: "")
+            }
+        }
+        if let current {
+            cues.append(current)
+        }
+        return cues.filter { !$0.text.isEmpty }
+    }
+
+    /// Reads a time like "01:02:03,456", which may be followed by the position of the cue.
+    private static func milliseconds(fromSRTTime text: Substring) -> Int? {
+        let time = text.trimmingCharacters(in: .whitespaces).prefix { !$0.isWhitespace }
+        let parts = time.split(whereSeparator: { $0 == ":" || $0 == "," || $0 == "." })
+        guard parts.count == 4, let hours = Int(parts[0]), let minutes = Int(parts[1]), let seconds = Int(parts[2]), let ms = Int(parts[3]) else {
+            return nil
+        }
+        return ((hours * 60 + minutes) * 60 + seconds) * 1000 + ms
+    }
 }
