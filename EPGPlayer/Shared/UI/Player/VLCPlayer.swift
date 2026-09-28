@@ -163,6 +163,7 @@ class VLCPlayerViewController: UIViewController {
     private var captionStreamID: String?
     private var loadTask: Task<Void, Never>?
     private var translationClock: Timer?
+    private var captionClock = CaptionClock()
     #endif
 
     var videoView: UIView!
@@ -321,6 +322,7 @@ class VLCPlayerViewController: UIViewController {
 //                newMediaPlayer.audioStereoMode = self?.mediaPlayer.audioStereoMode
                 self?.mediaPlayer.stop()
                 self?.mediaPlayer = newMediaPlayer
+                self?.captionClock = CaptionClock()
                 self?.mediaPlayer.play()
                 self?.mediaPlayer.position = oldPosition
             }
@@ -425,12 +427,20 @@ class VLCPlayerViewController: UIViewController {
             Task { @MainActor in
                 translator?.streamStarted()
             }
+        }, onSeek: { [weak self] time in
+            Task { @MainActor in
+                guard let self, self.captionStreamID == streamID else {
+                    return
+                }
+                self.captionClock.seek(to: time)
+            }
         }, onCaptionStream: { [weak translator] found in
             Task { @MainActor in
                 translator?.captionStreamFound(found)
             }
         })
         captionStreamID = streamID
+        captionClock = CaptionClock()
         translator.attach(isLive: videoItem.type == .livestream)
         startTranslationClock()
         loadTask = Task { [weak self] in
@@ -475,7 +485,11 @@ class VLCPlayerViewController: UIViewController {
                 guard let self, let liveTranslator = self.liveTranslator else {
                     return
                 }
-                liveTranslator.update(playbackTime: Int(self.mediaPlayer.time.intValue))
+                // A stopped player reads the stream from its start again when it plays.
+                if [.nothingSpecial, .stopping, .stopped].contains(self.mediaPlayer.state) {
+                    self.captionClock = CaptionClock()
+                }
+                liveTranslator.update(playbackTime: self.captionClock.captionTime(atPlaybackTime: Int(self.mediaPlayer.time.intValue)))
             }
         }
         // Keep running while a menu is open.

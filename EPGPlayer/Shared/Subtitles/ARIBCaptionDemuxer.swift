@@ -9,11 +9,20 @@
 import Foundation
 import LibARIBCaption
 
-/// The first PCR of an MPEG-TS stream, which is the origin of the playback time in VLC.
-/// Readers that start in the middle of a stream share it with the reader that started at its beginning.
+/// The first PCR of an MPEG-TS stream, from which the captions are timed, and the PIDs of its program map.
+/// Readers that start in the middle of a stream share them with the reader that started at its beginning.
 final class ARIBCaptionTimeBase: @unchecked Sendable {
+    struct ProgramMap {
+        let pmtPID: Int
+        let pcrPID: Int
+        let captionPID: Int?
+    }
+
+    private static let timestampMask: Int64 = (1 << 33) - 1
+
     private let lock = NSLock()
     private var pcr: Int64?
+    private var map: ProgramMap?
 
     var firstPCR: Int64? {
         get {
@@ -22,6 +31,28 @@ final class ARIBCaptionTimeBase: @unchecked Sendable {
         set {
             lock.withLock { pcr = newValue }
         }
+    }
+
+    var programMap: ProgramMap? {
+        get {
+            lock.withLock { map }
+        }
+        set {
+            lock.withLock { map = newValue }
+        }
+    }
+
+    /// Returns the time of a PCR or PTS in milliseconds from the first PCR, if that is known.
+    func time(of timestamp: Int64) -> Int? {
+        guard let firstPCR else {
+            return nil
+        }
+        let relative = (timestamp - firstPCR) & Self.timestampMask
+        // Timestamps just before the first PCR wrap around to huge values.
+        guard relative < 1 << 32 else {
+            return nil
+        }
+        return Int(relative / 90)
     }
 }
 
@@ -33,7 +64,6 @@ final class ARIBCaptionDemuxer {
     /// Number of packets in a row that must start with the sync byte before the stream is trusted,
     /// so that other file formats are not mistaken for MPEG-TS by chance.
     static let packetsToSync = 5
-    private static let ptsMask: Int64 = (1 << 33) - 1
 
     /// Called with each decoded caption, in stream order.
     var onCaption: ((ARIBCaption) -> Void)?
@@ -46,8 +76,9 @@ final class ARIBCaptionDemuxer {
 
     private let timeBase: ARIBCaptionTimeBase
     /// Whether this reader starts at the beginning of the stream and sets the time base from its first PCR.
-    private let setsTimeBase: Bool
-    private var didSetTimeBase = false
+    let setsTimeBase: Bool
+    /// The first PCR that this reader has read.
+    private(set) var firstPCR: Int64?
 
     private var buffer = [UInt8]()
 
@@ -67,6 +98,14 @@ final class ARIBCaptionDemuxer {
     init(timeBase: ARIBCaptionTimeBase = ARIBCaptionTimeBase(), setsTimeBase: Bool = true) {
         self.timeBase = timeBase
         self.setsTimeBase = setsTimeBase
+        // A reader from the middle of the stream reads the PCR and captions from its first packets,
+        // instead of waiting for the next program map, like VLC after a seek.
+        if !setsTimeBase, let programMap = timeBase.programMap {
+            pmtPID = programMap.pmtPID
+            pcrPID = programMap.pcrPID
+            captionPID = programMap.captionPID
+            foundProgramMap = true
+        }
         context = aribcc_context_alloc()
         decoder = aribcc_decoder_alloc(context)
         aribcc_decoder_initialize(decoder, ARIBCC_ENCODING_SCHEME_AUTO, ARIBCC_CAPTIONTYPE_CAPTION, ARIBCC_PROFILE_A, ARIBCC_LANGUAGEID_FIRST)
@@ -117,9 +156,12 @@ final class ARIBCaptionDemuxer {
         var payloadOffset = 4
         if adaptationFieldControl & 0x02 != 0 {
             let adaptationLength = Int(packet[4])
-            if pid == pcrPID, setsTimeBase, !didSetTimeBase, adaptationLength >= 7, packet[5] & 0x10 != 0 {
-                timeBase.firstPCR = Int64(packet[6]) << 25 | Int64(packet[7]) << 17 | Int64(packet[8]) << 9 | Int64(packet[9]) << 1 | Int64(packet[10]) >> 7
-                didSetTimeBase = true
+            if pid == pcrPID, firstPCR == nil, adaptationLength >= 7, packet[5] & 0x10 != 0 {
+                let pcr = Int64(packet[6]) << 25 | Int64(packet[7]) << 17 | Int64(packet[8]) << 9 | Int64(packet[9]) << 1 | Int64(packet[10]) >> 7
+                firstPCR = pcr
+                if setsTimeBase {
+                    timeBase.firstPCR = pcr
+                }
             }
             payloadOffset += 1 + adaptationLength
         }
@@ -212,8 +254,14 @@ final class ARIBCaptionDemuxer {
         guard body.count >= 9 else {
             return
         }
-        pcrPID = Int(body[5] & 0x1F) << 8 | Int(body[6])
+        let pcrPID = Int(body[5] & 0x1F) << 8 | Int(body[6])
+        self.pcrPID = pcrPID
         foundProgramMap = true
+        defer {
+            if setsTimeBase, let pmtPID {
+                timeBase.programMap = ARIBCaptionTimeBase.ProgramMap(pmtPID: pmtPID, pcrPID: pcrPID, captionPID: captionPID)
+            }
+        }
         let programInfoLength = Int(body[7] & 0x0F) << 8 | Int(body[8])
         var offset = 9 + programInfoLength
         while offset + 5 <= body.count {
@@ -243,17 +291,13 @@ final class ARIBCaptionDemuxer {
             pes.removeAll(keepingCapacity: true)
             pesActive = false
         }
-        guard pesActive, pes.count >= 14, let firstPCR = timeBase.firstPCR,
-              pes[0] == 0, pes[1] == 0, pes[2] == 1, pes[7] & 0x80 != 0 else {
+        guard pesActive, pes.count >= 14, pes[0] == 0, pes[1] == 0, pes[2] == 1, pes[7] & 0x80 != 0 else {
             return
         }
         let rawPTS = Int64(pes[9] & 0x0E) << 29 | Int64(pes[10]) << 22 | Int64(pes[11] & 0xFE) << 14 | Int64(pes[12]) << 7 | Int64(pes[13]) >> 1
-        let relativePTS = (rawPTS - firstPCR) & Self.ptsMask
-        // Timestamps just before the first PCR wrap around to huge values; skip them.
-        guard relativePTS < 1 << 32 else {
+        guard let time = timeBase.time(of: rawPTS) else {
             return
         }
-        let time = Int(relativePTS / 90)
         let payloadOffset = 9 + Int(pes[8])
         guard payloadOffset < pes.count else {
             return

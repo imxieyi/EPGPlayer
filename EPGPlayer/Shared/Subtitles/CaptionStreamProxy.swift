@@ -27,6 +27,8 @@ final class CaptionStreamProxy: NSObject, @unchecked Sendable {
         let onCaption: @Sendable (ARIBCaption, Int) -> Void
         /// Called when a connection starts reading the stream from its beginning.
         let onStart: @Sendable () -> Void
+        /// Called with the caption time of the first PCR of a connection that VLC opened to seek.
+        let onSeek: @Sendable (Int) -> Void
         /// Called when a connection finds out whether the stream has a caption stream.
         let onCaptionStream: @Sendable (Bool) -> Void
     }
@@ -163,6 +165,7 @@ final class CaptionStreamProxy: NSObject, @unchecked Sendable {
         var demuxer: ARIBCaptionDemuxer?
         var demuxedBytes = 0
         var reportedCaptionStream: Bool?
+        var reportedSeek = false
         var pendingBytes = 0
         var isDownloadPaused = false
         var isClosed = false
@@ -287,6 +290,12 @@ final class CaptionStreamProxy: NSObject, @unchecked Sendable {
         if let demuxer = connection.demuxer {
             demuxer.feed(data)
             connection.demuxedBytes += data.count
+            if !demuxer.setsTimeBase, !connection.reportedSeek, let pcr = demuxer.firstPCR,
+               let time = connection.stream.timeBase.time(of: pcr) {
+                connection.reportedSeek = true
+                Logger.info("Caption proxy connection \(connection.id) starts at \(time) ms")
+                connection.stream.onSeek(time)
+            }
             if demuxer.foundProgramMap {
                 if connection.reportedCaptionStream != demuxer.foundCaptionStream {
                     connection.reportedCaptionStream = demuxer.foundCaptionStream
