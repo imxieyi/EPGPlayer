@@ -34,6 +34,10 @@ struct EPGView: View {
     @State var viewSize = CGSize.zero
     @State var safeAreaInsets = EdgeInsets()
     @State var scrollOffset = CGPoint.zero
+    /// The ScrollView's contentOffset reading the first time onScrollGeometryChange fires,
+    /// which can be nonzero at rest on tvOS (safe-area inset); subtracted from every
+    /// subsequent reading so "unscrolled" means a net-zero scrollOffset.
+    @State var scrollOffsetBaseline: CGPoint? = nil
     // Preload the cell before appearing
     @State var preloadBuffer: CGFloat = 50
     
@@ -234,10 +238,19 @@ struct EPGView: View {
                     // render blank after scrolling). onScrollGeometryChange reports the
                     // ScrollView's own content offset directly, so use that instead. Sign is
                     // flipped to match the existing "-scrollOffset" convention used below.
+                    // tvOS's horizontal safe-area inset makes contentOffset.x start at some
+                    // nonzero value even at rest (confirmed via a debug readout: x:80 y:0) -
+                    // capture that as a baseline on the first callback and subtract it, so
+                    // "unscrolled" really means a net-zero offset for hourRuler/channelHeader
+                    // instead of silently shifting the hour ruler off its clipped bounds.
                     .onScrollGeometryChange(for: CGPoint.self) { geometry in
                         geometry.contentOffset
                     } action: { _, newValue in
-                        scrollOffset = CGPoint(x: -newValue.x, y: -newValue.y)
+                        if scrollOffsetBaseline == nil {
+                            scrollOffsetBaseline = newValue
+                        }
+                        let baseline = scrollOffsetBaseline ?? .zero
+                        scrollOffset = CGPoint(x: -(newValue.x - baseline.x), y: -(newValue.y - baseline.y))
                     }
                 }
                 #if os(tvOS)
