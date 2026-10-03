@@ -26,6 +26,12 @@ struct RecordingsView: View {
     @State var recorded: [Components.Schemas.RecordedItem] = []
     @State var searchRules: [SearchRule] = []
     
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    static let periodicRefreshInterval: TimeInterval = 120
+    
     #if os(tvOS)
     @State var shelves: [RecordingShelf] = []
     @State var shelvesLoadingState = LoadingState.loading
@@ -37,6 +43,12 @@ struct RecordingsView: View {
                 #if os(tvOS)
                 VStack(spacing: 0) {
                     TVTopActionBar(alignment: .leading) {
+                        Button {
+                            refresh()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
                         Button {
                             showSearchView.toggle()
                         } label: {
@@ -119,7 +131,16 @@ struct RecordingsView: View {
             }
         })
         .onAppear {
-            if recorded.isEmpty {
+            if recorded.isEmpty || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+                refresh()
+            }
+        }
+        // Keeps data fresh while this tab is actually visible; cancelled automatically
+        // when the view disappears (e.g. switching tabs), unlike Timer.publish.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Self.periodicRefreshInterval))
+                guard !Task.isCancelled else { return }
                 refresh()
             }
         }
@@ -264,6 +285,7 @@ struct RecordingsView: View {
             if let records {
                 self.recorded = records
                 loadingState = .loaded
+                lastRefreshedAt = Date()
             }
             #if DEBUG
             if userSettings.demoMode {

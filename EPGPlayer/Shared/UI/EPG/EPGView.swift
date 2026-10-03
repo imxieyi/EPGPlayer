@@ -40,6 +40,12 @@ struct EPGView: View {
     let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
     @State var nowPosition: CGFloat = 0
     
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    static let periodicRefreshInterval: TimeInterval = 120
+    
     @State var selectedProgram: EPGProgram? = nil
     
     @State var showSettings = false
@@ -75,6 +81,12 @@ struct EPGView: View {
                 #if os(tvOS)
                 VStack(spacing: 0) {
                     TVTopActionBar {
+                        Button {
+                            refresh(manual: false)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
                         Button {
                             showReserves.toggle()
                         } label: {
@@ -149,7 +161,7 @@ struct EPGView: View {
             }
         }
         .onAppear {
-            if schedules.isEmpty {
+            if schedules.isEmpty || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
                 refresh(manual: false)
             }
             Task {
@@ -160,6 +172,15 @@ struct EPGView: View {
                 await notifier.updateSetProgramIds()
             }
             #endif
+        }
+        // Keeps data fresh while this tab is actually visible; cancelled automatically
+        // when the view disappears (e.g. switching tabs), unlike Timer.publish.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Self.periodicRefreshInterval))
+                guard !Task.isCancelled else { return }
+                refresh(manual: false)
+            }
         }
     }
     
@@ -538,6 +559,7 @@ struct EPGView: View {
                 timeFormatter.timeZone = TimeZone(abbreviation: "JST")
                 updateNowPosition()
                 loadingState = .loaded
+                lastRefreshedAt = Date()
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")

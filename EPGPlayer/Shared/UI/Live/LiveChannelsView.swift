@@ -24,6 +24,11 @@ struct LiveChannelsView: View {
     let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
     @State var progressMap: [Components.Schemas.ProgramId : Double] = [:]
     
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    
     @State var showSettings = false
     @State var channelKeyword = ""
     @State var programKeyword = ""
@@ -38,6 +43,12 @@ struct LiveChannelsView: View {
                 #if os(tvOS)
                 VStack(spacing: 0) {
                     TVTopActionBar {
+                        Button {
+                            refresh()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
                         Button {
                             showSettings.toggle()
                         } label: {
@@ -84,7 +95,7 @@ struct LiveChannelsView: View {
             settings
         }
         .onAppear {
-            if schedules.isEmpty || liveStreamConfig == nil {
+            if schedules.isEmpty || liveStreamConfig == nil || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
                 refresh()
             }
         }
@@ -362,6 +373,7 @@ struct LiveChannelsView: View {
                 schedules = try await appState.client.api.getSchedulesBroadcasting(query: Operations.GetSchedulesBroadcasting.Input.Query(isHalfWidth: true)).ok.body.json
                 updateProgress()
                 loadingState = .loaded
+                lastRefreshedAt = Date()
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")
