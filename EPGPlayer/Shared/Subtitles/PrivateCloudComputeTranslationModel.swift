@@ -122,9 +122,9 @@ struct PrivateCloudComputeTranslationModel: SubtitleTranslationModel {
                 case .quotaLimitReached(let info):
                     throw SubtitleTranslationModelError.fatal(Self.quotaMessage(resetDate: info.resetDate))
                 case .networkFailure:
-                    throw SubtitleTranslationModelError.fatal(String(localized: "Could not connect to Apple Intelligence. Check your network connection."))
+                    throw SubtitleTranslationModelError.temporary(String(localized: "Could not connect to Apple Intelligence. Check your network connection."))
                 case .serviceUnavailable:
-                    throw SubtitleTranslationModelError.fatal(String(localized: "Apple Intelligence is temporarily unavailable. Try again later."))
+                    throw SubtitleTranslationModelError.temporary(String(localized: "Apple Intelligence is temporarily unavailable. Try again later."))
                 @unknown default:
                     throw SubtitleTranslationModelError.fatal(error.localizedDescription)
                 }

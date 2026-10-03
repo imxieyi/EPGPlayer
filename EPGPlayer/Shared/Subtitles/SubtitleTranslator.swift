@@ -31,7 +31,9 @@ enum SubtitleTranslationModelError: Error {
     case tooLong
     /// The model failed to reply for an unknown reason, which can also be caused by the content.
     case generationFailed(String)
-    /// A failure that affects every request, such as a network error, a wrong API key or an exhausted quota.
+    /// A failure that the same request may not run into again, such as a busy server or a dropped connection.
+    case temporary(String)
+    /// A failure that affects every request, such as a wrong API key or an exhausted quota.
     case fatal(String)
 }
 
@@ -42,7 +44,7 @@ extension SubtitleTranslationModelError: LocalizedError {
             return String(localized: "The model refused to translate the subtitles.")
         case .tooLong:
             return String(localized: "The subtitles are too long for the model.")
-        case .generationFailed(let message), .fatal(let message):
+        case .generationFailed(let message), .temporary(let message), .fatal(let message):
             return message
         }
     }
@@ -77,7 +79,8 @@ protocol SubtitleTranslationModel: Sendable {
 /// translation stays attached to the right line. A reply entry is only accepted when its source matches the text of
 /// its id. Lines that are missing from a reply are sent again.
 ///
-/// A translation that stops with an error can be resumed from its last progress.
+/// A request that fails temporarily is sent again after a while. A translation that stops with an error can be
+/// resumed from its last progress.
 struct SubtitleTranslator {
     struct UntranslatedLine: Hashable, Sendable {
         enum Reason: Sendable {
@@ -109,6 +112,8 @@ struct SubtitleTranslator {
     private static let attemptsPerLine = 3
     /// Number of replies in a row without any usable line before the model is considered unable to follow the format.
     private static let maxUnusableReplies = 3
+    /// Number of temporary failures in a row before the translation stops, after about a minute of retrying.
+    private static let maxTemporaryFailures = 6
 
     let model: any SubtitleTranslationModel
     let target: Locale.Language
@@ -129,15 +134,34 @@ struct SubtitleTranslator {
         var translatedCount = 0
         var unusableReplies = 0
         var lastUnusableReply = ""
+        var temporaryFailures = 0
 
         func report() async {
             await onProgress(Progress(translations: translations, untranslated: untranslated))
         }
 
+        func respond(_ prompt: String) async throws -> String {
+            while true {
+                do {
+                    let reply = try await model.respond(instructions: instructions, prompt: prompt)
+                    temporaryFailures = 0
+                    return reply
+                } catch SubtitleTranslationModelError.temporary(let message) {
+                    temporaryFailures += 1
+                    guard temporaryFailures < Self.maxTemporaryFailures else {
+                        throw SubtitleTranslationModelError.temporary(message)
+                    }
+                    let delay = min(30, 1 << temporaryFailures)
+                    Logger.info("Translation request failed, sending it again in \(delay) s: \(message)")
+                    try await Task.sleep(for: .seconds(delay))
+                }
+            }
+        }
+
         func request(_ indices: [Int]) async throws -> [Int: String] {
             try Task.checkCancellation()
             let prompt = Self.prompt(for: indices, texts: texts, translations: translations)
-            let reply = try await model.respond(instructions: instructions, prompt: prompt)
+            let reply = try await respond(prompt)
             let accepted = Self.acceptedTranslations(in: reply, indices: indices, texts: texts)
             if accepted.isEmpty {
                 unusableReplies += 1
@@ -176,7 +200,7 @@ struct SubtitleTranslator {
                 }
             } catch let error as SubtitleTranslationModelError {
                 switch error {
-                case .fatal:
+                case .temporary, .fatal:
                     throw error
                 case .refused, .tooLong, .generationFailed:
                     Logger.info("Translation request for \(indices.count) lines failed: \(error)")

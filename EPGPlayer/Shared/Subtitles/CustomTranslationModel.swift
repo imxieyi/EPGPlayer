@@ -168,6 +168,8 @@ struct CustomTranslationModel: SubtitleTranslationModel {
                 throw SubtitleTranslationModelError.refused
             case .exceededContextWindowSize:
                 throw SubtitleTranslationModelError.tooLong
+            case .rateLimited, .concurrentRequests:
+                throw SubtitleTranslationModelError.temporary(String(describing: error))
             default:
                 throw SubtitleTranslationModelError.fatal(String(describing: error))
             }
@@ -176,11 +178,39 @@ struct CustomTranslationModel: SubtitleTranslationModel {
         } catch let error as URLError where error.code == .cancelled {
             throw CancellationError()
         } catch let error as URLError {
+            if Self.temporaryNetworkErrors.contains(error.code) {
+                throw SubtitleTranslationModelError.temporary(error.localizedDescription)
+            }
             throw SubtitleTranslationModelError.fatal(error.localizedDescription)
         } catch {
-            // The HTTP errors of AnyLanguageModel only describe the status and the reply of the server in their description.
-            throw SubtitleTranslationModelError.fatal(String(describing: error))
+            // The errors of AnyLanguageModel are internal, and only describe the status and the reply of the server.
+            let description = String(describing: error)
+            if Self.isTemporary(description) {
+                throw SubtitleTranslationModelError.temporary(description)
+            }
+            throw SubtitleTranslationModelError.fatal(description)
         }
+    }
+
+    /// Network errors that a dropped connection or a server that restarts can cause. A host that doesn't exist is not one of them.
+    private static let temporaryNetworkErrors: Set<URLError.Code> = [
+        .timedOut, .networkConnectionLost, .notConnectedToInternet, .cannotConnectToHost, .dnsLookupFailed,
+        .badServerResponse, .cannotParseResponse, .zeroByteResource, .resourceUnavailable,
+        .dataNotAllowed, .internationalRoamingOff, .callIsActive,
+    ]
+
+    /// HTTP statuses of a server that is busy, overloaded or restarting, including the 52x statuses of Cloudflare and
+    /// the 529 status of Anthropic.
+    private static let temporaryHTTPStatuses: Set<Int> = Set([408, 409, 425, 429, 500, 502, 503, 504]).union(520...529)
+
+    /// Whether an error of AnyLanguageModel is a temporary HTTP status, a reply that is not JSON (e.g. the error page of a
+    /// proxy), or a reply without a message.
+    private static func isTemporary(_ description: String) -> Bool {
+        if let match = description.firstMatch(of: /^HTTP error \(Status (\d+)\)/), let status = Int(match.1) {
+            return temporaryHTTPStatuses.contains(status)
+        }
+        return description.hasPrefix("Decoding error") || description.hasPrefix("Invalid response")
+            || description == "noResponseGenerated" || description == "No candidate in response"
     }
 
     /// Asks the official servers to cache the conversation. OpenAI and Gemini cache the start of a request that

@@ -2357,6 +2357,22 @@
         }
       }
     },
+    "The model did not reply in time." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "モデルが時間内に応答しませんでした。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模型未能及时回复。"
+          }
+        }
+      }
+    },
     "The model failed to translate %lld sentences." : {
       "localizations" : {
         "ja" : {

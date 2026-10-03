@@ -48,7 +48,13 @@ final class LiveSubtitleTranslator {
     private static let lookahead = 120_000
     /// Most lines in one request, which only grows when requests fall behind.
     private static let maxLinesPerRequest = 20
-    private static let attemptsPerLine = 2
+    private static let attemptsPerLine = 3
+    /// The least time to wait for a reply. A server that doesn't answer would otherwise hold up the translation
+    /// until the connection times out, which takes many minutes.
+    private static let minRequestTimeout = Duration.seconds(5)
+    private static let maxRequestTimeout = Duration.seconds(60)
+    /// Temporary failures in a row before they are shown, since the translation usually goes on after one.
+    private static let temporaryFailuresBeforeNotice = 3
     /// Captions of a live stream that ended this long ago are dropped.
     private static let liveRetention = 600_000
 
@@ -99,11 +105,21 @@ final class LiveSubtitleTranslator {
     /// The cue of the last caption of each connection of the proxy.
     @ObservationIgnored private var lastCueIDs: [Int: Int] = [:]
 
+    /// A request to the model that has not replied yet.
+    private struct Request {
+        let id: Int
+        let lineIDs: [Int]
+        let start: ContinuousClock.Instant
+        let task: Task<Void, Never>
+    }
+
     @ObservationIgnored private var conversationID = UUID().uuidString
     @ObservationIgnored private var history: [SubtitleTranslationTurn] = []
-    @ObservationIgnored private var requestTask: Task<Void, Never>?
-    /// Changes when the translations are discarded, so that the replies of earlier requests are ignored.
-    @ObservationIgnored private var generation = 0
+    @ObservationIgnored private var request: Request?
+    @ObservationIgnored private var nextRequestID = 1
+    /// How long a reply usually takes, to tell a server that doesn't answer from a model that is slow.
+    @ObservationIgnored private var typicalReplyDuration = Duration.seconds(5)
+    @ObservationIgnored private var consecutiveTimeouts = 0
     @ObservationIgnored private var consecutiveFailures = 0
     @ObservationIgnored private var retryDate: Date?
     @ObservationIgnored private var noticeTask: Task<Void, Never>?
@@ -124,7 +140,7 @@ final class LiveSubtitleTranslator {
         }
         isEnabled = enabled
         if !enabled {
-            requestTask?.cancel()
+            cancelRequest()
             visibleText = nil
             setStatus(.off)
         } else if let problem {
@@ -161,7 +177,7 @@ final class LiveSubtitleTranslator {
 
     func detach() {
         isAttached = false
-        requestTask?.cancel()
+        cancelRequest()
         visibleText = nil
     }
 
@@ -277,9 +293,7 @@ final class LiveSubtitleTranslator {
 
     /// Forgets all captions, since the times of a new stream start over.
     private func resetTimeline() {
-        requestTask?.cancel()
-        requestTask = nil
-        generation += 1
+        cancelRequest()
         cues = []
         captionCueIDs = [:]
         lastCueIDs = [:]
@@ -288,15 +302,14 @@ final class LiveSubtitleTranslator {
         visibleText = nil
         retryDate = nil
         consecutiveFailures = 0
+        consecutiveTimeouts = 0
         if case .noSubtitles = status {
             setStatus(isEnabled ? .active : .off)
         }
     }
 
     private func discardTranslations() {
-        requestTask?.cancel()
-        requestTask = nil
-        generation += 1
+        cancelRequest()
         for index in cues.indices {
             cues[index].state = .pending
             cues[index].translation = nil
@@ -309,16 +322,28 @@ final class LiveSubtitleTranslator {
         visibleText = nil
         retryDate = nil
         consecutiveFailures = 0
+        consecutiveTimeouts = 0
     }
 
     // MARK: - Requests
 
     private func sendIfNeeded() {
-        guard isEnabled, isAttached, requestTask == nil, let model, status != .noSubtitles else {
+        guard isEnabled, isAttached, let model, status != .noSubtitles else {
             return
         }
         if case .unavailable = status {
             return
+        }
+        if let request {
+            let timeout = requestTimeout
+            guard ContinuousClock.now - request.start > timeout else {
+                return
+            }
+            Logger.error("Live translation of \(request.lineIDs.count) lines got no reply in \(timeout)")
+            cancelRequest()
+            consecutiveTimeouts += 1
+            // The lines have waited long enough, so they are sent again right away.
+            countTemporaryFailure(String(localized: "The model did not reply in time."))
         }
         if let retryDate, retryDate > .now {
             return
@@ -359,9 +384,10 @@ final class LiveSubtitleTranslator {
         let prompt = SubtitleTranslator.livePrompt(for: lines)
         let history = history
         let conversationID = conversationID
-        let generation = generation
-        requestTask = Task {
-            let start = ContinuousClock.now
+        let requestID = nextRequestID
+        nextRequestID += 1
+        let start = ContinuousClock.now
+        let task = Task {
             let result: Result<String, any Error>
             do {
                 result = .success(try await model.respond(instructions: instructions, history: history, prompt: prompt, conversationID: conversationID))
@@ -369,12 +395,40 @@ final class LiveSubtitleTranslator {
                 // A cancelled request can also fail with the error of its connection.
                 result = .failure(Task.isCancelled ? CancellationError() : error)
             }
-            guard generation == self.generation else {
+            // The reply of a request that was cancelled, e.g. because it took too long, is ignored.
+            guard request?.id == requestID else {
                 return
             }
-            requestTask = nil
+            request = nil
             handle(result, lines: lines, prompt: prompt, duration: ContinuousClock.now - start)
             sendIfNeeded()
+        }
+        request = Request(id: requestID, lineIDs: lines.map(\.id), start: start, task: task)
+    }
+
+    /// Three times as long as a usual reply, and twice as long after each timeout in a row, so that a slow model
+    /// still gets to reply.
+    private var requestTimeout: Duration {
+        min(Self.maxRequestTimeout, max(Self.minRequestTimeout, typicalReplyDuration * 3) * (1 << min(consecutiveTimeouts, 3)))
+    }
+
+    /// Stops the request that is being sent. Its lines are sent again when they are due.
+    private func cancelRequest() {
+        guard let request else {
+            return
+        }
+        request.task.cancel()
+        self.request = nil
+        for index in request.lineIDs.compactMap(index(ofCue:)) where cues[index].state == .sending {
+            cues[index].state = .pending
+        }
+    }
+
+    /// Counts a failure that may not happen again, and shows it once it keeps happening.
+    private func countTemporaryFailure(_ message: String) {
+        consecutiveFailures += 1
+        if consecutiveFailures >= Self.temporaryFailuresBeforeNotice {
+            setStatus(.failed(message))
         }
     }
 
@@ -405,6 +459,8 @@ final class LiveSubtitleTranslator {
                 trimHistory()
             }
             Logger.info("Translated \(accepted.count) of \(lines.count) live subtitle lines in \(duration), lead \((lines.first.flatMap { index(ofCue: $0.id) }.map { cues[$0].start - playbackTime }) ?? 0) ms")
+            typicalReplyDuration = (typicalReplyDuration * 3 + duration) / 4
+            consecutiveTimeouts = 0
             consecutiveFailures = 0
             retryDate = nil
             if case .failed = status {
@@ -437,12 +493,20 @@ final class LiveSubtitleTranslator {
                 for index in ids.compactMap(index(ofCue:)) {
                     retryLater(index)
                 }
+            case .temporary(let message)?:
+                for index in ids.compactMap(index(ofCue:)) {
+                    cues[index].state = .pending
+                }
+                countTemporaryFailure(message)
+                // Send again after a short pause, which grows a little while the failures go on. Even the longest pause
+                // is about as long as a caption, so that the translation goes on soon after the server recovers.
+                retryDate = .now + TimeInterval(min(4, 1 << (consecutiveFailures - 1)))
             case .fatal?, nil:
                 for index in ids.compactMap(index(ofCue:)) {
                     cues[index].state = .pending
                 }
                 consecutiveFailures += 1
-                // Network errors are often temporary, so keep trying at longer intervals.
+                // Keep trying at longer intervals, in case the problem is fixed, e.g. an exhausted quota that is reset.
                 let delay = min(30, 2 << min(consecutiveFailures, 4))
                 // The player updates the translator several times a second, which sends again once the time has come.
                 retryDate = .now + TimeInterval(delay)
