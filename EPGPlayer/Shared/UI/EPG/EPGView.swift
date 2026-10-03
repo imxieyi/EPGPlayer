@@ -161,8 +161,13 @@ struct EPGView: View {
             }
         }
         .onAppear {
-            if schedules.isEmpty || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+            if schedules.isEmpty {
                 refresh(manual: false)
+            } else if Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+                // Reappearing after a while - refresh data but keep the user's current
+                // day/hour position instead of jumping back to "now" like a real pull
+                // refresh does.
+                refresh(manual: true)
             }
             Task {
                 await fetchReserves()
@@ -179,7 +184,9 @@ struct EPGView: View {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(Self.periodicRefreshInterval))
                 guard !Task.isCancelled else { return }
-                refresh(manual: false)
+                // manual: true keeps the current day/hour position instead of resetting
+                // to "now", which would silently jump the view mid-browse.
+                refresh(manual: true)
             }
         }
     }
