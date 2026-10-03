@@ -510,8 +510,14 @@ struct EPGView: View {
         guard appState.clientState == .initialized else {
             return
         }
-        schedules = []
-        loadingState = .loading
+        // Only flash to the loading/empty state for a true first load. Background
+        // refreshes (periodic task, stale-on-reappear) would otherwise tear down and
+        // rebuild the whole scroll view every time, resetting scroll position and
+        // making the sticky hour ruler/channel header disappear mid-browse.
+        let isInitialLoad = schedules.isEmpty
+        if isInitialLoad {
+            loadingState = .loading
+        }
         let nowTime = Date(timeIntervalSince1970: TimeInterval(Int(Date.now.timeIntervalSince1970) / 3600 * 3600)) // Round down to the nearest hour
         var calendar = Calendar(identifier: .japanese)
         calendar.timeZone = TimeZone(abbreviation: "JST")!
@@ -570,7 +576,11 @@ struct EPGView: View {
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")
-                loadingState = .error(Text(verbatim: error.localizedDescription))
+                // Only surface the error full-screen for a true first load; a failed
+                // background refresh should just leave the existing content showing.
+                if isInitialLoad {
+                    loadingState = .error(Text(verbatim: error.localizedDescription))
+                }
             }
         }
     }
