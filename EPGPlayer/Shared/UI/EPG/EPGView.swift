@@ -252,6 +252,10 @@ struct EPGView: View {
                 // not real pinning, so scrolled-past cells must be clipped to this
                 // view's own bounds or they show through above the floating tab bar.
                 .clipped()
+                // Without its own section, the focus engine can skip over
+                // TVTopActionBar entirely when moving down from the tab bar,
+                // landing directly in the grid instead (see TVTopActionBar.swift).
+                .focusSection()
                 #endif
             } else {
                 ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
