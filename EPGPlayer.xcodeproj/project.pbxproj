@@ -14,7 +14,19 @@
 		8A850F272DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F262DB523A0004E9328 /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		8A850F292DB523A0004E9328 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 8A850F282DB523A0004E9328 /* FirebaseCrashlytics */; };
 		8AA515162DADAE38006C7AA7 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 8AA515152DADAE38006C7AA7 /* KeychainSwift */; };
+		E72148C6B036D1DFFE5017C6 /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8A7667E52D946A54008E69F7 /* OpenAPIRuntime */; };
+		E8DF458DDE084ADDCBBC9C93 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84E2709EFAE18A6280B71B4B /* Foundation.framework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AAEF1ED106FA577A20403FA9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8A7744502D92C2F30080D3BA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8A7744572D92C2F30080D3BA;
+			remoteInfo = EPGPlayer;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		8AB878292E1548810045304F /* Embed Frameworks */ = {
@@ -30,6 +42,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6A8784E85DFFA34145446B7B /* EPGPlayerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EPGPlayerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		84E2709EFAE18A6280B71B4B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		8A7744582D92C2F30080D3BA /* EPGPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EPGPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8AA227102DAEC89500348381 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -76,6 +90,11 @@
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		1BCD27F5E60422548F333694 /* EPGPlayerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = EPGPlayerTests;
+			sourceTree = "<group>";
+		};
 		8A77445A2D92C2F30080D3BA /* EPGPlayer */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -88,6 +107,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		65B7F3BD8470055466DF85B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E8DF458DDE084ADDCBBC9C93 /* Foundation.framework in Frameworks */,
+				E72148C6B036D1DFFE5017C6 /* OpenAPIRuntime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8A7744552D92C2F30080D3BA /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -105,9 +133,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		32D74F6A2820C9D14449574A /* tvOS */ = {
+			isa = PBXGroup;
+			children = (
+				84E2709EFAE18A6280B71B4B /* Foundation.framework */,
+			);
+			name = tvOS;
+			sourceTree = "<group>";
+		};
 		440125368C107C8675F64AE8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				32D74F6A2820C9D14449574A /* tvOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -119,6 +156,7 @@
 				8A77445A2D92C2F30080D3BA /* EPGPlayer */,
 				8A7744592D92C2F30080D3BA /* Products */,
 				440125368C107C8675F64AE8 /* Frameworks */,
+				1BCD27F5E60422548F333694 /* EPGPlayerTests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -126,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				8A7744582D92C2F30080D3BA /* EPGPlayer.app */,
+				6A8784E85DFFA34145446B7B /* EPGPlayerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -143,6 +182,30 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		82B7C3B6FF1B73B8BF72DE38 /* EPGPlayerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B2A207DC1EDBF972AB0115F3 /* Build configuration list for PBXNativeTarget "EPGPlayerTests" */;
+			buildPhases = (
+				59F2367B91D9D1E04062408F /* Sources */,
+				65B7F3BD8470055466DF85B4 /* Frameworks */,
+				C88CA45F66A7AAA42A517412 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9F96B37B9B88FC3B75A04532 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				1BCD27F5E60422548F333694 /* EPGPlayerTests */,
+			);
+			name = EPGPlayerTests;
+			packageProductDependencies = (
+				8A7667E52D946A54008E69F7 /* OpenAPIRuntime */,
+			);
+			productName = EPGPlayerTests;
+			productReference = 6A8784E85DFFA34145446B7B /* EPGPlayerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		8A7744572D92C2F30080D3BA /* EPGPlayer */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 8A7744662D92C2F50080D3BA /* Build configuration list for PBXNativeTarget "EPGPlayer" */;
@@ -210,12 +273,20 @@
 			projectRoot = "";
 			targets = (
 				8A7744572D92C2F30080D3BA /* EPGPlayer */,
+				82B7C3B6FF1B73B8BF72DE38 /* EPGPlayerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		8A7744562D92C2F30080D3BA /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C88CA45F66A7AAA42A517412 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -273,6 +344,13 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		59F2367B91D9D1E04062408F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8A7744542D92C2F30080D3BA /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -287,9 +365,54 @@
 			isa = PBXTargetDependency;
 			productRef = 8AB8780F2E153FB00045304F /* OpenAPIGenerator */;
 		};
+		9F96B37B9B88FC3B75A04532 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = EPGPlayer;
+			target = 8A7744572D92C2F30080D3BA /* EPGPlayer */;
+			targetProxy = AAEF1ED106FA577A20403FA9 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		254F15D11E703E54D3A3B5AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A4FQ895F44;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = tokyo.soraneko.EPGPlayerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EPGPlayer.app/EPGPlayer";
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		88272C969B17C23EDB6652E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = A4FQ895F44;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = tokyo.soraneko.EPGPlayerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = appletvos;
+				SUPPORTED_PLATFORMS = "appletvos appletvsimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/EPGPlayer.app/EPGPlayer";
+				TVOS_DEPLOYMENT_TARGET = 18.0;
+			};
+			name = Debug;
+		};
 		8A7744642D92C2F50080D3BA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -522,6 +645,15 @@
 			buildConfigurations = (
 				8A7744672D92C2F50080D3BA /* Debug */,
 				8A7744682D92C2F50080D3BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B2A207DC1EDBF972AB0115F3 /* Build configuration list for PBXNativeTarget "EPGPlayerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				254F15D11E703E54D3A3B5AB /* Release */,
+				88272C969B17C23EDB6652E5 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

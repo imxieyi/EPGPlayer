@@ -28,6 +28,9 @@ jobs:
       - name: Build tvOS
         run: |
           xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=tvOS" | xcpretty && exit ${PIPESTATUS[0]}
+      - name: Test tvOS
+        run: |
+          xcodebuild test CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -destination "platform=tvOS Simulator,name=Apple TV" -only-testing:EPGPlayerTests | xcpretty && exit ${PIPESTATUS[0]}
       - name: Build macOS
         run: |
           xcodebuild clean build analyze CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO -project EPGPlayer.xcodeproj -scheme EPGPlayer -configuration Release -destination "generic/platform=macOS" | xcpretty && exit ${PIPESTATUS[0]}
