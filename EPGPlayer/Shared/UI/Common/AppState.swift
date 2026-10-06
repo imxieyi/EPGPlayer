@@ -40,9 +40,10 @@ final class AppState {
 struct SearchQuery: Equatable {
     let keyword: String
     let channel: SearchChannel?
+    var rule: SearchRule? = nil
     
     func apiQuery(offset: Int? = nil) -> Operations.GetRecorded.Input.Query {
-        return Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: offset, channelId: channel?.channelId, keyword: keyword)
+        return Operations.GetRecorded.Input.Query(isHalfWidth: true, offset: offset, ruleId: rule?.id, channelId: channel?.channelId, keyword: keyword)
     }
 }
 
@@ -57,6 +58,13 @@ struct SearchChannel: Hashable, Identifiable {
             name
         }
     }
+}
+
+/// A recording rule, offered as a search filter by its keyword (e.g. "search recordings
+/// that were recorded because they matched this rule").
+struct SearchRule: Hashable, Identifiable {
+    let id: Int
+    let keyword: String
 }
 
 enum ClientState {
@@ -78,14 +86,18 @@ class PlayerItem: Identifiable {
 
     let videoItem: any VideoItem
     let title: String
+    let subtitle: String?
+    let programDescription: String?
     /// The program that is played, which helps translating its subtitles.
     let program: SubtitleProgramInfo?
     /// When the program of a live stream ends and the channel moves on to the next one.
     let programEnd: Date?
-    
-    init(videoItem: any VideoItem, title: String, program: SubtitleProgramInfo? = nil, programEnd: Date? = nil) {
+
+    init(videoItem: any VideoItem, title: String, subtitle: String? = nil, programDescription: String? = nil, program: SubtitleProgramInfo? = nil, programEnd: Date? = nil) {
         self.videoItem = videoItem
         self.title = title
+        self.subtitle = subtitle
+        self.programDescription = programDescription
         self.program = program
         self.programEnd = programEnd
     }

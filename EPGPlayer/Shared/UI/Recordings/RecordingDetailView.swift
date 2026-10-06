@@ -26,6 +26,9 @@ struct RecordingDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var deleteInProgress = false
     @State private var deleteError: String? = nil
+    #if os(tvOS)
+    @State private var showActionMenu = false
+    #endif
     @State private var translatingVideoItem: LocalVideoItem? = nil
     @State private var translatableVideoItems: [LocalVideoItem] = []
 
@@ -79,7 +82,7 @@ struct RecordingDetailView: View {
                                 Section("TS") {
                                     ForEach(item.videoItems.filter({ $0.type == .ts }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, program: programInfo)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, subtitle: item.channelName, programDescription: [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n\n"), program: programInfo)
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif
@@ -95,7 +98,7 @@ struct RecordingDetailView: View {
                                 Section("Encoded") {
                                     ForEach(item.videoItems.filter({ $0.type == .encoded }), id: \.epgId) { videoItem in
                                         Button {
-                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, program: programInfo)
+                                            appState.playingItem = PlayerItem(videoItem: videoItem, title: item.name, subtitle: item.channelName, programDescription: [item.shortDesc, item.extendedDesc].compactMap { $0 }.joined(separator: "\n\n"), program: programInfo)
                                             #if os(macOS)
                                             openWindow(id: "player-window")
                                             #endif
@@ -161,6 +164,15 @@ struct RecordingDetailView: View {
                     if deleteInProgress {
                         ProgressView()
                     } else {
+                        #if os(tvOS)
+                        // Menu inside a toolbar item doesn't open reliably on tvOS, so use a confirmationDialog instead.
+                        Button {
+                            showActionMenu = true
+                        } label: {
+                            Image(systemName: "ellipsis")
+                        }
+                        .controlSize(.small)
+                        #else
                         Menu {
                             Button(role: .destructive) {
                                 showDeleteConfirmation = true
@@ -170,10 +182,19 @@ struct RecordingDetailView: View {
                         } label: {
                             Label("More", systemImage: "ellipsis")
                         }
+                        #endif
                     }
                 }
             }
         }
+        #if os(tvOS)
+        .confirmationDialog("More", isPresented: $showActionMenu, titleVisibility: .hidden) {
+            Button("Delete recording", role: .destructive) {
+                showDeleteConfirmation = true
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        #endif
         .alert("Delete recording", isPresented: $showDeleteConfirmation) {
             Button("Delete", role: .destructive) {
                 deleteRecording()
@@ -189,6 +210,15 @@ struct RecordingDetailView: View {
                 Text(verbatim: deleteError)
             }
         }
+        #if os(tvOS)
+        // Right after the player's fullScreenCover dismisses, tvOS sometimes fails to
+        // recognize this view still has a NavigationStack to pop back into, and routes
+        // the Menu button to "exit app" instead. Handle it explicitly so Back always
+        // just pops back to the recordings list.
+        .onExitCommand {
+            dismiss()
+        }
+        #endif
         #if os(iOS) || os(macOS)
         .task(id: playableLocalVideoItems.map(\.id)) {
             // Encoded downloads can be in any container, while only MPEG-TS files carry ARIB subtitles.

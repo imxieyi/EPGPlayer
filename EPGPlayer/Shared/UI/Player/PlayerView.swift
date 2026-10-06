@@ -13,9 +13,9 @@ import VLCKit
 struct PlayerView: View {
     @Environment(\.scenePhase) var scenePhase
     @Environment(\.modelContext) private var context
-    @Environment(AppState.self) private var appState
+    @Environment(AppState.self) var appState
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var userSettings: UserSettings
+    @EnvironmentObject var userSettings: UserSettings
     @EnvironmentObject private var appDelegate: AppDelegate
     
     let item: PlayerItem
@@ -33,6 +33,26 @@ struct PlayerView: View {
     @State var isPIPSupported = false
     @State var isPIPEnabled = false
     @State var isExternalPlay = false
+    @State var isProgramInfoPresented = false
+    #if os(tvOS)
+    @FocusState var focusedPlaybackSetting: PlaybackSetting?
+    // The whole player surface (minus Settings) has exactly one focusable target;
+    // Select cycles through Idle -> Transport -> Scrubbing -> commit via isScrubbing,
+    // instead of moving tvOS focus onto the slider itself.
+    @FocusState private var isWakeSurfaceFocused: Bool
+    @State var isScrubbing = false
+    @State var isChannelSwitcherPresented = false
+    @State var isChannelCategoryStageActive = false
+    @State var channelSwitcherAllSchedules: [Components.Schemas.Schedule] = []
+    @State var channelSwitcherCategory: Components.Schemas.ChannelType = .gr
+    
+    static let channelSwitcherTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.timeZone = TimeZone(identifier: "Asia/Tokyo")
+        return formatter
+    }()
+    #endif
     
     @State var playerUIOpacity: Double = 1
     
@@ -70,7 +90,7 @@ struct PlayerView: View {
     #endif
     
     var videoPlayer: VLCPlayer {
-        var player = VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
+        var player = VLCPlayer(videoItem: item.videoItem, httpHeaders: appState.client.headers, playerEvents: playerEvents, forceStrokeText: userSettings.$forceStrokeText, force16To9: userSettings.$force16To9, videoAspectRatio: userSettings.$videoAspectRatio, audioStereoMode: $audioStereoMode, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState)
         #if os(iOS) || os(macOS)
         player.liveTranslator = liveTranslator
         player.translateSubtitles = userSettings.liveTranslation
@@ -83,6 +103,7 @@ struct PlayerView: View {
         ZStack(alignment: .topLeading) {
             videoPlayer
                 .ignoresSafeArea(edges: .vertical)
+                #if !os(tvOS)
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
                         hidePlayerUI()
@@ -90,12 +111,34 @@ struct PlayerView: View {
                         showPlayerUI()
                     }
                 })
+                #endif
                 #if os(macOS)
                 .simultaneousGesture(TapGesture(count: 2).onEnded{
                     macHelper?.toggleFullscreen()
                 })
                 #endif
-            
+
+            #if os(tvOS)
+            // Always mounted (never inserted/removed) so requesting focus never races
+            // against the view appearing. This is the only focusable element in the
+            // player (besides Settings/the channel switcher); Select's meaning depends
+            // on playerUIOpacity/isScrubbing rather than on tvOS focus ever moving
+            // onto the slider.
+            if !isProgramInfoPresented && !isChannelSwitcherPresented {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .focusable()
+                    .focused($isWakeSurfaceFocused)
+                    .onAppear {
+                        isWakeSurfaceFocused = true
+                    }
+                    .onTapGesture {
+                        handleSelect()
+                    }
+            }
+            #endif
+
             #if os(iOS) || os(macOS)
             // A live stream stops instead of pausing, which leaves no video to translate.
             if !isExternalPlay && playerState != .stopping && playerState != .stopped {
@@ -105,7 +148,7 @@ struct PlayerView: View {
                     .ignoresSafeArea(edges: .vertical)
             }
             #endif
-            
+
             if isExternalPlay {
                 HStack {
                     Spacer()
@@ -143,7 +186,7 @@ struct PlayerView: View {
             }
             
             VStack(spacing: 0) {
-                #if !os(macOS)
+                #if !os(macOS) && !os(tvOS)
                 VStack {
                     Spacer()
                         .frame(height: paddingSize)
@@ -173,10 +216,8 @@ struct PlayerView: View {
                         }
                         
                         playerMenu
-                            #if !os(tvOS)
                             .menuStyle(.button)
                             .buttonStyle(.borderless)
-                            #endif
                         
                         Spacer()
                             .frame(width: paddingSize)
@@ -194,20 +235,29 @@ struct PlayerView: View {
                     Spacer()
                         .frame(width: paddingSize)
                     
+                    #if os(tvOS)
+                    PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, loadedPlaybackPosition: $loadedPlaybackPosition, playbackPosition: $playbackPosition, playerEvents: playerEvents, isScrubbing: $isScrubbing)
+                    #else
                     PlayerProgressControl(item: item, playerState: $playerState, hadErrorState: $hadErrorState, hadPlayingState: $hadPlayingState, loadedPlaybackPosition: $loadedPlaybackPosition, playbackPosition: $playbackPosition, playerEvents: playerEvents)
+                    #endif
                     
                     Spacer()
                         .frame(width: paddingSize)
                 }
                 .background(.black.opacity(0.7))
-                #if os(iOS) || os(macOS)
+                #if os(tvOS)
+                .opacity(isProgramInfoPresented ? 0 : playerUIOpacity)
+                // Hit-testing must stay enabled even while invisible: Select can reveal
+                // the HUD and immediately start scrubbing from the very same tap.
+                .allowsHitTesting(!isProgramInfoPresented)
+                #else
                 .onGeometryChange(for: CGFloat.self) { geometry in
                     geometry.frame(in: .named(SubtitleOverlay.coordinateSpace)).minY
                 } action: { top in
                     controlsTop = top
                 }
-                #endif
                 .opacity(playerUIOpacity)
+                #endif
                 
                 #if os(macOS)
                 Color.black
@@ -215,6 +265,31 @@ struct PlayerView: View {
                     .opacity(playerUIOpacity * 0.7)
                 #endif
             }
+
+            #if os(tvOS)
+            if isProgramInfoPresented {
+                VStack(spacing: 0) {
+                    tvOSPlaybackSettings
+                        .padding(.horizontal, 48)
+                        .padding(.top, 26)
+                    Spacer()
+                    programInfoPanel
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+            
+            if isChannelSwitcherPresented {
+                HStack(spacing: 0) {
+                    if isChannelCategoryStageActive {
+                        channelCategorySwitcherPanel
+                    } else {
+                        channelSwitcherPanel
+                    }
+                    Spacer()
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+            #endif
             
             #if os(macOS)
             VStack {
@@ -297,6 +372,21 @@ struct PlayerView: View {
         .onChange(of: playbackSpeed, { _, newValue in
             playerEvents.setPlaybackRate.send(newValue.rawValue)
         })
+        #if os(tvOS)
+        .onChange(of: isProgramInfoPresented) { _, newValue in
+            if newValue {
+                Task { @MainActor in
+                    await Task.yield()
+                    focusedPlaybackSetting = .aspect
+                }
+            } else {
+                focusedPlaybackSetting = nil
+            }
+        }
+        .onChange(of: userSettings.videoAspectRatio, { _, newValue in
+            playerEvents.setVideoAspectRatio.send(newValue)
+        })
+        #endif
         .onChange(of: playerState, { _, newValue in
             if !newValue.isPlaying {
                 savePlaybackPosition()
@@ -310,6 +400,11 @@ struct PlayerView: View {
                 #endif
                 if let savedPlaybackPosition {
                     playerEvents.setPlaybackPosition.send(savedPlaybackPosition.position)
+                }
+                if activeTextTrack.id == "none" {
+                    // VLC can finalize its own default subtitle track selection once playback
+                    // actually starts, after all per-track "disable" commands already ran.
+                    playerEvents.enableTrack.send(activeTextTrack)
                 }
             }
         })
@@ -338,6 +433,10 @@ struct PlayerView: View {
             textTracks.append(track)
             if userSettings.enableSubtitles && textTracks.count == 1 {
                 activeTextTrack = track
+            } else if activeTextTrack.id == "none" {
+                // VLC can auto-select a newly discovered track (e.g. ARIB captions) on its own;
+                // re-assert "None" so it doesn't silently override the user's choice.
+                playerEvents.enableTrack.send(activeTextTrack)
             }
         }
         .onReceive(playerEvents.setPIPSupported, perform: { supported in
@@ -372,6 +471,75 @@ struct PlayerView: View {
             liveTranslator.updateProgram(item.program)
             #endif
         }
+        #if os(tvOS)
+        // Swipe either quick-seeks (Idle/Transport) or moves the scrub preview
+        // (Scrubbing, entered/exited via Select in handleSelect()).
+        .onMoveCommand { direction in
+            guard !isProgramInfoPresented else {
+                return
+            }
+            if isChannelSwitcherPresented {
+                // Up/down navigate the list/category rows via native tvOS focus;
+                // only left (one more step "outward") needs explicit handling here.
+                if direction == .left && !isChannelCategoryStageActive {
+                    openCategorySwitcher()
+                    resetIdleTimer()
+                }
+                return
+            }
+            switch direction {
+            case .left:
+                if isScrubbing {
+                    playbackPosition = max(0, playbackPosition - 0.01)
+                } else if item.videoItem.type != .livestream {
+                    playerEvents.seekBy.send(-10)
+                }
+            case .right:
+                if isScrubbing {
+                    playbackPosition = min(1, playbackPosition + 0.01)
+                } else if item.videoItem.type != .livestream {
+                    playerEvents.seekBy.send(30)
+                } else {
+                    openChannelSwitcher()
+                }
+            case .up:
+                if !isScrubbing {
+                    isProgramInfoPresented = true
+                }
+            default:
+                break
+            }
+            resetIdleTimer()
+        }
+        .onExitCommand {
+            if isChannelSwitcherPresented {
+                if isChannelCategoryStageActive {
+                    // Back out of category picking, not all the way out of the switcher.
+                    isChannelCategoryStageActive = false
+                } else {
+                    isChannelSwitcherPresented = false
+                }
+                resetIdleTimer()
+            } else if isProgramInfoPresented {
+                closeProgramInfo()
+            } else if isScrubbing {
+                // Cancel without seeking; resume whatever state playback was in.
+                isScrubbing = false
+                if !playerState.isPlaying {
+                    playerEvents.togglePlay.send()
+                }
+                resetIdleTimer()
+            } else if playerUIOpacity == 1 {
+                // Transport HUD only: dismiss it, don't leave the player.
+                hidePlayerUI()
+            } else {
+                dismiss()
+            }
+        }
+        .onPlayPauseCommand {
+            playerEvents.togglePlay.send()
+        }
+        #endif
         #if os(iOS) || os(macOS)
         .task {
             liveTranslator.updateProgram(item.program)
@@ -396,7 +564,7 @@ struct PlayerView: View {
         }
         #endif
     }
-    
+
     var playerMenu: some View {
         Menu {
             if item.videoItem.type != .livestream {
@@ -538,6 +706,21 @@ struct PlayerView: View {
     }
     
     func hidePlayerUI() {
+        guard !isProgramInfoPresented else {
+            return
+        }
+        #if os(tvOS)
+        guard !isChannelSwitcherPresented else {
+            return
+        }
+        if isScrubbing {
+            // Idle timeout mid-scrub: don't leave playback stuck paused.
+            isScrubbing = false
+            if !playerState.isPlaying {
+                playerEvents.togglePlay.send()
+            }
+        }
+        #endif
         if playerUIOpacity == 1 {
             withAnimation(.default.speed(2)) {
                 playerUIOpacity = 0
@@ -600,14 +783,20 @@ struct PlayerView: View {
         Logger.info("Saved playback position: \(savedPlaybackPosition.position)")
     }
     
-    func resetIdleTimer() {
+    func resetIdleTimer(after seconds: Int? = nil) {
         if let idleTimer {
             idleTimer.invalidate()
         }
+        #if os(tvOS)
+        // tvOS doesn't expose the "Auto hide UI" setting; always use a fixed, short delay.
+        let delay = seconds ?? 3
+        #else
         guard userSettings.inactiveTimer != .max else {
             return
         }
-        idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(userSettings.inactiveTimer), repeats: false) { _ in
+        let delay = seconds ?? userSettings.inactiveTimer
+        #endif
+        idleTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(delay), repeats: false) { _ in
             Task {
                 await MainActor.run {
                     #if os(macOS)

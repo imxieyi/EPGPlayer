@@ -24,6 +24,11 @@ struct LiveChannelsView: View {
     let timer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
     @State var progressMap: [Components.Schemas.ProgramId : Double] = [:]
     
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    
     @State var showSettings = false
     @State var channelKeyword = ""
     @State var programKeyword = ""
@@ -35,14 +40,77 @@ struct LiveChannelsView: View {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
                 refresh(waitTime: waitTime)
             } content: {
-                if let liveStreamConfig {
-                    #if os(tvOS)
-                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
-                    #else
-                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 10)
-                    #endif
-                    ScrollView {
-                        #if os(macOS)
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar {
+                        Button {
+                            refresh()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
+                        Button {
+                            showSettings.toggle()
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                        }
+                        .controlSize(.small)
+                    }
+                    liveContent
+                }
+                #else
+                liveContent
+                #endif
+            }
+            .toolbar(content: {
+                #if os(macOS)
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        refresh()
+                    } label: {
+                        Label("Refresh", systemImage: "arrow.clockwise")
+                    }
+                }
+                #endif
+                #if !os(tvOS)
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showSettings.toggle()
+                    } label: {
+                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+                #endif
+            })
+            #if !os(tvOS)
+            .navigationTitle("Live")
+            #if !os(macOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            #else
+            .toolbarTitleDisplayMode(.inline)
+            #endif
+        }
+        .sheet(isPresented: $showSettings) {
+            settings
+        }
+        .onAppear {
+            if schedules.isEmpty || liveStreamConfig == nil || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+                refresh()
+            }
+        }
+    }
+    
+    var liveContent: some View {
+        Group {
+            if let liveStreamConfig {
+                #if os(tvOS)
+                let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
+                #else
+                let gridItem = GridItem(.adaptive(minimum: 300), spacing: 10)
+                #endif
+                ScrollView {
+                    #if os(macOS)
                         Spacer()
                             .frame(height: 10)
                         #endif
@@ -54,72 +122,36 @@ struct LiveChannelsView: View {
                                     || (schedule.channel.channelType == .sky && userSettings.liveShowSKY))
                                     && (channelKeyword == "" || schedule.channel.name.lowercased().contains(channelKeyword.lowercased()))
                                     && (programKeyword == "" || (schedule.programs.first?.name ?? "").lowercased().contains(programKeyword.lowercased())) {
-                                    Menu {
-                                        if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2ts", formatName: "M2TS", selections: m2ts)
+                                    Group {
+                                        #if os(tvOS)
+                                        Button {
+                                            playChannel(schedule)
+                                        } label: {
+                                            channelCellLabel(for: schedule)
                                         }
-                                        if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
-                                        }
-                                        if let webm = liveStreamConfig.webm, !webm.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "webm", formatName: "WebM", selections: webm)
-                                        }
-                                        if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
-                                            LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "mp4", formatName: "MP4", selections: mp4)
-                                        }
-                                    } label: {
-                                        VStack(alignment: .leading) {
-                                            HStack {
-                                                AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(schedule.channel.id)/logo"), headers: appState.client.headers) { phase in
-                                                    if let image = phase.image {
-                                                        #if DEBUG
-                                                        if userSettings.demoMode {
-                                                            Image(systemName: "inset.filled.tv")
-                                                        } else {
-                                                            image
-                                                                .resizable()
-                                                                .scaledToFit()
-                                                        }
-                                                        #else
-                                                        image
-                                                            .resizable()
-                                                            .scaledToFit()
-                                                        #endif
-                                                    } else if phase.error != nil {
-                                                        Image(systemName: "photo.badge.exclamationmark")
-                                                            .foregroundStyle(.placeholder)
-                                                    } else {
-                                                        ProgressView()
-                                                    }
-                                                }
-                                                .frame(height: 20)
-                                                Text(schedule.channel.name)
-                                                Spacer()
-                                                Text(schedule.channel.channelType.rawValue.uppercased())
-                                                    .foregroundStyle(.secondary)
+                                        .buttonStyle(.tvFlat)
+                                        // The system's own default focus-lift animation zooms the
+                                        // button regardless of tvOSFocusCard's scale; disable it too.
+                                        .focusEffectDisabled()
+                                        #else
+                                        Menu {
+                                            if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }), !m2ts.isEmpty {
+                                                LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2ts", formatName: "M2TS", selections: m2ts)
                                             }
-                                            if let program = schedule.programs.first {
-                                                Text(verbatim: program.name)
-                                                    .font(.headline)
-                                                    .multilineTextAlignment(.leading)
-                                                    .lineLimit(2)
-                                                    .layoutPriority(3)
-                                                Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
-                                                    .font(.caption)
-                                                    .layoutPriority(2)
-                                                if let description = program.description {
-                                                    Text(verbatim: description)
-                                                        .font(.footnote)
-                                                        .multilineTextAlignment(.leading)
-                                                        .layoutPriority(1)
-                                                }
-                                                Spacer()
-                                                    .frame(minHeight: 0)
-                                                ProgramProgressView(progress: $progressMap[program.id])
-                                            } else {
-                                                Spacer()
+                                            if let m2tsll = liveStreamConfig.m2tsll, !m2tsll.isEmpty {
+                                                LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "m2tsll", formatName: "M2TS-LL", selections: m2tsll)
                                             }
+                                            if let webm = liveStreamConfig.webm, !webm.isEmpty {
+                                                LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "webm", formatName: "WebM", selections: webm)
+                                            }
+                                            if let mp4 = liveStreamConfig.mp4, !mp4.isEmpty {
+                                                LiveStreamSelectionMenu(channel: schedule.channel, program: schedule.programs.first, format: "mp4", formatName: "MP4", selections: mp4)
+                                            }
+                                        } label: {
+                                            channelCellLabel(for: schedule)
                                         }
+                                        .menuStyle(.button)
+                                        .buttonStyle(.plain)
                                         .padding(.all, 6)
                                         #if os(macOS)
                                         .background(.fill)
@@ -127,15 +159,9 @@ struct LiveChannelsView: View {
                                         // The fill style is drawn black in a menu label on iOS 27.
                                         .background(Color(uiColor: .secondarySystemBackground))
                                         #endif
-                                        .frame(maxWidth: .infinity, minHeight: 120, idealHeight: 120, maxHeight: 120)
-                                        .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
-                                        .shadow(radius: 3)
+                                        #endif
                                     }
                                     .id(schedule.channel.id)
-                                    #if !os(tvOS)
-                                    .menuStyle(.button)
-                                    .buttonStyle(.plain)
-                                    #endif
                                     .tint(.primary)
                                 }
                             }
@@ -154,40 +180,7 @@ struct LiveChannelsView: View {
                     ContentUnavailableView("Failed to load live stream config", systemImage: "exclamationmark.triangle")
                 }
             }
-            .toolbar(content: {
-                #if os(macOS)
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        refresh()
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                }
-                #endif
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showSettings.toggle()
-                    } label: {
-                        Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
-                    }
-                }
-            })
-            #if !os(tvOS)
-            .navigationTitle("Live")
-            #if !os(macOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            #endif
         }
-        .sheet(isPresented: $showSettings) {
-            settings
-        }
-        .onAppear {
-            if schedules.isEmpty || liveStreamConfig == nil {
-                refresh()
-            }
-        }
-    }
     
     var settings: some View {
         NavigationStack {
@@ -248,6 +241,109 @@ struct LiveChannelsView: View {
         }
     }
     
+    #if os(tvOS)
+    // tvOS skips the format/quality Menu entirely; Select plays immediately using
+    // the default format/mode from Settings.
+    func playChannel(_ schedule: Components.Schemas.Schedule) {
+        let program = schedule.programs.first
+        appState.playingItem = PlayerItem(
+            videoItem: EPGLiveStreamItem(channel: schedule.channel, format: userSettings.tvLiveDefaultFormat, mode: userSettings.tvLiveDefaultMode, audioComponentType: program?.audioComponentType),
+            title: program?.name ?? schedule.channel.name,
+            subtitle: schedule.channel.name,
+            programDescription: [program?.description, program?.extended].compactMap { $0 }.joined(separator: "\n\n"),
+            program: program?.subtitleProgramInfo, programEnd: program?.endDate
+        )
+    }
+    #endif
+    
+    func channelCellLabel(for schedule: Components.Schemas.Schedule) -> some View {
+        VStack(alignment: .leading) {
+            HStack {
+                AsyncImageWithHeaders(url: appState.client.endpoint.appending(path: "channels/\(schedule.channel.id)/logo"), headers: appState.client.headers) { phase in
+                    if let image = phase.image {
+                        #if DEBUG
+                        if userSettings.demoMode {
+                            Image(systemName: "inset.filled.tv")
+                        } else {
+                            image
+                                .resizable()
+                                .scaledToFit()
+                        }
+                        #else
+                        image
+                            .resizable()
+                            .scaledToFit()
+                        #endif
+                    } else if phase.error != nil {
+                        Image(systemName: "photo.badge.exclamationmark")
+                            .foregroundStyle(.placeholder)
+                    } else {
+                        ProgressView()
+                    }
+                }
+                .frame(height: 20)
+                Text(schedule.channel.name)
+                    #if os(tvOS)
+                    .font(.system(size: 16))
+                    .lineLimit(1)
+                    #endif
+                Spacer()
+                Text(schedule.channel.channelType.rawValue.uppercased())
+                    .foregroundStyle(.secondary)
+                    #if os(tvOS)
+                    .font(.system(size: 14))
+                    #endif
+            }
+            if let program = schedule.programs.first {
+                Text(verbatim: program.name)
+                    #if os(tvOS)
+                    .font(.system(size: 22, weight: .bold))
+                    #else
+                    .font(.headline)
+                    #endif
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .layoutPriority(3)
+                Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                    #if os(tvOS)
+                    .font(.system(size: 16))
+                    .lineLimit(1)
+                    #else
+                    .font(.caption)
+                    #endif
+                    .layoutPriority(2)
+                if let description = program.description {
+                    Text(verbatim: description)
+                        #if os(tvOS)
+                        .font(.system(size: 14))
+                        .lineLimit(2)
+                        #else
+                        .font(.footnote)
+                        #endif
+                        .multilineTextAlignment(.leading)
+                        .layoutPriority(1)
+                }
+                Spacer()
+                    .frame(minHeight: 0)
+                ProgramProgressView(progress: $progressMap[program.id])
+            } else {
+                Spacer()
+            }
+        }
+        .padding(.all, 6)
+        #if !os(tvOS)
+        .background(.fill)
+        #endif
+        .frame(maxWidth: .infinity, minHeight: 120, idealHeight: 120, maxHeight: 120)
+        .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
+        .shadow(radius: 3)
+        #if os(tvOS)
+        // The white focus border is enough here; the zoom made focused cells
+        // overlap neighboring cells in the grid.
+        .tvOSFocusCard(scale: 1.0)
+        #endif
+    }
+    
     func updateProgress() {
         let currentTimestamp = Date.now.timeIntervalSince1970 * 1000
         for schedule in schedules {
@@ -285,6 +381,7 @@ struct LiveChannelsView: View {
                 schedules = try await appState.client.api.getSchedulesBroadcasting(query: Operations.GetSchedulesBroadcasting.Input.Query(isHalfWidth: true)).ok.body.json
                 updateProgress()
                 loadingState = .loaded
+                lastRefreshedAt = Date()
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")

@@ -108,6 +108,11 @@ struct RecordingCell: View {
             .aspectRatio(16/9, contentMode: .fit)
             .clipShape(RoundedRectangle(cornerSize: CGSize(width: 10, height: 10)))
             .shadow(radius: 3)
+            #if os(tvOS)
+            // The white focus border is enough here; the zoom made focused cells
+            // overlap their horizontal-shelf neighbors.
+            .tvOSFocusCard(scale: 1.0)
+            #endif
         }
     }
 }

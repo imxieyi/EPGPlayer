@@ -25,6 +25,12 @@ final class PlayerEvents: ObservableObject, Sendable {
     let setPlaybackRate = PassthroughSubject<Float, Never>()
     let setPlaybackPosition = PassthroughSubject<Double, Never>()
     let setPlaybackTime = PassthroughSubject<Double, Never>()
+    #if os(tvOS)
+    let setVideoAspectRatio = PassthroughSubject<VideoAspectRatio, Never>()
+    let videoOutputReady = PassthroughSubject<Void, Never>()
+    /// Idle-state quick seek (Siri Remote swipe while the scrubber isn't focused).
+    let seekBy = PassthroughSubject<Double, Never>()
+    #endif
     
     let updatePosition = PassthroughSubject<PlaybackPosition, Never>()
     let updateStats = PassthroughSubject<VLCMedia.Stats, Never>()

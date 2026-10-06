@@ -29,6 +29,10 @@ struct SettingsView: View {
     @State private var databaseSizeError: String? = nil
     @State private var currentCacheSize: Int = 0
     
+    #if os(tvOS)
+    @State private var liveQualityOptions: [LiveQualityOption] = []
+    #endif
+    
     var body: some View {
         NavigationStack {
             Form {
@@ -166,9 +170,47 @@ struct SettingsView: View {
                 Text("Force stroke text")
             }
             
+            #if os(tvOS)
+            // tvOS has no menu bar to host the gear-icon "Show stats" toggle that
+            // iOS/macOS show in the player itself, so it needs a home here instead.
+            Toggle(isOn: userSettings.$showPlayerStats) {
+                Text("Show stats")
+            }
+            
+            Picker(selection: userSettings.$videoAspectRatio) {
+                ForEach(VideoAspectRatio.allCases) { aspectRatio in
+                    Text(verbatim: aspectRatio.label)
+                        .tag(aspectRatio)
+                }
+            } label: {
+                Text("Aspect ratio")
+            }
+            .pickerStyle(.menu)
+            
+            // A List-based NavigationLink instead of a Picker(.menu): the menu style
+            // picker with a dynamic ForEach + custom Binding was not reliably
+            // openable/selectable on tvOS.
+            NavigationLink {
+                liveQualityList
+            } label: {
+                HStack {
+                    Text("Live quality")
+                    Spacer()
+                    Text(verbatim: currentLiveQualityLabel)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .disabled(liveQualityOptions.isEmpty)
+            // Re-run whenever clientState changes so this isn't stuck empty forever
+            // if the sheet was opened before the client finished initializing.
+            .task(id: appState.clientState) {
+                await loadLiveQualityOptions()
+            }
+            #else
             Toggle(isOn: userSettings.$force16To9) {
                 Text("Force 16:9")
             }
+            #endif
             
             #if !os(macOS) && !os(tvOS)
             Toggle(isOn: userSettings.$forceLandscape) {
@@ -194,6 +236,59 @@ struct SettingsView: View {
             Label("Player Settings", systemImage: "play.rectangle")
         }
     }
+    
+    #if os(tvOS)
+    var currentLiveQualityLabel: String {
+        liveQualityOptions.first(where: { $0.format == userSettings.tvLiveDefaultFormat && $0.mode == userSettings.tvLiveDefaultMode })?.label
+            ?? "\(userSettings.tvLiveDefaultFormat)-\(userSettings.tvLiveDefaultMode)"
+    }
+    
+    var liveQualityList: some View {
+        List(liveQualityOptions) { option in
+            Button {
+                userSettings.tvLiveDefaultFormat = option.format
+                userSettings.tvLiveDefaultMode = option.mode
+            } label: {
+                HStack {
+                    Text(verbatim: option.label)
+                    Spacer()
+                    if option.format == userSettings.tvLiveDefaultFormat && option.mode == userSettings.tvLiveDefaultMode {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+        }
+        .navigationTitle("Live quality")
+    }
+    
+    func loadLiveQualityOptions() async {
+        guard liveQualityOptions.isEmpty, appState.clientState == .initialized else {
+            return
+        }
+        do {
+            guard let liveStreamConfig = try await appState.client.api.getConfig().ok.body.json.streamConfig.live?.ts else {
+                return
+            }
+            var options: [LiveQualityOption] = []
+            if let m2ts = liveStreamConfig.m2ts?.map({ $0.name }) {
+                options += m2ts.enumerated().map { LiveQualityOption(format: "m2ts", formatName: "M2TS", mode: $0.offset, quality: $0.element) }
+            }
+            if let m2tsll = liveStreamConfig.m2tsll {
+                options += m2tsll.enumerated().map { LiveQualityOption(format: "m2tsll", formatName: "M2TS-LL", mode: $0.offset, quality: $0.element) }
+            }
+            if let webm = liveStreamConfig.webm {
+                options += webm.enumerated().map { LiveQualityOption(format: "webm", formatName: "WebM", mode: $0.offset, quality: $0.element) }
+            }
+            if let mp4 = liveStreamConfig.mp4 {
+                options += mp4.enumerated().map { LiveQualityOption(format: "mp4", formatName: "MP4", mode: $0.offset, quality: $0.element) }
+            }
+            Logger.info("Live quality candidates: m2ts=\(liveStreamConfig.m2ts?.count ?? 0), m2tsll=\(liveStreamConfig.m2tsll?.count ?? 0), webm=\(liveStreamConfig.webm?.count ?? 0), mp4=\(liveStreamConfig.mp4?.count ?? 0)")
+            liveQualityOptions = options
+        } catch let error {
+            Logger.error("Failed to load live stream config: \(error)")
+        }
+    }
+    #endif
     
     #if os(iOS) || os(macOS)
     var translationSection: some View {
@@ -423,3 +518,15 @@ struct SettingsView: View {
     }
     #endif
 }
+
+#if os(tvOS)
+struct LiveQualityOption: Identifiable, Hashable {
+    let format: String
+    let formatName: String
+    let mode: Int
+    let quality: String
+    
+    var id: String { "\(format)-\(mode)" }
+    var label: String { "\(formatName) - \(quality)" }
+}
+#endif

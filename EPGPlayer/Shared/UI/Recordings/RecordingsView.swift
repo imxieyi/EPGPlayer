@@ -24,10 +24,44 @@ struct RecordingsView: View {
     @State var totalCount = 0
     @State var channels: [Components.Schemas.ChannelItem] = []
     @State var recorded: [Components.Schemas.RecordedItem] = []
+    @State var searchRules: [SearchRule] = []
+    
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    static let periodicRefreshInterval: TimeInterval = 120
+    
+    #if os(tvOS)
+    @State var shelves: [RecordingShelf] = []
+    @State var shelvesLoadingState = LoadingState.loading
+    #endif
     
     var body: some View {
         NavigationStack {
-            recordingsContent
+            Group {
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar(alignment: .leading) {
+                        Button {
+                            refresh()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .controlSize(.small)
+                        Button {
+                            showSearchView.toggle()
+                        } label: {
+                            Image(systemName: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
+                        }
+                        .controlSize(.small)
+                    }
+                    recordingsContent
+                }
+                #else
+                recordingsContent
+                #endif
+            }
             .toolbar(content: {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
@@ -38,6 +72,7 @@ struct RecordingsView: View {
                     }
                 }
                 #endif
+                #if !os(tvOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showSearchView.toggle()
@@ -45,16 +80,19 @@ struct RecordingsView: View {
                         Label("Search", systemImage: searchQuery == nil ? "magnifyingglass" : "sparkle.magnifyingglass")
                     }
                 }
+                #endif
             })
             #if !os(tvOS)
             .navigationTitle("Recordings")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            #else
+            .toolbarTitleDisplayMode(.inline)
             #endif
         }
         .sheet(isPresented: $showSearchView) {
-            SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) })
+            SearchView(searchQuery: $searchQuery, channels: channels.map { SearchChannel(name: $0.name, channelId: $0.id) }, rules: searchRules)
         }
         .onChange(of: searchQuery, initial: true) { oldValue, newValue in
             if oldValue != newValue {
@@ -73,56 +111,15 @@ struct RecordingsView: View {
                     .frame(height: 10)
                 #endif
 
-                if recorded.isEmpty {
-                    ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+                #if os(tvOS)
+                if searchQuery == nil {
+                    shelvesSection
                 } else {
-                    #if os(tvOS)
-                    let gridItem = GridItem(.adaptive(minimum: 600), spacing: 15)
-                    #else
-                    let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
-                    #endif
-                    LazyVGrid(columns: [gridItem], spacing: 15) {
-                        ForEach(recorded) { item in
-                            NavigationLink {
-                                RecordingDetailView(item: item, onDelete: {
-                                    recorded.removeAll { $0.id == item.id }
-                                    totalCount -= 1
-                                })
-                            } label: {
-                                RecordingCell(item: item)
-                            }
-                            #if os(macOS) || os(tvOS)
-                            .buttonStyle(.borderless)
-                            #endif
-                            .tint(.primary)
-                            .id(item.id)
-                        }
-                        if case .loaded = loadingMoreState, recorded.count < totalCount {
-                            Spacer()
-                                .onAppear {
-                                    loadMore()
-                                }
-                        }
-                    }
-                    #if !os(tvOS)
-                    .padding(.horizontal)
-                    #endif
+                    recordingsGrid
                 }
-
-                if recorded.count < totalCount {
-                    if case .loading = loadingMoreState {
-                        ProgressView()
-                            #if !os(tvOS)
-                            .controlSize(.large)
-                            #endif
-                    } else if case .error(let message) = loadingMoreState {
-                        ContentUnavailableView {
-                            Label("Error loading content", systemImage: "xmark.circle")
-                        } description: {
-                            message
-                        }
-                    }
-                }
+                #else
+                recordingsGrid
+                #endif
 
                 #if os(macOS)
                 Spacer()
@@ -134,11 +131,125 @@ struct RecordingsView: View {
             }
         })
         .onAppear {
-            if recorded.isEmpty {
+            if recorded.isEmpty || Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+                refresh()
+            }
+        }
+        // Keeps data fresh while this tab is actually visible; cancelled automatically
+        // when the view disappears (e.g. switching tabs), unlike Timer.publish.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Self.periodicRefreshInterval))
+                guard !Task.isCancelled else { return }
                 refresh()
             }
         }
     }
+    
+    var recordingsGrid: some View {
+        Group {
+            if recorded.isEmpty {
+                ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+            } else {
+                #if os(tvOS)
+                let gridItem = GridItem(.adaptive(minimum: 420), spacing: 15)
+                #else
+                let gridItem = GridItem(.adaptive(minimum: 300), spacing: 15)
+                #endif
+                LazyVGrid(columns: [gridItem], spacing: 15) {
+                    ForEach(recorded) { item in
+                        NavigationLink {
+                            RecordingDetailView(item: item, onDelete: {
+                                recorded.removeAll { $0.id == item.id }
+                                totalCount -= 1
+                            })
+                        } label: {
+                            RecordingCell(item: item)
+                        }
+                        #if os(tvOS)
+                        .buttonStyle(.tvFlat)
+                        .focusEffectDisabled()
+                        #elseif os(macOS)
+                        .buttonStyle(.borderless)
+                        #endif
+                        .tint(.primary)
+                        .id(item.id)
+                    }
+                    if case .loaded = loadingMoreState, recorded.count < totalCount {
+                        Spacer()
+                            .onAppear {
+                                loadMore()
+                            }
+                    }
+                }
+                #if !os(tvOS)
+                .padding(.horizontal)
+                #endif
+            }
+
+            if recorded.count < totalCount {
+                if case .loading = loadingMoreState {
+                    ProgressView()
+                        #if !os(tvOS)
+                        .controlSize(.large)
+                        #endif
+                } else if case .error(let message) = loadingMoreState {
+                    ContentUnavailableView {
+                        Label("Error loading content", systemImage: "xmark.circle")
+                    } description: {
+                        message
+                    }
+                }
+            }
+        }
+    }
+    
+    #if os(tvOS)
+    var shelvesSection: some View {
+        Group {
+            if case .loading = shelvesLoadingState, shelves.isEmpty {
+                ProgressView()
+            } else if shelves.isEmpty {
+                ContentUnavailableView("No recordings found", systemImage: "questionmark.circle")
+            } else {
+                LazyVStack(alignment: .leading, spacing: 40) {
+                    ForEach(shelves) { shelf in
+                        recordingShelfRow(shelf)
+                    }
+                }
+            }
+        }
+    }
+    
+    func recordingShelfRow(_ shelf: RecordingShelf) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(verbatim: shelf.title)
+                .font(.title3.bold())
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 24) {
+                    ForEach(shelf.items) { item in
+                        NavigationLink {
+                            RecordingDetailView(item: item, onDelete: {
+                                removeRecording(item)
+                            })
+                        } label: {
+                            RecordingCell(item: item)
+                        }
+                        .buttonStyle(.tvFlat)
+                        .focusEffectDisabled()
+                        .tint(.primary)
+                        .frame(width: 420)
+                        .id(item.id)
+                    }
+                }
+            }
+            // Marks each horizontally-scrolling row as its own focus region, so the
+            // focus engine reliably moves up/down between rows (and up and out to
+            // TVTopActionBar's search button) instead of getting stuck inside one.
+            .focusSection()
+        }
+    }
+    #endif
     
     func refresh(waitTime: Duration = .zero) {
         guard appState.clientState == .initialized else {
@@ -174,6 +285,7 @@ struct RecordingsView: View {
             if let records {
                 self.recorded = records
                 loadingState = .loaded
+                lastRefreshedAt = Date()
             }
             #if DEBUG
             if userSettings.demoMode {
@@ -184,6 +296,48 @@ struct RecordingsView: View {
                 })
             }
             #endif
+            if searchRules.isEmpty {
+                loadSearchRules()
+            }
+            #if os(tvOS)
+            if searchQuery == nil {
+                loadShelves()
+            }
+            #endif
+        }
+    }
+    
+    /// Fetches every recording rule that has a keyword, for the search sheet's "Recording
+    /// rule" filter. Shared with loadShelves() below, which needs the same full rule list.
+    func fetchAllRules() async throws -> [Components.Schemas.Rule] {
+        var rules: [Components.Schemas.Rule] = []
+        while true {
+            let resp = try await appState.client.api.getRules(query: .init(offset: rules.count, limit: 100))
+            let json = try resp.ok.body.json
+            if json.rules.isEmpty {
+                break
+            }
+            rules += json.rules
+            if rules.count >= json.total {
+                break
+            }
+        }
+        return rules
+    }
+    
+    func loadSearchRules() {
+        Task {
+            do {
+                let rules = try await fetchAllRules()
+                searchRules = rules.compactMap { rule in
+                    guard let keyword = rule.value2.searchOption.keyword, !keyword.isEmpty else {
+                        return nil
+                    }
+                    return SearchRule(id: rule.value1.id, keyword: keyword)
+                }
+            } catch let error {
+                Logger.error("Failed to load search rules: \(error.localizedDescription)")
+            }
         }
     }
     
@@ -213,7 +367,88 @@ struct RecordingsView: View {
             }
         }
     }
+    
+    #if os(tvOS)
+    func removeRecording(_ item: Components.Schemas.RecordedItem) {
+        recorded.removeAll { $0.id == item.id }
+        totalCount -= 1
+        shelves = shelves.compactMap { shelf in
+            let items = shelf.items.filter { $0.id != item.id }
+            return items.isEmpty ? nil : RecordingShelf(id: shelf.id, title: shelf.title, items: items)
+        }
+    }
+    
+    func loadShelves() {
+        Task {
+            shelvesLoadingState = .loading
+            do {
+                let rules = try await fetchAllRules()
+                
+                var ruleResults: [(ruleId: Int, keyword: String, total: Int, items: [Components.Schemas.RecordedItem])] = []
+                for rule in rules {
+                    let ruleId = rule.value1.id
+                    guard let keyword = rule.value2.searchOption.keyword, !keyword.isEmpty else {
+                        continue
+                    }
+                    // No isReverse here: the default (unspecified) order is already newest-first,
+                    // matching "Recent Recordings" below - isReverse actually flips it to oldest-first.
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, limit: 20, ruleId: ruleId))
+                    let json = try resp.ok.body.json
+                    ruleResults.append((ruleId, keyword, json.total, json.records))
+                }
+                
+                // Page through newest-first, bucketing into "last 30 days" vs "older", until
+                // we have enough older items for that shelf too (or run out of data).
+                let thirtyDaysAgo = Date().addingTimeInterval(-30 * 24 * 3600)
+                var last30DaysItems: [Components.Schemas.RecordedItem] = []
+                var olderItems: [Components.Schemas.RecordedItem] = []
+                var offset = 0
+                while offset < 500 {
+                    let resp = try await appState.client.api.getRecorded(query: .init(isHalfWidth: true, offset: offset, limit: 100))
+                    let json = try resp.ok.body.json
+                    if json.records.isEmpty {
+                        break
+                    }
+                    for record in json.records {
+                        if record.startTime >= thirtyDaysAgo {
+                            last30DaysItems.append(record)
+                        } else {
+                            olderItems.append(record)
+                        }
+                    }
+                    offset += json.records.count
+                    if olderItems.count >= 30 || offset >= json.total {
+                        break
+                    }
+                }
+                
+                let recentShelf = RecordingShelf(id: "recent", title: String(localized: "Recent Recordings"), items: Array(last30DaysItems.prefix(30)))
+                let olderShelf = RecordingShelf(id: "older", title: String(localized: "Older Recordings"), items: Array(olderItems.prefix(30)))
+                let ruleShelves = ruleResults
+                    .filter { $0.total > 0 }
+                    .sorted { $0.total > $1.total }
+                    .map { RecordingShelf(id: "rule-\($0.ruleId)", title: $0.keyword, items: $0.items) }
+                
+                Logger.info("Shelves: recent=\(recentShelf.items.count), older=\(olderShelf.items.count), rules=\(ruleShelves.count)")
+                shelves = [recentShelf, olderShelf].filter { !$0.items.isEmpty } + ruleShelves
+                shelvesLoadingState = .loaded
+            } catch let error {
+                Logger.error("Failed to load recording shelves: \(error.localizedDescription)")
+                shelvesLoadingState = .error(Text(verbatim: error.localizedDescription))
+            }
+        }
+    }
+    #endif
 }
 
 extension Components.Schemas.RecordedItem: Identifiable {
 }
+
+#if os(tvOS)
+struct RecordingShelf: Identifiable {
+    let id: String
+    let title: String
+    let items: [Components.Schemas.RecordedItem]
+}
+#endif
+

@@ -25,7 +25,12 @@ struct EPGView: View {
     @State var endAt: CGFloat = 0
     @State var channelWidth: CGFloat = 200
     @State var heightOneDay: CGFloat = 5000
+    #if os(tvOS)
+    // tvOS's larger default text needs more room than the 20pt used elsewhere.
+    @State var borderWidth: CGFloat = 60
+    #else
     @State var borderWidth: CGFloat = 20
+    #endif
     @State var viewSize = CGSize.zero
     @State var safeAreaInsets = EdgeInsets()
     @State var scrollOffset = CGPoint.zero
@@ -34,6 +39,12 @@ struct EPGView: View {
     
     let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
     @State var nowPosition: CGFloat = 0
+    
+    /// When this tab was last successfully refreshed from the server, used to decide
+    /// whether to auto-refresh again on reappear instead of just trusting empty-check.
+    @State var lastRefreshedAt: Date? = nil
+    static let staleThreshold: TimeInterval = 60
+    static let periodicRefreshInterval: TimeInterval = 120
     
     @State var selectedProgram: EPGProgram? = nil
     
@@ -67,49 +78,34 @@ struct EPGView: View {
             ClientContentView(activeTab: $activeTab, loadingState: $loadingState) { waitTime in
                 refresh(waitTime: waitTime, manual: false)
             } content: {
-                if !schedules.isEmpty {
-                    GeometryReader { outerProxy in
-                        ScrollView([.horizontal, .vertical]) {
-                            ZStack(alignment: .topLeading) {
-                                VStack(alignment: .leading, spacing: 0) {
-                                    Spacer()
-                                        .frame(height: borderWidth)
-                                    HStack(alignment: .top, spacing: 0) {
-                                        Spacer()
-                                            .frame(width: borderWidth)
-                                        epgGrid
-                                    }
-                                }
-                                Color.red
-                                    .frame(width: channelWidth * CGFloat(schedules.count), height: 2)
-                                    .position(x: borderWidth + channelWidth * CGFloat(schedules.count) / 2, y: borderWidth + nowPosition)
-                                hourRuler
-                                    .background(.regularMaterial)
-                                    .offset(x: -scrollOffset.x)
-                                channelHeader
-                                    .background(.regularMaterial)
-                                    .offset(y: -scrollOffset.y)
-                            }
-                            .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
-                            .background(GeometryReader { (proxy: GeometryProxy) -> Color in
-                                viewSize = outerProxy.size
-                                safeAreaInsets = outerProxy.safeAreaInsets
-                                scrollOffset = proxy.frame(in: .named("outer")).origin
-                                return Color.clear
-                            })
-                        }
-                        .refreshable {
+                #if os(tvOS)
+                VStack(spacing: 0) {
+                    TVTopActionBar {
+                        Button {
                             refresh(manual: false)
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
                         }
-                        .onReceive(timer) { _ in
-                            updateNowPosition()
+                        .controlSize(.small)
+                        Button {
+                            showReserves.toggle()
+                        } label: {
+                            Image(systemName: "calendar.badge.clock")
                         }
+                        .controlSize(.small)
+                        Button {
+                            showSettings.toggle()
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                        }
+                        .controlSize(.small)
                     }
-                } else {
-                    ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
+                    epgContent
                 }
+                #else
+                epgContent
+                #endif
             }
-            .coordinateSpace(name: "outer")
             .toolbar(content: {
                 #if os(macOS)
                 ToolbarItem(placement: .primaryAction) {
@@ -120,6 +116,7 @@ struct EPGView: View {
                     }
                 }
                 #endif
+                #if !os(tvOS)
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showReserves.toggle()
@@ -134,12 +131,17 @@ struct EPGView: View {
                         Label("Filter", systemImage: "line.3.horizontal.decrease.circle")
                     }
                 }
+                #endif
             })
             #if !os(tvOS)
             .navigationTitle("EPG")
             #if !os(macOS)
             .navigationBarTitleDisplayMode(.inline)
             #endif
+            #else
+            // Without this, the untitled nav bar still reserves large-title-sized
+            // height, leaving a big empty gap below the floating tab bar.
+            .toolbarTitleDisplayMode(.inline)
             #endif
             .sheet(item: $selectedProgram) { program in
                 #if !os(tvOS)
@@ -161,6 +163,11 @@ struct EPGView: View {
         .onAppear {
             if schedules.isEmpty {
                 refresh(manual: false)
+            } else if Date().timeIntervalSince(lastRefreshedAt ?? .distantPast) > Self.staleThreshold {
+                // Reappearing after a while - refresh data but keep the user's current
+                // day/hour position instead of jumping back to "now" like a real pull
+                // refresh does.
+                refresh(manual: true)
             }
             Task {
                 await fetchReserves()
@@ -171,6 +178,89 @@ struct EPGView: View {
             }
             #endif
         }
+        // Keeps data fresh while this tab is actually visible; cancelled automatically
+        // when the view disappears (e.g. switching tabs), unlike Timer.publish.
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(Self.periodicRefreshInterval))
+                guard !Task.isCancelled else { return }
+                // manual: true keeps the current day/hour position instead of resetting
+                // to "now", which would silently jump the view mid-browse.
+                refresh(manual: true)
+            }
+        }
+    }
+    
+    var epgContent: some View {
+        Group {
+            if !schedules.isEmpty {
+                GeometryReader { outerProxy in
+                    ScrollView([.horizontal, .vertical]) {
+                        ZStack(alignment: .topLeading) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Spacer()
+                                    .frame(height: borderWidth)
+                                HStack(alignment: .top, spacing: 0) {
+                                    Spacer()
+                                        .frame(width: borderWidth)
+                                    epgGrid
+                                }
+                            }
+                            Color.red
+                                .frame(width: channelWidth * CGFloat(schedules.count), height: 2)
+                                .position(x: borderWidth + channelWidth * CGFloat(schedules.count) / 2, y: borderWidth + nowPosition)
+                            hourRuler
+                                .background(.regularMaterial)
+                                .offset(x: -scrollOffset.x)
+                            channelHeader
+                                .background(.regularMaterial)
+                                .offset(y: -scrollOffset.y)
+                        }
+                        .frame(width: borderWidth + channelWidth * CGFloat(schedules.count), height: borderWidth + heightOneDay * (endAt - startAt) / (24 * 3600 * 1000))
+                        .background(GeometryReader { (_: GeometryProxy) -> Color in
+                            viewSize = outerProxy.size
+                            safeAreaInsets = outerProxy.safeAreaInsets
+                            return Color.clear
+                        })
+                    }
+                    .refreshable {
+                        refresh(manual: false)
+                    }
+                    .onReceive(timer) { _ in
+                        updateNowPosition()
+                    }
+                    // The nested-GeometryReader + named-coordinate-space trick used to measure
+                    // scroll position was unreliable on tvOS (channelHeader/hourRuler could
+                    // render blank after scrolling). onScrollGeometryChange reports the
+                    // ScrollView's own content offset directly, so use that instead. Sign is
+                    // flipped to match the existing "-scrollOffset" convention used below.
+                    // tvOS's horizontal safe-area inset makes contentOffset.x nonzero even at
+                    // rest (confirmed via a debug readout: contentOffset.x -80 with a leading
+                    // safe-area inset of 80). contentInsets cancels that out deterministically,
+                    // unlike capturing a "baseline" from the first callback (which could latch
+                    // onto a transient pre-settled value instead of the true resting offset).
+                    .onScrollGeometryChange(for: CGPoint.self) { geometry in
+                        CGPoint(
+                            x: geometry.contentOffset.x + geometry.contentInsets.leading,
+                            y: geometry.contentOffset.y + geometry.contentInsets.top)
+                    } action: { _, newValue in
+                        scrollOffset = CGPoint(x: -newValue.x, y: -newValue.y)
+                    }
+                }
+                #if os(tvOS)
+                // The sticky header/ruler are positioned by counter-offsetting scroll,
+                // not real pinning, so scrolled-past cells must be clipped to this
+                // view's own bounds or they show through above the floating tab bar.
+                .clipped()
+                // Without its own section, the focus engine can skip over
+                // TVTopActionBar entirely when moving down from the tab bar,
+                // landing directly in the grid instead (see TVTopActionBar.swift).
+                .focusSection()
+                #endif
+            } else {
+                ContentUnavailableView("No schedule available", systemImage: "exclamationmark.triangle")
+            }
+        }
     }
     
     var channelHeader: some View {
@@ -179,7 +269,12 @@ struct EPGView: View {
                 .frame(width: borderWidth)
             ForEach(schedules) { schedule in
                 Text(schedule.channel.name)
+                    #if os(tvOS)
+                    .font(.system(size: 20, weight: .bold))
+                    .lineLimit(1)
+                    #else
                     .font(.headline)
+                    #endif
                     .frame(width: channelWidth)
             }
         }
@@ -193,7 +288,12 @@ struct EPGView: View {
             ForEach(0..<hourRulers.count, id: \.self) { index in
                 VStack {
                     Text(verbatim: hourRulers[index])
+                        #if os(tvOS)
+                        .font(.system(size: 18, weight: .semibold, design: .monospaced))
+                        .lineLimit(1)
+                        #else
                         .font(.system(.headline, design: .monospaced))
+                        #endif
                     Spacer()
                 }
                 .frame(height: heightOneDay / 24)
@@ -225,14 +325,28 @@ struct EPGView: View {
                                     ZStack(alignment: .topLeading) {
                                         VStack(alignment: .leading) {
                                             Text(verbatim: program.name)
+                                                #if os(tvOS)
+                                                .font(.system(size: 22, weight: .bold))
+                                                .lineLimit(2)
+                                                #else
                                                 .font(.headline)
+                                                #endif
                                                 .multilineTextAlignment(.leading)
                                                 .layoutPriority(3)
                                             Text(verbatim: timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.startAt / 1000))) + " ~ " + timeFormatter.string(from: Date(timeIntervalSince1970: TimeInterval(program.endAt / 1000))))
+                                                #if os(tvOS)
+                                                .font(.system(size: 16))
+                                                .lineLimit(1)
+                                                #else
                                                 .font(.caption)
+                                                #endif
                                                 .layoutPriority(2)
                                             if let description = program.description {
                                                 Text(verbatim: description)
+                                                    #if os(tvOS)
+                                                    .font(.system(size: 14))
+                                                    .lineLimit(2)
+                                                    #endif
                                                     .multilineTextAlignment(.leading)
                                                     .layoutPriority(1)
                                             }
@@ -258,8 +372,18 @@ struct EPGView: View {
                                                 .padding(4)
                                         }
                                     }
+                                    #if os(tvOS)
+                                    // The white focus border is enough here; the zoom made focused
+                                    // cells overlap neighboring programs in the grid.
+                                    .tvOSFocusCard(cornerRadius: 4, scale: 1.0)
+                                    #endif
                                 }
-                                #if os(macOS) || os(tvOS)
+                                #if os(tvOS)
+                                .buttonStyle(.tvFlat)
+                                // The system's own default focus-lift animation zooms the
+                                // button regardless of tvOSFocusCard's scale; disable it too.
+                                .focusEffectDisabled()
+                                #elseif os(macOS)
                                 .buttonStyle(.borderless)
                                 #endif
                                 .tint(.primary)
@@ -397,8 +521,14 @@ struct EPGView: View {
         guard appState.clientState == .initialized else {
             return
         }
-        schedules = []
-        loadingState = .loading
+        // Only flash to the loading/empty state for a true first load. Background
+        // refreshes (periodic task, stale-on-reappear) would otherwise tear down and
+        // rebuild the whole scroll view every time, resetting scroll position and
+        // making the sticky hour ruler/channel header disappear mid-browse.
+        let isInitialLoad = schedules.isEmpty
+        if isInitialLoad {
+            loadingState = .loading
+        }
         let nowTime = Date(timeIntervalSince1970: TimeInterval(Int(Date.now.timeIntervalSince1970) / 3600 * 3600)) // Round down to the nearest hour
         var calendar = Calendar(identifier: .japanese)
         calendar.timeZone = TimeZone(abbreviation: "JST")!
@@ -453,10 +583,15 @@ struct EPGView: View {
                 timeFormatter.timeZone = TimeZone(abbreviation: "JST")
                 updateNowPosition()
                 loadingState = .loaded
+                lastRefreshedAt = Date()
                 Logger.info("Loaded \(schedules.count) channels")
             } catch let error {
                 Logger.error("Failed to load recordings: \(error)")
-                loadingState = .error(Text(verbatim: error.localizedDescription))
+                // Only surface the error full-screen for a true first load; a failed
+                // background refresh should just leave the existing content showing.
+                if isInitialLoad {
+                    loadingState = .error(Text(verbatim: error.localizedDescription))
+                }
             }
         }
     }

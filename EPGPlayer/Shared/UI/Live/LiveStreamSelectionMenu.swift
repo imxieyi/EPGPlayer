@@ -25,8 +25,18 @@ struct LiveStreamSelectionMenu: View {
         Menu {
             ForEach(0..<selections.count, id: \.self) { index in
                 Button {
+                    #if os(tvOS)
+                    let playableItem = PlayerItem(
+                        videoItem: EPGLiveStreamItem(channel: channel, format: format, mode: index, audioComponentType: program?.audioComponentType),
+                        title: program?.name ?? channel.name,
+                        subtitle: channel.name,
+                        programDescription: [program?.description, program?.extended].compactMap { $0 }.joined(separator: "\n\n"),
+                        program: program?.subtitleProgramInfo, programEnd: program?.endDate
+                    )
+                    #else
                     let playableItem = PlayerItem(videoItem: EPGLiveStreamItem(channel: channel, format: format, mode: index, audioComponentType: program?.audioComponentType),
                                                   title: channel.name, program: program?.subtitleProgramInfo, programEnd: program?.endDate)
+                    #endif
                     // Set the playing item in appState. The player window observes this.
                     appState.playingItem = playableItem
                     #if os(macOS)
