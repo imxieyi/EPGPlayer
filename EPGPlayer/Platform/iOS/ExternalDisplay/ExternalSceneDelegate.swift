@@ -18,15 +18,20 @@ class ExternalSceneDelegate: NSObject, UISceneDelegate {
         guard let scene = scene as? UIWindowScene else {
             return
         }
-        ExternalDisplayHelper.instance.delegate = self
         window = UIWindow(windowScene: scene)
         viewController = UIViewController()
+        viewController.view.backgroundColor = .black
         window?.rootViewController = viewController
         window?.isHidden = false
+        // Publish only after the drawable is attached to the external scene.
+        ExternalDisplayHelper.instance.delegate = self
     }
     
     func sceneDidDisconnect(_ scene: UIScene) {
-        ExternalDisplayHelper.instance.delegate = nil
+        if ExternalDisplayHelper.instance.delegate === self {
+            ExternalDisplayHelper.instance.delegate = nil
+        }
+        window = nil
     }
     
 }

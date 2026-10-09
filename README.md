@@ -47,7 +47,7 @@ An unofficial native iOS/iPadOS/macOS app for [EPGStation](https://github.com/l3
 - iOS/iPadOS 18+
 - macOS 15+
 - tvOS 18+ (tvOS version WIP)
-- Xcode 16+ (for building)
+- Xcode 27+ (for building)
 
 ## Server Requirements
 

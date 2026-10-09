@@ -32,6 +32,11 @@ struct VLCPlayer: UIViewControllerRepresentable {
     /// Shows the translation saved next to a downloaded video.
     var savedSubtitles: SavedSubtitles? = nil
     #endif
+
+    #if os(iOS)
+    var externalSubtitleText: String? = nil
+    var externalSubtitleNotice: String? = nil
+    #endif
     
     #if !os(macOS)
     func makeUIViewController(context: Context) -> VLCPlayerViewController {
@@ -65,6 +70,9 @@ struct VLCPlayer: UIViewControllerRepresentable {
         playerVC.savedSubtitles = savedSubtitles
         playerVC.readsCaptions = translateSubtitles && videoItem.supportsLiveTranslation
         #endif
+        #if os(iOS)
+        playerVC.updateExternalSubtitles(text: externalSubtitleText, notice: externalSubtitleNotice)
+        #endif
         return playerVC
     }
 
@@ -74,6 +82,9 @@ struct VLCPlayer: UIViewControllerRepresentable {
 //        }
         #if os(iOS) || os(macOS)
         uiViewController.readsCaptions = translateSubtitles && videoItem.supportsLiveTranslation
+        #endif
+        #if os(iOS)
+        uiViewController.updateExternalSubtitles(text: externalSubtitleText, notice: externalSubtitleNotice)
         #endif
         guard uiViewController.videoItem?.epgId != videoItem.epgId else {
             return
@@ -171,6 +182,14 @@ class VLCPlayerViewController: UIViewController {
     var pipController: VLCPictureInPictureWindowControlling?
     var pipPossibleObservation: NSKeyValueObservation?
 
+    #if os(iOS)
+    // Keep the iOS 27 registration alive while supporting earlier deployment targets.
+    private var externalDisplayRegistration: AnyObject?
+    private var externalSubtitles = SubtitleOverlay(text: nil, controlsTop: nil)
+    private var externalSubtitleController: UIHostingController<SubtitleOverlay>?
+    private var routesVideoToExternalDisplay = true
+    #endif
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -190,18 +209,16 @@ class VLCPlayerViewController: UIViewController {
         
         videoView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         videoView.isUserInteractionEnabled = false
-        if let externalView = ExternalDisplayHelper.instance.delegate?.viewController.view {
-            mediaPlayer.drawable = externalView
-            playerEvents?.setExternalPlay.send(true)
-        } else {
-            mediaPlayer.drawable = self
-            playerEvents?.setExternalPlay.send(false)
-        }
+        mediaPlayer.drawable = self
         #endif
         mediaPlayer.audio?.passthrough = true
         mediaPlayer.delegate = delegate
         
         view.addSubview(videoView)
+
+        #if os(iOS)
+        routeVideoToExternalDisplay()
+        #endif
 
         reload()
     }
@@ -298,29 +315,22 @@ class VLCPlayerViewController: UIViewController {
             }
         })
         #if !os(macOS) && !os(tvOS)
-        externalDisplayObservation = ExternalDisplayHelper.instance.observe(\.delegate, options: [.old, .new], changeHandler: { [weak self] helper, change in
-            Task { @MainActor in
-                let newMediaPlayer = VLCMediaPlayer()
-                newMediaPlayer.delegate = self?.delegate
-                if let view = change.newValue??.viewController.view {
-                    newMediaPlayer.drawable = view
-                    self?.playerEvents?.setExternalPlay.send(true)
-                } else {
-                    newMediaPlayer.drawable = self
-                    self?.playerEvents?.setExternalPlay.send(false)
-                }
-                guard let oldPosition = self?.mediaPlayer.position else {
+        routesVideoToExternalDisplay = true
+        externalDisplayObservation = ExternalDisplayHelper.instance.observe(\.delegate, options: [.initial, .new], changeHandler: { [weak self] _, _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.routesVideoToExternalDisplay else {
                     return
                 }
-                newMediaPlayer.media = self?.mediaPlayer.media
-//                newMediaPlayer.audioStereoMode = self?.mediaPlayer.audioStereoMode
-                self?.mediaPlayer.stop()
-                self?.mediaPlayer = newMediaPlayer
-                self?.captionClock = CaptionClock()
-                self?.mediaPlayer.play()
-                self?.mediaPlayer.position = oldPosition
+                self.routeVideoToExternalDisplay()
             }
         })
+        if #available(iOS 27.0, *), externalDisplayRegistration == nil {
+            // iOS 27 no longer connects noninteractive external scenes automatically.
+            let configuration = UISceneConfiguration(name: "ExternalScene", sessionRole: .windowExternalDisplayNonInteractive)
+            configuration.delegateClass = ExternalSceneDelegate.self
+            let accessory = UISceneAccessory.externalNonInteractive(sceneConfiguration: configuration)
+            externalDisplayRegistration = registerSceneAccessory(accessory)
+        }
         #endif
 
         // Playback starts in viewDidLoad, so VLC may have added tracks before the listeners above existed.
@@ -351,10 +361,60 @@ class VLCPlayerViewController: UIViewController {
         togglePIPModeListener?.cancel()
         reloadMediaListener?.cancel()
         externalDisplayObservation?.invalidate()
+        #if os(iOS)
+        routesVideoToExternalDisplay = false
+        removeExternalSubtitleController()
+        videoView.removeFromSuperview()
+        externalDisplayRegistration = nil
+        #endif
         #if os(iOS) || os(macOS)
         stopReadingCaptions()
         #endif
     }
+
+    #if os(iOS)
+    func updateExternalSubtitles(text: String?, notice: String?) {
+        externalSubtitles = SubtitleOverlay(text: text, notice: notice, controlsTop: nil)
+        externalSubtitleController?.rootView = externalSubtitles
+    }
+
+    /// Move VLC's whole output, including native captions, without replacing the player.
+    /// A new player would lose track selection and restart the caption proxy's timeline.
+    private func routeVideoToExternalDisplay() {
+        let externalController = ExternalDisplayHelper.instance.delegate?.viewController
+        let container = externalController?.view ?? view!
+        if videoView.superview !== container {
+            videoView.removeFromSuperview()
+            videoView.frame = container.bounds
+            container.insertSubview(videoView, at: 0)
+            container.layoutIfNeeded()
+        }
+
+        if externalSubtitleController?.parent !== externalController {
+            removeExternalSubtitleController()
+            if let externalController {
+                let subtitles = UIHostingController(rootView: externalSubtitles)
+                subtitles.safeAreaRegions = []
+                subtitles.view.backgroundColor = .clear
+                subtitles.view.isUserInteractionEnabled = false
+                subtitles.view.frame = container.bounds
+                subtitles.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                externalController.addChild(subtitles)
+                container.addSubview(subtitles.view)
+                subtitles.didMove(toParent: externalController)
+                externalSubtitleController = subtitles
+            }
+        }
+        playerEvents?.setExternalPlay.send(externalController != nil)
+    }
+
+    private func removeExternalSubtitleController() {
+        externalSubtitleController?.willMove(toParent: nil)
+        externalSubtitleController?.view.removeFromSuperview()
+        externalSubtitleController?.removeFromParent()
+        externalSubtitleController = nil
+    }
+    #endif
     
     func reload() {
         mediaPlayer.stop()

@@ -76,6 +76,13 @@ struct PlayerView: View {
         player.translateSubtitles = userSettings.liveTranslation
         player.savedSubtitles = savedSubtitles
         #endif
+        #if os(iOS)
+        if playerState != .stopping && playerState != .stopped {
+            let isLive = item.videoItem.supportsLiveTranslation
+            player.externalSubtitleText = isLive ? liveTranslator.visibleText : savedSubtitles.visibleText
+            player.externalSubtitleNotice = isLive ? liveTranslator.notice : nil
+        }
+        #endif
         return player
     }
     
@@ -83,6 +90,7 @@ struct PlayerView: View {
         ZStack(alignment: .topLeading) {
             videoPlayer
                 .ignoresSafeArea(edges: .vertical)
+                .contentShape(Rectangle())
                 .gesture(TapGesture().onEnded {
                     if playerUIOpacity == 1 {
                         hidePlayerUI()
@@ -119,6 +127,7 @@ struct PlayerView: View {
                     Spacer()
                 }
                 .foregroundStyle(.secondary)
+                .allowsHitTesting(false)
             }
             
             if !playerState.isPlaying && hadErrorState {
